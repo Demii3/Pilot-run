@@ -3,7 +3,7 @@ import tkinter as tk
 
 def main():
     app = tk.Tk()
-    a = 2
+    a = "nigga"
     app.mainloop()
 
                     
