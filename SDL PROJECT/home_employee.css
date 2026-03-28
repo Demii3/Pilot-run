@@ -1,0 +1,363 @@
+body {
+    margin: 0;
+    padding-top: 60px;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Background */
+.bg-container {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+}
+
+.bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+}
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+/* NAVBAR */
+.custom-navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 10px 20px;
+
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+
+    box-shadow: 0 10px 40px rgba(94, 93, 93, 0.5);
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* LEFT */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* LOGO */
+.logo-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.logo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* COMPANY NAME */
+.company-name {
+    color: white;
+    font-weight: 600;
+    font-size: 15px;
+    font-family: 'Poppins', sans-serif;
+}
+
+
+/* RIGHT */
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* AVATAR */
+.avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 100%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* DROPDOWN MENU */
+.dropdown-menu {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+
+    width: 280px;
+    padding: 10px;
+
+    background: rgba(49, 49, 49, 0.95);
+    backdrop-filter: blur(10px);
+
+    border-radius: 12px;
+    color: white;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+    display: none;
+}
+
+/* SHOW MENU */
+.dropdown-menu.active {
+    display: block;
+}
+
+/* PROFILE HEADER */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.profile-header:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.profile-header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+/* ITEMS */
+.profile-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: white;
+}
+
+.profile-item:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* DIVIDER */
+.dropdown-menu hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin: 8px 0;
+}
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+/* Welcome Card */
+.welcome-card {
+  position: relative;
+  margin: 30px auto;
+  width: 90%;
+  max-width: 900px;
+  padding: 20px 30px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(131, 130, 130, 0.1);
+  backdrop-filter: blur(20px);
+
+  border-radius: 20px;
+  color: white;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* Left side */
+.welcomecard-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.profile-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.welcome-text {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.user-name {
+  margin: 0;
+  font-weight: 600;
+}
+
+.divider {
+  margin: 8px 0;
+  border: none;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+
+
+/* Right side */
+.welcomecard-right p {
+  margin: 0;
+  font-size: 20px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
+  text-align: right;
+}
+
+#time {
+  font-size: 26px !important;
+  font-weight: bold !important;
+  font-family: 'Poppins', sans-serif;
+  margin-top: 5px !important;
+}
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+/* ICONS */
+.functions-card {
+  margin: 30px auto;
+  width: 90%;
+  max-width: 900px;
+  padding: 20px 30px;
+
+  display: flex;
+  justify-content: center;   
+  align-items: center;
+
+  background: rgba(131, 130, 130, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-icons {
+  display: flex;
+  justify-content: center;   
+  align-items: center;
+  gap: 60px;                 
+  width: 100%;               
+}
+
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+}
+
+.icon-item img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 8px;
+  transition: 0.3s;
+}
+
+.icon-item img:hover {
+  transform: scale(1.2);
+  filter: brightness(1.3);
+}
+
+/* Mobayl */
+@media screen and (max-width: 768px) {
+  body {
+    padding-top: 55px;
+  }
+
+  .custom-navbar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .nav-left,
+  .nav-right {
+    gap: 8px;
+  }
+
+  .company-name {
+    font-size: 13px;
+  }
+
+  .logo-circle,
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dropdown-menu {
+    right: 10px;
+    width: calc(100vw - 20px);
+    max-width: 300px;
+  }
+
+  .welcome-card,
+  .functions-card {
+    width: 95%;
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .welcomecard-left,
+  .card-icons {
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .welcomecard-right {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .welcomecard-right p,
+  .welcomecard-right #time {
+    font-size: 20px;
+    margin: 1px 0;
+  }
+
+  .card-icons {
+    gap: 20px;
+  }
+}
