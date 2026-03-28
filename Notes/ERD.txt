@@ -1,0 +1,25 @@
+Tables for Payroll system:
+	
+	Employee:
+		Emp_id		(PK)
+		First Name
+		Last name
+		Department
+
+	Deductions:
+		Emp_id		(P&F K)
+		Cash Advance
+		SSS
+		Philhealth
+		PAGIBIG
+		TAX
+	
+	Attendance:
+		Emp_id		(P&F K)
+		Day
+		Date
+		In
+		Out
+		Total time
+		Regular hour
+		
