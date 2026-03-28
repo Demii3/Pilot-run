@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Your CSS -->
+  <link rel="stylesheet" href="Assets/login.css">
+
+  <link rel="icon" type="image/png" href="Images/logo.jpg"/>
+</head>
+
+<body>
+
+<!-- Background -->
+<div class="bg-container">
+    <img src="Images/bgimg.jpg" class="bg-image">
+    <div class="overlay"></div>
+</div>
+
+<!-- Login Card -->
+<div class="login-wrapper">
+    <div class="login-card">
+
+        <h1>LOGIN ACCOUNT</h1>
+
+        <form action="login.php" method="POST">
+
+            <label>Email</label>
+            <input type="text" name="email">
+
+            <label>Password</label>
+            <input type="password" name="password">
+
+            <div class="remember">
+                <input type="checkbox" name="remember">
+                <span>Remember me.</span>
+            </div>
+
+            <button type="submit">LOGIN</button>
+
+            <div class="forgot">
+                <a href="#">Forgot your password?</a>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+</body>
+</html>
