@@ -1,3 +1,7 @@
+<?php
+    session_start();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,9 +16,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- CSS -->
-  <link rel="stylesheet" href="Assets/home_hr.css">
+  <link rel="stylesheet" href="../Assets/home_hr.css">
 
-  <link rel="icon" type="image/png" href="Images/logo.jpg"/>
+  <link rel="icon" type="image/png" href="../Images/logo.jpg"/>
 </head>
 
 <body>
@@ -24,26 +28,26 @@
 
   <div class="nav-left">
     <div class="logo-circle">
-      <img src="Images/logo.jpg" alt="Logo">
+      <img src="../Images/logo.jpg" alt="Logo">
     </div>
     <span class="company-name">Chengshi <br>Construction Corp</span>
   </div>
 
   <div class="nav-right">
     <button class="avatar" onclick="toggleMenu()">
-      <img src="Images/profilepic.jpg" alt="User">
+      <img src="../Images/profilepic.jpg" alt="User">
     </button>
 
     <div id="profileMenu" class="dropdown-menu">
 
       <div class="profile-header">
-        <img src="Images/profilepic.jpg">
+        <img src="../Images/profilepic.jpg">
         <span>User</span>
       </div>
 
       <a href="#" class="profile-item"> Settings & Privacy </a>
       <a href="#" class="profile-item"> Help & Support </a>
-      <a href="#" class="profile-item"> Logout </a>
+      <a href="../?logout=true" class="profile-item"> Logout </a>
 
     </div>
 
@@ -53,10 +57,10 @@
 <!-- Welcome Card -->
 <div class="welcome-card">
   <div class="welcomecard-left">
-    <img src="Images/profilepic.jpg" class="profile-img">
+    <img src="../Images/profilepic.jpg" class="profile-img">
     <div>
       <p class="welcome-text">Welcome!</p>
-      <h4 class="user-name">Username</h4>
+      <h4 class="user-name"><?php echo $_SESSION['username']; ?></h4>
     </div>
   </div>
 
@@ -73,22 +77,22 @@
     <div class="card-icons">
 
       <a href="#" class="icon-item">
-        <img src="Images/attendance.png" alt="Attendance">
+        <img src="../Images/attendance.png" alt="Attendance">
         <p>Attendance</p>
       </a>
 
       <a href="#" class="icon-item">
-        <img src="Images/payslip.png" alt="Payslip">
+        <img src="../Images/payslip.png" alt="Payslip">
         <p>Payslip</p>
       </a>
 
       <a href="#" class="icon-item">
-        <img src="Images/payroll.png" alt="Attendance">
+        <img src="../Images/payroll.png" alt="Attendance">
         <p>Payroll</p>
       </a>
 
       <a href="#" class="icon-item">
-        <img src="Images/employees.png" alt="Payslip">
+        <img src="../Images/employees.png" alt="Payslip">
         <p>Employees</p>
       </a>
     </div>
@@ -98,52 +102,15 @@
 
   <!-- Background -->
 <div class="bg-container">
-    <img src="Images/bgimg.jpg" class="bg-image">
+    <img src="../Images/bgimg.jpg" class="bg-image">
     <div class="overlay"></div>
 </div>
 
 
 <!-- JAVA RICE -->
-<script>
-  function toggleMenu() {
-    document.getElementById("profileMenu").classList.toggle("active");
-  }
-
-  document.addEventListener("click", function(e) {
-    const menu = document.getElementById("profileMenu");
-    const avatar = document.querySelector(".avatar");
-
-    if (!avatar.contains(e.target) && !menu.contains(e.target)) {
-      menu.classList.remove("active");
-    }
-  });
-
-  function updateDateTime() {
-  const now = new Date();
-
-  const month = now.toLocaleString('default', { month: 'long' });
-  const day = now.getDate();
-  const year = now.getFullYear();
-
-  let hours = now.getHours();
-  let minutes = now.getMinutes();
-  let ampm = hours >= 12 ? 'PM' : 'AM';
-
-  hours = hours % 12;
-  hours = hours ? hours : 12; // 0 becomes 12
-  minutes = minutes < 10 ? '0' + minutes : minutes;
-
-  const time = hours + ":" + minutes + " " + ampm;
-
-  document.getElementById("month").textContent = month;
-  document.getElementById("day").textContent = day;
-  document.getElementById("year").textContent = year;
-  document.getElementById("time").textContent = time;
-}
-updateDateTime();
-setInterval(updateDateTime, 1000);
-</script>
-
+<?php
+  include("ionknowdisdude.php");
+?>
 
 </body>
 </html>

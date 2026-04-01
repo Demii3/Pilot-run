@@ -1,20 +1,36 @@
+<?php
+    session_start();
+
+    if(isset($_GET['logout'])){
+        $_SESSION = [];
+        session_destroy();
+        header("location: ./");
+    }
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- Your CSS -->
-  <link rel="stylesheet" href="Assets/login.css">
+    <!-- Your CSS -->
+    <link rel="stylesheet" href="Assets/login.css">
 
-  <link rel="icon" type="image/png" href="Images/logo.jpg"/>
+    <link rel="icon" type="image/png" href="Images/logo.jpg"/>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="vendor/jquery/jquery.form.js"></script>
 </head>
 
 <body>
@@ -25,35 +41,34 @@
     <div class="overlay"></div>
 </div>
 
-<!-- Login Card -->
-<div class="login-wrapper">
-    <div class="login-card">
+<?php
+    $page = "";
+    if(isset($_GET['page'])){
+        $page = $_GET['page'];
+    };
 
-        <h1>LOGIN ACCOUNT</h1>
-
-        <form action="login.php" method="POST">
-
-            <label>Email</label>
-            <input type="text" name="email">
-
-            <label>Password</label>
-            <input type="password" name="password">
-
-            <div class="remember">
-                <input type="checkbox" name="remember">
-                <span>Remember me.</span>
-            </div>
-
-            <button type="submit">LOGIN</button>
-
-            <div class="forgot">
-                <a href="#">Forgot your password?</a>
-            </div>
-
-        </form>
-
-    </div>
-</div>
-
+    if (!isset($_SESSION['login'])) {
+        include("Modules/login_card.php");
+    } else {
+        if ($_SESSION['type'] == 'HR') {
+            header("location: Modules/home_hr.php");
+        } else {
+            header("location: Modules/home_employee.php");
+        }
+        /* switch ($page) {
+            case 'home':
+                include("Modules/Home.php");
+                break;
+            case 'about':
+                include("Modules/About.php");
+                break;
+            case 'contact':
+                include("Modules/Contact.php");
+                break;
+            default:
+                include("Modules/Home.php");
+        }; */
+    };
+?>  
 </body>
 </html>
