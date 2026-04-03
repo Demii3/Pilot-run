@@ -12,26 +12,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
   <!-- Your CSS -->
-  <link rel="stylesheet" href="Assets/login.css">
+  <link rel="stylesheet" href="./Assets/login.css">
 
-  <link rel="icon" type="image/png" href="Images/logo.jpg"/>
+  <link rel="icon" type="image/png" href="./Images/logo.jpg"/>
 </head>
 
 <body>
 
 <!-- Background -->
 <div class="bg-container">
-    <img src="Images/bgimg.jpg" class="bg-image">
+    <img src="./Images/bgimg.jpg" class="bg-image">
     <div class="overlay"></div>
 </div>
 
 <!-- Login Card -->
 <div class="login-wrapper">
     <div class="login-card">
+        <h1>Welcome Back!</h1>
+        <h2>Chengshi Construction Corp</h2>
+        <h3>LOGIN ACCOUNT</h3>
 
-        <h1>LOGIN ACCOUNT</h1>
-
-        <form action="login.php" method="POST">
+        <form action="./login.php" method="POST">
 
             <label>Email</label>
             <input type="text" name="email">
