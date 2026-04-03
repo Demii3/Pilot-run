@@ -1,5 +1,4 @@
 <?php
-// Connect to the database (example connection, adjust credentials as needed)
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -7,13 +6,12 @@ $dbname = "employee_db";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Check connection
+
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Fetch employee data (example query, adjust table/column names as needed)
-$employeeId = 'E12345'; // Example static ID, replace with dynamic input if needed
+$employeeId = '202314090'; // Replace with the actual employee ID you want to view/ link this to the employee home page/login
 $sql = "SELECT * FROM employees WHERE employee_id = '$employeeId'";
 $result = $conn->query($sql);
 
@@ -35,7 +33,7 @@ if ($result->num_rows > 0) {
     die("No employee data found.");
 }
 
-// Calculate totals
+
 $totalOtherIncome = $specialHoliday + $legalHoliday + $overtimeRate;
 $totalOtherDeductions = $late + $absent + $cashAdvance;
 $totalMonthlySalary = $totalHours * $ratePerHour;

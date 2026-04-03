@@ -3,6 +3,10 @@ body {
     margin: 0;
     padding: 0;
     background: #F5F5DC; /* Updated background color */
+    background-image: url('bgimg.jpg'); 
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
     color: #333;
 }
 .container {
@@ -64,4 +68,24 @@ h2 {
     margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+    table {
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    table {
+        font-size: 12px;
+    }
+
+    th, td {
+        padding: 6px;
+    }
 }
