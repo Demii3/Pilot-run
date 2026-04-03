@@ -1,0 +1,43 @@
+<!-- Login Card -->
+<div class="login-wrapper">
+    <div class="login-card">
+
+        <h1>LOGIN ACCOUNT</h1>
+
+        <form id="formlogin">
+
+            <label>Email</label>
+            <input type="text" name="email" id="email">
+
+            <label>Password</label>
+            <input type="password" name="password" id="password">
+
+            <div class="remember">
+                <input type="checkbox" name="remember">
+                <span>Remember me.</span>
+            </div>
+
+            <button type="button" id="loginBtn">LOGIN</button>
+
+            <div class="forgot">
+                <a href="#">Forgot your password?</a>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        $("#loginBtn").click(function(){
+            $.post("Modules/login_process.php",$("form#formlogin").serialize(),function(d){
+                if(d=='success'){
+                    document.location = "./";
+                } else {
+                    alert(d);
+                }
+            });
+        });
+    });
+</script>
