@@ -54,6 +54,7 @@ function createEmployee($employee_id, $total_hours, $rate_per_hour, $special_hol
         error_log("Error: " . $stmt->error); // Log errors instead of echoing
     }
     $stmt->close();
+    $hello = '';
 }
 
 ?>
