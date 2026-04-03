@@ -64,7 +64,7 @@ function createEmployee($employee_id, $total_hours, $rate_per_hour, $special_hol
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Management</title>
-    <link rel="stylesheet" href="Computation_crude.css">
+    <link rel="stylesheet" href="../css/Computation_crude.css">
 </head>
 <body>
     <h1>Employee Management</h1>

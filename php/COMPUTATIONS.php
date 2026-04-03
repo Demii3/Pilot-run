@@ -47,7 +47,7 @@ $netPay = $totalOtherIncome + $totalMonthlySalary - ($totalOtherDeductions + $to
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Net Pay Viewer</title>
-    <link rel="stylesheet" href="computation_css.css">
+    <link rel="stylesheet" href="../css/computation_css.css">
 </head>
 <body>
     <div class="container">

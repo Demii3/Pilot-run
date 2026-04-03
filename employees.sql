@@ -24,10 +24,10 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `employees`
+-- Table structure for table `employees`	
 --
 
-CREATE TABLE `employees` (
+CREATE TABLE employees (
   `employee_id` varchar(10) NOT NULL,
   `total_hours` int(11) NOT NULL,
   `rate_per_hour` decimal(10,2) NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE `employees` (
 -- Dumping data for table `employees`
 --
 
-INSERT INTO `employees` (`employee_id`, `total_hours`, `rate_per_hour`, `special_holiday`, `legal_holiday`, `overtime_rate`, `late`, `absent`, `cash_advance`, `sss`, `philhealth`, `pagibig`, `tax`) VALUES
+INSERT INTO employees (`employee_id`, `total_hours`, `rate_per_hour`, `special_holiday`, `legal_holiday`, `overtime_rate`, `late`, `absent`, `cash_advance`, `sss`, `philhealth`, `pagibig`, `tax`) VALUES
 ('12345678', 160, 100.00, 1000.00, 1000.00, 1000.00, 100000.00, 2400.00, 1000.00, 1000.00, 1000.00, 1000.00, 1000.00),
 ('202314090', 140, 187.50, 2000.00, 1500.00, 1500.00, 500.00, 1000.00, 500.00, 1000.00, 1000.00, 500.00, 500.00),
 ('E12345', 160, 187.50, 2000.00, 1500.00, 1500.00, 500.00, 1000.00, 500.00, 1000.00, 1000.00, 500.00, 500.00);
@@ -59,7 +59,7 @@ INSERT INTO `employees` (`employee_id`, `total_hours`, `rate_per_hour`, `special
 --
 -- Indexes for table `employees`
 --
-ALTER TABLE `employees`
+ALTER TABLE employees
   ADD PRIMARY KEY (`employee_id`);
 COMMIT;
 
