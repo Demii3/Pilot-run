@@ -60,12 +60,12 @@
                 </a>
 
                 <a href="#" class="icon-item">
-                    <img src="../Images/payroll.png" alt="Attendance">
+                    <img src="../Images/payroll.png" alt="Payroll">
                     <p>Payroll</p>
                 </a>
 
-                <a href="#" class="icon-item">
-                    <img src="../Images/employees.png" alt="Payslip">
+                <a href="./Pages/employee_management.php" class="icon-item">
+                    <img src="../Images/employees.png" alt="Employees">
                     <p>Employees</p>
                 </a>
             </div>
