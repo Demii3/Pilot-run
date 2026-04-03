@@ -20,7 +20,7 @@
             $row = mysqli_fetch_array($result);
             session_start();
             $_SESSION['login'] = '1';
-            $_SESSION['type'] = $row['Type'];
+            $_SESSION['type'] = $_SESSION['bg_source'] = $row['Type'];
             $_SESSION['username'] = $row['Username'];
             $msg = 'success';
         } else {

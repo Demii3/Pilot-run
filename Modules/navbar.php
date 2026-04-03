@@ -22,7 +22,7 @@
 
             <a href="#" class="profile-item"> Settings & Privacy </a>
             <a href="#" class="profile-item"> Help & Support </a>
-            <a href="#" class="profile-item"> Logout </a>
+            <a href="../?logout=logout" class="profile-item"> Logout </a>
 
         </div>
 

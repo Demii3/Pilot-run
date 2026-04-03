@@ -1,3 +1,19 @@
+<?php
+    session_start();
+    if (!isset($_SESSION['login']) || $_SESSION['type'] != "HR") {
+        header("location: ../");
+        exit();
+    };
+
+    echo '<pre>';
+    print_r($_SESSION);
+    echo '</pre>';
+    header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Cache-Control: post-check=0, pre-check=0', FALSE);
+    header('Pragma: no-cache');
+?>
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -28,7 +44,32 @@
 
         <?php include '../Modules/background.php'; ?>
         <?php include '../Modules/navbar.php'; ?>
-        <?php include './welcome_card.php'; ?>
+        <?php include '../Modules/welcome_card.php'; ?>
+
+        <!-- functions card -->
+        <div class="functions-card">
+            <div class="card-icons">
+                <a href="#" class="icon-item">
+                    <img src="../Images/attendance.png" alt="Attendance">
+                    <p>Attendance</p>
+                </a>
+
+                <a href="#" class="icon-item">
+                    <img src="../Images/payslip.png" alt="Payslip">
+                    <p>Payslip</p>
+                </a>
+
+                <a href="#" class="icon-item">
+                    <img src="../Images/payroll.png" alt="Attendance">
+                    <p>Payroll</p>
+                </a>
+
+                <a href="#" class="icon-item">
+                    <img src="../Images/employees.png" alt="Payslip">
+                    <p>Employees</p>
+                </a>
+            </div>
+        </div>
 
 
         <!-- JAVA RICE -->

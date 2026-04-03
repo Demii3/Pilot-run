@@ -6,8 +6,8 @@
 
         <form id="formlogin">
 
-            <label>Email</label>
-            <input type="text" name="email" id="email">
+            <label>Username</label>
+            <input type="text" name="username" id="username">
 
             <label>Password</label>
             <input type="password" name="password" id="password">
