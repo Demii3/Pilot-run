@@ -1,73 +1,21 @@
 <?php
-ob_start(); // Start output buffering
+    ob_start(); // Start output buffering
 
-// Database connection
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "simpletest_db";
+    // Database connection
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "simpletest_db";
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+    $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Function to update an employee record
-function updateEmployee($employee_id,
-                        $total_hours,
-                        $rate_per_hour,
-                        $special_holiday, 
-                        $legal_holiday, 
-                        $overtime_rate, 
-                        $late_count, 
-                        $absent_count, 
-                        $cash_advance, 
-                        $sss, 
-                        $philhealth, 
-                        $pagibig, 
-                        $tax) {
-    global $conn;
-    // Calculate deductions
-    $late_deduction = $late_count * $rate_per_hour;
-    $absent_deduction = $absent_count * $rate_per_hour * 8; // Assuming 8 hours per day
-
-    $stmt = $conn->prepare("UPDATE employees SET total_hours = ?, rate_per_hour = ?, special_holiday = ?, legal_holiday = ?, overtime_rate = ?, late = ?, absent = ?, cash_advance = ?, sss = ?, philhealth = ?, pagibig = ?, tax = ? WHERE employee_id = ?");
-    $stmt->bind_param("ddddddddddddi", $total_hours, $rate_per_hour, $special_holiday, $legal_holiday, $overtime_rate, $late_deduction, $absent_deduction, $cash_advance, $sss, $philhealth, $pagibig, $tax, $employee_id);
-    if (!$stmt->execute()) {
-        error_log("Error: " . $stmt->error); // Log errors instead of echoing
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
     }
-    $stmt->close();
-}
 
-// Function to delete an employee record
-function deleteEmployee($employee_id) {
-    global $conn;
-    $stmt = $conn->prepare("DELETE FROM employees WHERE employee_id = ?");
-    $stmt->bind_param("i", $employee_id);
-    if (!$stmt->execute()) {
-        error_log("Error: " . $stmt->error); // Log errors instead of echoing
-    }
-    $stmt->close();
-}
-
-// Function to create a new employee record
-function createEmployee($employee_id, $total_hours, $rate_per_hour, $special_holiday, $legal_holiday, $overtime_rate, $late_count, $absent_count, $cash_advance, $sss, $philhealth, $pagibig, $tax) {
-    global $conn;
-
-    // Calculate deductions
-    $late_deduction = $late_count * $rate_per_hour;
-    $absent_deduction = $absent_count * $rate_per_hour * 8; // Assuming 8 hours per day
-
-    $stmt = $conn->prepare("INSERT INTO employees (employee_id, total_hours, rate_per_hour, special_holiday, legal_holiday, overtime_rate, late, absent, cash_advance, sss, philhealth, pagibig, tax) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("idddddddddddd", $employee_id, $total_hours, $rate_per_hour, $special_holiday, $legal_holiday, $overtime_rate, $late_deduction, $absent_deduction, $cash_advance, $sss, $philhealth, $pagibig, $tax);
-    if (!$stmt->execute()) {
-        error_log("Error: " . $stmt->error); // Log errors instead of echoing
-    }
-    $stmt->close();
-}
-
+    // Function to update an employee record
+    include '../HR_Modules/functions.php';
 ?>
 
 <!DOCTYPE html>
@@ -199,35 +147,7 @@ function createEmployee($employee_id, $total_hours, $rate_per_hour, $special_hol
                     }
 
                     // Add "Edit" and "Delete" button functionality in the employee list
-                    $result = $conn->query("SELECT * FROM employees");
-                    if ($result && $result->num_rows > 0) {
-                        while ($row = $result->fetch_assoc()) {
-                            echo "<tr>";
-                            echo "<td>" . $row['employee_id'] . "</td>";
-                            echo "<td>" . $row['total_hours'] . "</td>";
-                            echo "<td>" . $row['rate_per_hour'] . "</td>";
-                            echo "<td>" . $row['special_holiday'] . "</td>";
-                            echo "<td>" . $row['legal_holiday'] . "</td>";
-                            echo "<td>" . $row['overtime_rate'] . "</td>";
-                            echo "<td>" . $row['late'] . "</td>"; // Display late deduction
-                            echo "<td>" . $row['absent'] . "</td>"; // Display absent deduction
-                            echo "<td>" . $row['cash_advance'] . "</td>";
-                            echo "<td>" . $row['sss'] . "</td>";
-                            echo "<td>" . $row['philhealth'] . "</td>";
-                            echo "<td>" . $row['pagibig'] . "</td>";
-                            echo "<td>" . $row['tax'] . "</td>";
-                            echo "<td>";
-                            echo "<button class='btn btn-update' onclick='editEmployee(" . json_encode($row) . ")'>Edit</button>";
-                            echo "<form action='employee_management.php' method='POST' style='display:inline;'>";
-                            echo "<input type='hidden' name='employee_id' value='" . $row['employee_id'] . "'>";
-                            echo "<button type='submit' name='delete' class='btn btn-delete'>Delete</button>";
-                            echo "</form>";
-                            echo "</td>";
-                            echo "</tr>";
-                        }
-                    } else {
-                        echo "<tr><td colspan='14'>No employee records found.</td></tr>";
-                    }
+                    include '../HR_Modules/display_all_employees.php';
                     ?>
                 </tbody>
             </table>
