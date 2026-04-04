@@ -16,6 +16,9 @@
 
     // Function to update an employee record
     include '../HR_Modules/functions.php';
+
+    // Handle form submissions for create, update, and delete operations
+    include '../HR_Modules/handle_CRUD_submissions.php';
 ?>
 
 <!DOCTYPE html>
@@ -33,7 +36,7 @@
         <!-- Form to create a new employee -->
         <div class="form-container">
             <h2>Create New Employee</h2>
-            <form action="employee_management.php" method="POST">
+            <form action="index.php" method="POST">
                 <input type="text" name="employee_id" placeholder="Employee ID" required>
                 <input type="number" name="total_hours" placeholder="Total Hours" required>
                 <input type="number" step="0.01" name="rate_per_hour" placeholder="Rate per Hour" required>
@@ -97,55 +100,6 @@
                 </thead>
                 <tbody>
                     <?php
-                    // Handle form submissions
-                    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                        if (isset($_POST['create'])) {
-                            createEmployee(
-                                $_POST['employee_id'],
-                                $_POST['total_hours'],
-                                $_POST['rate_per_hour'],
-                                $_POST['special_holiday'],
-                                $_POST['legal_holiday'],
-                                $_POST['overtime_rate'],
-                                $_POST['late'],
-                                $_POST['absent'],
-                                $_POST['cash_advance'],
-                                $_POST['sss'],
-                                $_POST['philhealth'],
-                                $_POST['pagibig'],
-                                $_POST['tax']
-                            );
-                            header("Location: ./");
-                            exit;
-                        }
-
-                        if (isset($_POST['update'])) {
-                            updateEmployee(
-                                $_POST['employee_id'],
-                                $_POST['total_hours'],
-                                $_POST['rate_per_hour'],
-                                $_POST['special_holiday'],
-                                $_POST['legal_holiday'],
-                                $_POST['overtime_rate'],
-                                $_POST['late'],
-                                $_POST['absent'],
-                                $_POST['cash_advance'],
-                                $_POST['sss'],
-                                $_POST['philhealth'],
-                                $_POST['pagibig'],
-                                $_POST['tax']
-                            );
-                            header("Location: ./");
-                            exit;
-                        }
-
-                        if (isset($_POST['delete'])) {
-                            deleteEmployee($_POST['employee_id']);
-                            header("Location: ./");
-                            exit;
-                        }
-                    }
-
                     // Add "Edit" and "Delete" button functionality in the employee list
                     include '../HR_Modules/display_all_employees.php';
                     ?>
@@ -157,7 +111,5 @@
     <!-- JavaScript to handle "Edit" button click and populate the update form -->
     <?php include '../HR_Modules/populate_update_form.php'; ?>
 
-
 </body>
 </html>
-
