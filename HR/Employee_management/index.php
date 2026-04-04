@@ -5,7 +5,7 @@ ob_start(); // Start output buffering
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "employee_db";
+$dbname = "simpletest_db";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -15,7 +15,19 @@ if ($conn->connect_error) {
 }
 
 // Function to update an employee record
-function updateEmployee($employee_id, $total_hours, $rate_per_hour, $special_holiday, $legal_holiday, $overtime_rate, $late_count, $absent_count, $cash_advance, $sss, $philhealth, $pagibig, $tax) {
+function updateEmployee($employee_id,
+                        $total_hours,
+                        $rate_per_hour,
+                        $special_holiday, 
+                        $legal_holiday, 
+                        $overtime_rate, 
+                        $late_count, 
+                        $absent_count, 
+                        $cash_advance, 
+                        $sss, 
+                        $philhealth, 
+                        $pagibig, 
+                        $tax) {
     global $conn;
     // Calculate deductions
     $late_deduction = $late_count * $rate_per_hour;
@@ -64,7 +76,7 @@ function createEmployee($employee_id, $total_hours, $rate_per_hour, $special_hol
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Management</title>
-    <link rel="stylesheet" href="../Assets/Computation_crude.css">
+    <link rel="stylesheet" href="../HR_Assets/Computation_crude.css">
 </head>
 <body>
     <h1>Employee Management</h1>
@@ -94,7 +106,7 @@ function createEmployee($employee_id, $total_hours, $rate_per_hour, $special_hol
         <!-- Update Form (hidden by default, shown when "Edit" is clicked) -->
         <div id="updateForm" class="form-container" style="display: none;">
             <h2>Update Employee</h2>
-            <form action="employee_management.php" method="POST">
+            <form action="index.php" method="POST">
                 <input type="hidden" id="update_employee_id" name="employee_id">
                 <input type="number" id="update_total_hours" name="total_hours" placeholder="Total Hours" required>
                 <input type="number" step="0.01" id="update_rate_per_hour" name="rate_per_hour" placeholder="Rate per Hour" required>
@@ -155,7 +167,7 @@ function createEmployee($employee_id, $total_hours, $rate_per_hour, $special_hol
                                 $_POST['pagibig'],
                                 $_POST['tax']
                             );
-                            header("Location: employee_management.php");
+                            header("Location: ./");
                             exit;
                         }
 
@@ -175,13 +187,13 @@ function createEmployee($employee_id, $total_hours, $rate_per_hour, $special_hol
                                 $_POST['pagibig'],
                                 $_POST['tax']
                             );
-                            header("Location: employee_management.php");
+                            header("Location: ./");
                             exit;
                         }
 
                         if (isset($_POST['delete'])) {
                             deleteEmployee($_POST['employee_id']);
-                            header("Location: employee_management.php");
+                            header("Location: ./");
                             exit;
                         }
                     }
@@ -224,28 +236,28 @@ function createEmployee($employee_id, $total_hours, $rate_per_hour, $special_hol
 
     <!-- JavaScript to handle "Edit" button click and populate the update form -->
     <script>
-    function editEmployee(employee) {
-        document.getElementById('update_employee_id').value = employee.employee_id;
-        document.getElementById('update_total_hours').value = employee.total_hours;
-        document.getElementById('update_rate_per_hour').value = employee.rate_per_hour;
-        document.getElementById('update_special_holiday').value = employee.special_holiday;
-        document.getElementById('update_legal_holiday').value = employee.legal_holiday;
-        document.getElementById('update_overtime_rate').value = employee.overtime_rate;
-        document.getElementById('update_late').value = '';
-        document.getElementById('update_absent').value = '';
-        document.getElementById('update_cash_advance').value = employee.cash_advance;
-        document.getElementById('update_sss').value = employee.sss;
-        document.getElementById('update_philhealth').value = employee.philhealth;
-        document.getElementById('update_pagibig').value = employee.pagibig;
-        document.getElementById('update_tax').value = employee.tax;
+        function editEmployee(employee) {
+            document.getElementById('update_employee_id').value = employee.employee_id;
+            document.getElementById('update_total_hours').value = employee.total_hours;
+            document.getElementById('update_rate_per_hour').value = employee.rate_per_hour;
+            document.getElementById('update_special_holiday').value = employee.special_holiday;
+            document.getElementById('update_legal_holiday').value = employee.legal_holiday;
+            document.getElementById('update_overtime_rate').value = employee.overtime_rate;
+            document.getElementById('update_late').value = '';
+            document.getElementById('update_absent').value = '';
+            document.getElementById('update_cash_advance').value = employee.cash_advance;
+            document.getElementById('update_sss').value = employee.sss;
+            document.getElementById('update_philhealth').value = employee.philhealth;
+            document.getElementById('update_pagibig').value = employee.pagibig;
+            document.getElementById('update_tax').value = employee.tax;
 
-        document.getElementById('updateForm').style.display = 'block';
-    }
+            document.getElementById('updateForm').style.display = 'block';
+        };
 
-    // JavaScript to handle canceling the update form
-    function cancelUpdate() {
-        document.getElementById('updateForm').style.display = 'none';
-    }
+        // JavaScript to handle canceling the update form
+        function cancelUpdate() {
+            document.getElementById('updateForm').style.display = 'none';
+        }
     </script>
 </body>
 </html>
