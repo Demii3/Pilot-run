@@ -1,4 +1,10 @@
 <?php
+    session_start();
+    if (!isset($_SESSION['login']) || $_SESSION['type'] != "HR") {
+        header("location: ../");
+        exit();
+    };
+
     ob_start(); // Start output buffering
 
     // Database connection
@@ -110,6 +116,16 @@
 
     <!-- JavaScript to handle "Edit" button click and populate the update form -->
     <?php include '../HR_Modules/populate_update_form.php'; ?>
+
+    <script>
+        $(document).ready(function(){
+            $.get('../../Modules/check_session.php', function(data){
+                if(data == '0'){
+                    window.location = '../';
+                }
+            });
+        });
+    </script>
 
 </body>
 </html>
