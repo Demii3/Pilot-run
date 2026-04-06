@@ -115,8 +115,10 @@
                         </button>
 
                         <!-- Add Work Location Button -->
-                        <button type="button" class="btn btn-info mb-3 ms-2" data-bs-toggle="modal" data-bs-target="#addWorkLocationModal">
-                            <i class="fas fa-map-marker-alt"></i> Add Work Location
+                        <button type="button" class="btn btn-info mb-3 ms-2" onclick="window.location='#';">
+                            <a href="./Employee_manage" class="icon-item">
+                                Add work location
+                            </a>
                         </button>
 
                         <!-- Employees Table -->
