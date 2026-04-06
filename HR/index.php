@@ -59,7 +59,7 @@
                     <p>Payslip</p>
                 </a>
 
-                <a href="./Employee_management" class="icon-item">
+                <a href="./Employee_payroll" class="icon-item">
                     <img src="../Images/payroll.png" alt="Payroll">
                     <p>Payroll</p>
                 </a>
