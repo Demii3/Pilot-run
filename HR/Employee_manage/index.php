@@ -86,10 +86,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
     <!-- Your CSS -->
-    <link rel="stylesheet" href="../Assets/home_hr.css">
+    <link rel="stylesheet" href="../../Assets/home_hr.css">
 
     <!-- Company Logo -->
-    <link rel="icon" type="image/png" href="../Images/logo.jpg"/>
+    <link rel="icon" type="image/png" href="../../Images/logo.jpg"/>
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
@@ -98,8 +98,8 @@
 </head>
 
 <body>
-    <?php include '../Modules/background.php'; ?>
-    <?php include '../Modules/navbar.php'; ?>
+    <?php include '../../Modules/background.php'; ?>
+    <?php include '../../Modules/navbar.php'; ?>
 
     <div class="container mt-5">
         <div class="row">
@@ -112,6 +112,11 @@
                         <!-- Add New Employee Button -->
                         <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
                             <i class="fas fa-plus"></i> Add New Employee
+                        </button>
+
+                        <!-- Add Work Location Button -->
+                        <button type="button" class="btn btn-info mb-3 ms-2" data-bs-toggle="modal" data-bs-target="#addWorkLocationModal">
+                            <i class="fas fa-map-marker-alt"></i> Add Work Location
                         </button>
 
                         <!-- Employees Table -->
