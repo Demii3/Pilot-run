@@ -61,7 +61,7 @@
         ?>
 
         <!-- Form to create a new employee -->
-<!--         <div class="form-container">
+        <div class="form-container">
             <h2>Create New Employee</h2>
             <form action="index.php" method="POST">
                 <input type="text" name="employee_id" placeholder="Employee ID" required>
@@ -79,10 +79,10 @@
                 <input type="number" step="0.01" name="tax" placeholder="Tax" required>
                 <button type="submit" name="create" style="background-color: green; color: white;">Create Employee</button>
             </form>
-        </div> -->
+        </div>
 
         <!-- Update Form (hidden by default, shown when "Edit" is clicked) -->
-        <div id="updateForm" class="form-container">
+        <div id="updateForm" class="form-container" style="display: none;">
             <h2>Update Employee</h2>
             <form action="index.php" method="POST">
                 <input type="hidden" id="update_employee_id" name="employee_id">
