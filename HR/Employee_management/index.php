@@ -39,8 +39,29 @@
     <h1>Employee Management</h1>
 
     <div class="container">
+        <?php
+            $page = "";
+            if(isset($_GET['page'])){
+	            $page = $_GET['page'];
+            }
+            switch ($page) {
+                case "":
+                    include '../HR_Modules/display_all_employees.php';
+                    break;
+                case 'update':
+                    include '../HR_Modules/update_employee.php';
+                    break;
+                case 'delete':
+                    include '../HR_Modules/delete_employee.php';
+                    break;
+                default:
+                    // Default content (e.g., employee list) can be included here
+                    break;
+            };
+        ?>
+
         <!-- Form to create a new employee -->
-        <div class="form-container">
+<!--         <div class="form-container">
             <h2>Create New Employee</h2>
             <form action="index.php" method="POST">
                 <input type="text" name="employee_id" placeholder="Employee ID" required>
@@ -58,10 +79,10 @@
                 <input type="number" step="0.01" name="tax" placeholder="Tax" required>
                 <button type="submit" name="create" style="background-color: green; color: white;">Create Employee</button>
             </form>
-        </div>
+        </div> -->
 
         <!-- Update Form (hidden by default, shown when "Edit" is clicked) -->
-        <div id="updateForm" class="form-container" style="display: none;">
+        <div id="updateForm" class="form-container">
             <h2>Update Employee</h2>
             <form action="index.php" method="POST">
                 <input type="hidden" id="update_employee_id" name="employee_id">
@@ -80,37 +101,6 @@
                 <button type="submit" name="update" style="background-color: #ffc107; color: white;">Update Employee</button>
                 <button type="button" onclick="cancelUpdate()" style="background-color: #dc3545; color: white;">Cancel</button>
             </form>
-        </div>
-
-        <!-- Table to display employees -->
-        
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Employee ID</th>
-                        <th>Total Hours</th>
-                        <th>Rate per Hour</th>
-                        <th>Special Holiday</th>
-                        <th>Legal Holiday</th>
-                        <th>Overtime Rate</th>
-                        <th>Late</th>
-                        <th>Absent</th>
-                        <th>Cash Advance</th>
-                        <th>SSS</th>
-                        <th>PhilHealth</th>
-                        <th>Pag-IBIG</th>
-                        <th>Tax</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    // Add "Edit" and "Delete" button functionality in the employee list
-                    include '../HR_Modules/display_all_employees.php';
-                    ?>
-                </tbody>
-            </table>
         </div>
     </div>
 
