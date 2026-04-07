@@ -116,7 +116,7 @@
 
                         <!-- Add Work Location Button -->
                         <button type="button" class="btn btn-info mb-3 ms-2" onclick="window.location='#';">
-                            <a href="./Employee_manage" class="icon-item">
+                            <a href="./geofence" class="icon-item">
                                 Add work location
                             </a>
                         </button>

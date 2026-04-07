@@ -1,0 +1,105 @@
+﻿body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1 {
+  text-align: center;
+  padding: 10px;
+  margin: 0;
+  background: #ffffff;
+  border-bottom: 1px solid #ddd;
+}
+
+#main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+#sidebar {
+  width: 320px;
+  min-width: 280px;
+  background: #f8f8f8;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#controls {
+  padding: 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #ddd;
+}
+
+#map {
+  flex: 1;
+  min-height: 0;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
+
+#geofence-name {
+  margin-right: 10px;
+  width: calc(100% - 130px);
+  max-width: 100%;
+  padding: 6px 8px;
+  box-sizing: border-box;
+}
+
+button {
+  margin: 5px 5px 5px 0;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+#geofence-list {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+#geofence-list h3 {
+  margin-top: 0;
+}
+
+.geofence-item {
+  margin: 8px 0;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.geofence-item:hover {
+  background: #eef6ff;
+  transform: translateX(2px);
+}
+
+.geofence-title {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.geofence-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.geofence-actions button {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+}
