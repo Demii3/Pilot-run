@@ -1,0 +1,377 @@
+body {
+    margin: 0;
+    padding-top: 60px;
+    font-family: 'Poppins', sans-serif;
+    
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* prevents whole page scrolling */
+}
+
+/* Background */
+.bg-container {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+}
+
+.bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+}
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+/* NAVBAR */
+.custom-navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 10px 20px;
+
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+
+    box-shadow: 0 10px 40px rgba(94, 93, 93, 0.5);
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* LEFT */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* LOGO */
+.logo-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.logo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* COMPANY NAME */
+.company-name {
+    color: white;
+    font-weight: 600;
+    font-size: 15px;
+    font-family: 'Poppins', sans-serif;
+}
+
+
+/* RIGHT */
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* AVATAR */
+.avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 100%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* DROPDOWN MENU */
+.dropdown-menu {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+
+    width: 280px;
+    padding: 10px;
+
+    background: rgba(49, 49, 49, 0.95);
+    backdrop-filter: blur(10px);
+
+    border-radius: 12px;
+    color: white;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+    display: none;
+}
+
+/* SHOW MENU */
+.dropdown-menu.active {
+    display: block;
+}
+
+/* PROFILE HEADER */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.profile-header:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.profile-header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+/* ITEMS */
+.profile-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: white;
+}
+
+.profile-item:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* DIVIDER */
+.dropdown-menu hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin: 8px 0;
+}
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+
+/* Payroll */
+.payroll-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  padding: 20px;
+
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+
+  height: calc(100vh - 60px);          
+  overflow-y: auto;      
+
+  box-sizing: border-box; 
+
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+
+  color: white;
+  
+}
+
+.sidebar h2 {
+  margin-bottom: 20px;
+  margin-top: 0;
+}
+
+/* Buttons */
+.sidebar button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: 0.3s;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar button:hover {
+  background: #34495e;
+}
+
+/* Active button */
+.sidebar button.active {
+  background: #1abc9c;
+}
+
+/* Content Area */
+.content {
+  flex: 1;
+  padding: 40px;
+
+  height: 100%;
+  overflow-y: auto;  
+
+  box-sizing: border-box;
+
+  overflow-y: auto;
+  max-height: 100vh;
+
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+
+  color: white;
+
+  
+}
+
+/* Card style */
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Headings */
+h2 {
+  margin-top: 0;
+}
+
+/* Sidebar scrollbar */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+}
+
+/* Content scrollbar */
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.4);
+  border-radius: 10px;
+}
+
+/* Mobayl */
+@media screen and (max-width: 768px) {
+  body {
+    padding-top: 55px;
+  }
+
+  .custom-navbar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .nav-left,
+  .nav-right {
+    gap: 8px;
+  }
+
+  .company-name {
+    font-size: 13px;
+  }
+
+  .logo-circle,
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dropdown-menu {
+    right: 10px;
+    width: calc(100vw - 20px);
+    max-width: 300px;
+  }
+
+  .welcome-card,
+  .functions-card {
+    width: 95%;
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .welcomecard-left,
+  .card-icons {
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .welcomecard-right {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .welcomecard-right p,
+  .welcomecard-right #time {
+    font-size: 20px;
+    margin: 1px 0;
+  }
+
+  .card-icons {
+    gap: 20px;
+  }
+
+  /* Small phones */
+  @media screen and (max-width: 405px) {
+    .welcomecard-left,
+    .card-icons {
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    .functions-card {
+      padding-left: 12px;
+    }
+  }
+
+  .icon-item img {
+    width: 50px;
+    height: 50px;
+  }
+}
