@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 06, 2026 at 10:16 AM
+-- Generation Time: Apr 09, 2026 at 04:48 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -54,9 +54,14 @@ CREATE TABLE `employee` (
 --
 
 INSERT INTO `employee` (`Emp_id`, `Firstname`, `Lastname`, `Department`) VALUES
-(1, 'Joyce', 'Bryce', 'HR'),
+(1, 'Joyce1', 'Bryce', 'HR'),
 (2, 'Bianca', 'Mayor', 'Project Manager'),
-(3, 'Demetri', 'Mayor', 'System Admin');
+(3, 'Demetri', 'Mayor', 'System Admin'),
+(5, 'Andrea', 'Cruz', 'Human Resources'),
+(6, 'Daniel', 'Reyes', 'Payroll'),
+(7, 'Maria', 'Lopez', 'Recruitment'),
+(8, 'Jason', 'Miller', 'Benifits'),
+(9, 'Lea', 'Tan', 'Training');
 
 -- --------------------------------------------------------
 
@@ -93,11 +98,45 @@ INSERT INTO `employees` (`employee_id`, `total_hours`, `rate_per_hour`, `special
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `employee_attendance`
+--
+
+CREATE TABLE `employee_attendance` (
+  `Date` date NOT NULL,
+  `Location` varchar(255) NOT NULL,
+  `Clock_in` time NOT NULL,
+  `Clock_out` time NOT NULL,
+  `Status` varchar(255) NOT NULL,
+  `ID_loc` bigint(255) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_location`
+--
+
+CREATE TABLE `employee_location` (
+  `User_Id` bigint(255) NOT NULL,
+  `loc_id` bigint(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `employee_location`
+--
+
+INSERT INTO `employee_location` (`User_Id`, `loc_id`) VALUES
+(3, 1),
+(3, 1);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `geofences`
 --
 
 CREATE TABLE `geofences` (
-  `id` int(10) UNSIGNED NOT NULL,
+  `id` bigint(255) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
   `coordinates` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -109,7 +148,8 @@ CREATE TABLE `geofences` (
 --
 
 INSERT INTO `geofences` (`id`, `name`, `coordinates`, `created_at`, `updated_at`) VALUES
-(1, 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.587290214752265,120.98689019680025],[14.587269448765882,120.98681509494783],[14.58708255480032,120.98672389984132],[14.586765872996489,120.98683655261995],[14.586672425819803,120.98653078079224]]', '2026-04-04 15:49:22', NULL);
+(1, 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.587290214752265,120.98689019680025],[14.587269448765882,120.98681509494783],[14.58708255480032,120.98672389984132],[14.586765872996489,120.98683655261995],[14.586672425819803,120.98653078079224]]', '2026-04-04 15:49:22', NULL),
+(2, 'SM', '[[14.652350801029067,120.99225997924806],[14.643880624522094,120.99123001098634],[14.645375385333589,121.0001564025879],[14.65334727086327,120.99998474121095],[14.652350801029067,120.99225997924806]]', '2026-04-06 11:25:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -131,7 +171,12 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`) VALUES
 (1, 'HR', '123', 'HR'),
 (2, 'bayang', '1234', 'Emp'),
-(3, 'emitter', '12345', 'Emp');
+(3, 'emitter', '12345', 'Emp'),
+(5, 'Andrea', '123', 'Emp'),
+(6, 'Daniel', '123', 'Emp'),
+(7, 'Maria', '123', 'Emp'),
+(8, 'Jason', '123', 'Emp'),
+(9, 'Lea', '123', 'Emp');
 
 --
 -- Indexes for dumped tables
@@ -181,13 +226,13 @@ ALTER TABLE `deleted_geofences`
 -- AUTO_INCREMENT for table `employee`
 --
 ALTER TABLE `employee`
-  MODIFY `Emp_id` bigint(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Emp_id` bigint(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `geofences`
 --
 ALTER TABLE `geofences`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(255) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables

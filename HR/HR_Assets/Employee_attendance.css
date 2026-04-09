@@ -1,0 +1,45 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f5f7fb;
+}
+
+.attendance-header {
+    background: #fff;
+    border-radius: .75rem;
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.06);
+}
+
+.attendance-table th {
+    white-space: nowrap;
+}
+
+.attendance-table tbody tr {
+    cursor: pointer;
+}
+
+.attendance-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.status-present {
+    color: #0f5132;
+    background: #d1e7dd;
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    display: inline-block;
+}
+
+.status-absent {
+    color: #842029;
+    background: #f8d7da;
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    display: inline-block;
+}
+.status-late {
+    color: #664d03;
+    background: #fff3cd;
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    display: inline-block;
+}

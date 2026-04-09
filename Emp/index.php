@@ -49,7 +49,7 @@
         <div class="functions-card">
             <div class="card-icons">
 
-                <a href="#" class="icon-item">
+                <a href="./Attendance" class="icon-item">
                     <img src="../Images/attendance.png" alt="Attendance">
                     <p>Attendance</p>
                 </a>

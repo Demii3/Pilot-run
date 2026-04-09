@@ -22,6 +22,7 @@
             $_SESSION['login'] = '1';
             $_SESSION['type'] = $_SESSION['bg_source'] = $row['Type'];
             $_SESSION['username'] = $row['Username'];
+            $_SESSION['emp_id'] = $row['User_id'];
             $msg = 'success';
         } else {
             $msg .= 'Username and Password do not match.';
