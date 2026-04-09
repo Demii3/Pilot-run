@@ -34,7 +34,7 @@ header('Pragma: no-cache');
                 </div>
                 <div class="d-flex gap-2">
                     <a href="../" class="btn btn-outline-secondary">Back to HR Dashboard</a>
-                    <a href="index.php" class="btn btn-primary">Refresh</a>
+                    <a href="./" class="btn btn-primary">Refresh</a>
                 </div>
             </div>
         </div>
