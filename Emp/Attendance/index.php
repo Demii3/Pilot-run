@@ -3,6 +3,7 @@ session_start();
 if (!isset($_SESSION['login']) || $_SESSION['type'] != "Emp") {
     header("Location: ../");
     exit();
+
 }
 
 header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
@@ -37,11 +38,11 @@ header('Pragma: no-cache');
             <select id="locationSelect" class="form-select">
                 <?php 
                     include "./Attendance_modules/dbcon.php";
-                    $sql = "SELECT `name`, `coordinates` FROM geofences WHERE id IN (SELECT loc_id FROM employee_location WHERE User_id = 3)";
+                    $sql = "SELECT `name`, `coordinates` FROM geofences WHERE id IN (SELECT loc_id FROM employee_location WHERE User_id = " . $_SESSION['emp_id'] . ")";
                     $result = mysqli_query($dbc, $sql);
                     echo "<option value=''>Select your location</option>";
                     while ($row = mysqli_fetch_array($result)) {
-                        echo "<option value='" . $row['name'] . "' data-coordinates='" . $row['coordinates'] . "'>" . $row['coordinates'] . "</option>";
+                        echo "<option value='" . $row['name'] . "' data-coordinates='" . $row['coordinates'] . "'>" . $row['name'] . "</option>";
                     }
                 ?>
             </select>
@@ -63,6 +64,7 @@ header('Pragma: no-cache');
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const tapButton = document.getElementById('tapButton');
@@ -94,7 +96,7 @@ header('Pragma: no-cache');
             });
         }
 
-        // Point-in-polygon function using ray casting
+        // Point-in-polygon function using ray casting (Used to process geofence coordinates and check if user is inside)
         function isPointInPolygon(point, polygon) {
             let x = point[0], y = point[1];
             let inside = false;
@@ -106,14 +108,27 @@ header('Pragma: no-cache');
                 }
             }
             return inside;
-        }
+        };
+
+        function to24HourTime(dateObj) {
+            return dateObj.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        };
+
+        function clockinStatus(timeStr) {
+            const parts = String(timeStr).split(':');
+            return parts[0] <= '08' ? 'On Time' : 'Late';
+        };
+
 
         // Check if location is selected
         locationSelect.addEventListener('change', function() {
             selectedLocation = this.value;
             if (this.value !== '') {
                 selectedCoordinates = this.options[this.selectedIndex].getAttribute('data-coordinates');
-                alert(selectedLocation + " " + selectedCoordinates);
             } else {
                 selectedCoordinates = null;
             }
@@ -145,20 +160,43 @@ header('Pragma: no-cache');
                         tapButton.textContent = 'Tap Out';
                         tapButton.classList.add('tapped-out');
 
-                        const now = tapInTime;
-                        const timeString = now.toLocaleTimeString();
-                        const dateString = now.toLocaleDateString();
+                        now = tapInTime;
+                        timeString = now.toLocaleTimeString();
+                        dateString = now.toLocaleDateString();
+                        statusClockin = clockinStatus(timeString);
 
                         statusDisplay.innerHTML = `
                             <div class="status-present">
                                 <strong>Tapped In</strong><br>
+                                <p class="d-none">
+                                User ID: <?php echo $_SESSION['emp_id']; ?> 
+                                </p>
+                                Date: ${dateString}<br>
                                 Location: ${selectedLocation}<br>
                                 Time: ${timeString}<br>
-                                Date: ${dateString}
+                                Status: ${statusClockin}
                             </div>
                         `;
                         statusDisplay.style.display = 'block';
 
+                        $.post('./Attendance_modules/save_attendance.php', {
+                            Emp_id: <?php echo $_SESSION['emp_id']; ?>,
+                            Date: dateString,
+                            Location: selectedLocation,
+                            Clock_in: timeString,
+                            Status: statusClockin
+                        }, function(response) {
+                            alert(response);
+                        }).fail(function(jqXHR, textStatus, errorThrown) {
+                            console.error('save_attendance request failed', {
+                                status: jqXHR.status,
+                                responseText: jqXHR.responseText,
+                                textStatus,
+                                errorThrown
+                            });
+                            alert('Failed to save attendance. Check console for details.');
+                        });
+                        
                         // Disable location change while tapped in
                         locationSelect.disabled = true;
                     } else {
@@ -181,7 +219,7 @@ header('Pragma: no-cache');
                     <div class="status-absent">
                         <strong>Tapped Out</strong><br>
                         Location: ${selectedLocation}<br>
-                        Tap In: ${tapInTime.toLocaleTimeString()}<br>
+                        Tap In: ${to24HourTime(tapInTime)}<br>
                         Tap Out: ${timeString}<br>
                         Duration: ${duration} minutes
                     </div>
