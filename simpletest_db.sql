@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 10, 2026 at 04:42 AM
+-- Generation Time: Apr 10, 2026 at 02:14 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -87,12 +87,19 @@ CREATE TABLE `employee_attendance` (
 --
 
 INSERT INTO `employee_attendance` (`Emp_id`, `Date`, `Location`, `Clock_in`, `Clock_out`, `Status`, `Duration`) VALUES
-(3, '0000-00-00', 'Adamson OZ', '09:57:04', '00:00:00', 'Late', 0),
-(3, '0000-00-00', 'Adamson OZ', '09:59:18', '00:00:00', 'Late', 0),
-(3, '0000-00-00', 'Adamson OZ', '10:00:57', '00:00:00', 'Late', 0),
-(3, '2026-04-09', 'Adamson OZ', '10:04:54', '00:00:00', 'Late', 0),
-(3, '2026-04-10', 'Adamson OZ', '09:10:29', '00:00:00', 'Late', 0),
-(3, '2026-04-10', 'Adamson OZ', '10:13:38', '00:00:00', 'Late', 0);
+(3, '2026-04-10', 'Adamson OZ', '03:57:05', '04:04:14', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:08:00', '16:13:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:08:00', '16:13:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:15:00', '16:32:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:33:00', '16:37:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:37:00', '16:41:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:41:00', '16:42:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:44:00', '00:00:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:48:00', '16:53:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:58:00', '16:58:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '17:00:00', '17:02:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '17:02:00', '17:03:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '17:07:00', '17:08:00', 'Late', 1);
 
 -- --------------------------------------------------------
 
@@ -111,7 +118,8 @@ CREATE TABLE `employee_location` (
 
 INSERT INTO `employee_location` (`User_Id`, `loc_id`) VALUES
 (3, 1),
-(3, 1);
+(3, 1),
+(2, 2);
 
 -- --------------------------------------------------------
 
@@ -145,22 +153,23 @@ CREATE TABLE `users` (
   `User_id` bigint(255) NOT NULL,
   `Username` varchar(255) NOT NULL,
   `Password` varchar(255) NOT NULL,
-  `Type` varchar(255) NOT NULL
+  `Type` varchar(255) NOT NULL,
+  `Work_status` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`) VALUES
-(1, 'HR', '123', 'HR'),
-(2, 'bayang', '1234', 'Emp'),
-(3, 'emitter', '12345', 'Emp'),
-(5, 'Andrea', '123', 'Emp'),
-(6, 'Daniel', '123', 'Emp'),
-(7, 'Maria', '123', 'Emp'),
-(8, 'Jason', '123', 'Emp'),
-(9, 'Lea', '123', 'Emp');
+INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`, `Work_status`) VALUES
+(1, 'HR', '123', 'HR', 'Tapped-out'),
+(2, 'bayang', '1234', 'Emp', 'Tapped-out'),
+(3, 'emitter', '12345', 'Emp', 'Tapped-out'),
+(5, 'Andrea', '123', 'Emp', 'Tapped-out'),
+(6, 'Daniel', '123', 'Emp', 'Tapped-out'),
+(7, 'Maria', '123', 'Emp', 'Tapped-out'),
+(8, 'Jason', '123', 'Emp', 'Tapped-out'),
+(9, 'Lea', '123', 'Emp', 'Tapped-out');
 
 --
 -- Indexes for dumped tables
@@ -183,6 +192,12 @@ ALTER TABLE `employee`
 --
 ALTER TABLE `employee_attendance`
   ADD KEY `Emp_id` (`Emp_id`);
+
+--
+-- Indexes for table `employee_location`
+--
+ALTER TABLE `employee_location`
+  ADD KEY `User_Id` (`User_Id`);
 
 --
 -- Indexes for table `geofences`
@@ -227,6 +242,12 @@ ALTER TABLE `geofences`
 --
 ALTER TABLE `employee_attendance`
   ADD CONSTRAINT `employee_attendance_ibfk_1` FOREIGN KEY (`Emp_id`) REFERENCES `employee` (`Emp_id`);
+
+--
+-- Constraints for table `employee_location`
+--
+ALTER TABLE `employee_location`
+  ADD CONSTRAINT `employee_location_ibfk_1` FOREIGN KEY (`User_Id`) REFERENCES `employee` (`Emp_id`);
 
 --
 -- Constraints for table `users`

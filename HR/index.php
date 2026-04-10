@@ -42,7 +42,7 @@
 
     <body>
 
-        <?php include '../Modules/background.php'; ?>
+        <?php include './HR_modules/background.php'; ?>
         <?php include '../Modules/navbar.php'; ?>
         <?php include '../Modules/welcome_card.php'; ?>
 

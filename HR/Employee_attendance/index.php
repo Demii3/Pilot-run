@@ -24,12 +24,14 @@ header('Pragma: no-cache');
     <link rel="stylesheet" href="../HR_Assets/Employee_attendance.css">
 
 </head>
+
 <body>
+    <?php include './Employee_attendance_modules/background.php'; ?>
     <div class="container py-5">
         <div class="attendance-header p-4 mb-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                 <div>
-                    <h1 class="h3 mb-2">Attendance List</h1>
+                    <h1 class="h3 mb-2" id = 'attendance-list'>Attendance List</h1>
                     <p class="text-muted mb-0">Track daily employee attendance and review status at a glance.</p>
                 </div>
                 <div class="d-flex gap-2">
@@ -161,20 +163,31 @@ header('Pragma: no-cache');
         const dateFilter = document.getElementById('dateFilter');
         const attendanceTable = document.getElementById('attendanceTable');
 
+        function swapDateFormat(dateString) {
+            const [year, month, day] = dateString.split('-');
+            return `${year}-${month}-${day}`;
+        }
+
         function filterAttendance() {
             const searchValue = searchInput.value.toLowerCase();
             const statusValue = statusFilter.value;
             const dateValue = dateFilter.value;
+            document.getElementById('attendance-list').textContent = `${swapDateFormat(dateFilter.value)}`;
+
 
             Array.from(attendanceTable.rows).forEach(row => {
                 const cells = row.cells;
                 // Get searchable text from Name (cells[1]) and Department (cells[2])
                 const nameText = cells[1] ? cells[1].textContent.toLowerCase() : '';
                 const deptText = cells[2] ? cells[2].textContent.toLowerCase() : '';
-
+                const dateText = cells[3] ? cells[3].textContent.trim() : '';
+                const statusText = cells[7] ? cells[7].textContent.trim() : '';
+                
                 const matchesSearch = searchValue === '' || nameText.includes(searchValue) || deptText.includes(searchValue);
+                const matchesDate = dateValue === '' || dateText.includes(dateValue);
+                const matchesStatus = statusValue === 'all' || statusText === statusValue;
 
-                row.style.display = (matchesSearch) ? '' : 'none';
+                row.style.display = (matchesSearch && matchesDate && matchesStatus) ? '' : 'none';
             });
         }
 
