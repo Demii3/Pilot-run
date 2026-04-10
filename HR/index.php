@@ -64,7 +64,7 @@
                     <p>Payroll</p>
                 </a>
 
-                <a href="./Employee_manage" class="icon-item">
+                <a href="./Employee_management" class="icon-item">
                     <img src="../Images/employees.png" alt="Employees">
                     <p>Employees</p>
                 </a>
