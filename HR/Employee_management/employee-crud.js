@@ -1,106 +1,15 @@
-class EmployeeCRUD {
-  constructor() {
-    this.storageKey = 'employees_data';
-    this.initializeStorage();
-  }
-
-  initializeStorage() {
-    if (!localStorage.getItem(this.storageKey)) {
-      const sampleData = [
-        {
-          id: 1,
-          name: 'John Doe',
-          email: 'john.doe@company.com',
-          position: 'Manager',
-          department: 'IT',
-          salary: 75000,
-          joinDate: '2022-01-15',
-          status: 'Active'
-        },
-        {
-          id: 2,
-          name: 'Jane Smith',
-          email: 'jane.smith@company.com',
-          position: 'Developer',
-          department: 'IT',
-          salary: 65000,
-          joinDate: '2022-06-20',
-          status: 'Active'
-        }
-      ];
-      localStorage.setItem(this.storageKey, JSON.stringify(sampleData));
-    }
-  }
-
-  getAllEmployees() {
-    const data = localStorage.getItem(this.storageKey);
-    return data ? JSON.parse(data) : [];
-  }
-
-  getEmployeeById(id) {
-    const employees = this.getAllEmployees();
-    return employees.find(emp => emp.id === parseInt(id));
-  }
-
-  createEmployee(employeeData) {
-    const employees = this.getAllEmployees();
-    const newId = employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1;
-    
-    const newEmployee = {
-      id: newId,
-      ...employeeData
-    };
-    
-    employees.push(newEmployee);
-    localStorage.setItem(this.storageKey, JSON.stringify(employees));
-    return newEmployee;
-  }
-
-  updateEmployee(id, employeeData) {
-    const employees = this.getAllEmployees();
-    const index = employees.findIndex(emp => emp.id === parseInt(id));
-    
-    if (index !== -1) {
-      employees[index] = {
-        ...employees[index],
-        ...employeeData,
-        id: parseInt(id)
-      };
-      localStorage.setItem(this.storageKey, JSON.stringify(employees));
-      return employees[index];
-    }
-    return null;
-  }
-
-  deleteEmployee(id) {
-    const employees = this.getAllEmployees();
-    const filteredEmployees = employees.filter(emp => emp.id !== parseInt(id));
-    localStorage.setItem(this.storageKey, JSON.stringify(filteredEmployees));
-    return true;
-  }
-
-  clearAllData() {
-    localStorage.removeItem(this.storageKey);
-    this.initializeStorage();
-  }
-}
-
-const employeeCRUD = new EmployeeCRUD();
-
-// Pagination variables
+﻿const API_URL = './employees_api.php';
+let employeesData = [];
 let currentPage = 1;
 const itemsPerPage = 5;
 let totalPages = 1;
 let isSearchActive = false;
 let searchResults = [];
 
-// Notif function
 function showNotification(message, type = 'info') {
-  // Remove notifications
   const existingNotifications = document.querySelectorAll('.notification');
   existingNotifications.forEach(notification => notification.remove());
 
-  // Notification element
   const notification = document.createElement('div');
   notification.className = `notification notification-${type}`;
   notification.innerHTML = `
@@ -110,7 +19,6 @@ function showNotification(message, type = 'info') {
     </div>
   `;
 
-  // Notif Styles
   if (!document.getElementById('notification-styles')) {
     const styles = document.createElement('style');
     styles.id = 'notification-styles';
@@ -182,10 +90,7 @@ function showNotification(message, type = 'info') {
     document.head.appendChild(styles);
   }
 
-  // Add to page
   document.body.appendChild(notification);
-
-  // Auto remove after 5 seconds
   setTimeout(() => {
     if (notification.parentElement) {
       notification.style.animation = 'slideOut 0.3s ease-in';
@@ -194,39 +99,30 @@ function showNotification(message, type = 'info') {
   }, 5000);
 }
 
-function displayEmployees() {
-  const employees = employeeCRUD.getAllEmployees();
-  const tableBody = document.querySelector('#employeeTable tbody');
-  
-  if (!tableBody) return;
-  
-  isSearchActive = false;
-  currentPage = 1;
-  
-  if (employees.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No employees found</td></tr>';
-    updatePaginationInfo(0);
-    return;
+async function fetchEmployees() {
+  const response = await fetch(API_URL);
+  const result = await response.json();
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || 'Failed to load employees');
   }
-  
-  totalPages = Math.ceil(employees.length / itemsPerPage);
-  displayPage(employees);
+  employeesData = result.data || [];
+  return employeesData;
 }
 
 function displayPage(dataToDisplay) {
   const tableBody = document.querySelector('#employeeTable tbody');
   tableBody.innerHTML = '';
-  
+
   if (dataToDisplay.length === 0) {
     tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No employees found</td></tr>';
     updatePaginationInfo(0);
     return;
   }
-  
+
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const pageData = dataToDisplay.slice(startIndex, endIndex);
-  
+
   pageData.forEach(emp => {
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -244,16 +140,34 @@ function displayPage(dataToDisplay) {
     `;
     tableBody.appendChild(row);
   });
-  
+
   updatePaginationInfo(dataToDisplay.length);
 }
 
 function updatePaginationInfo(totalRecords) {
   const currentPageElement = document.getElementById('currentPage');
   const totalPagesElement = document.getElementById('totalPages');
-  
+
   if (currentPageElement) currentPageElement.textContent = currentPage;
   if (totalPagesElement) totalPagesElement.textContent = totalPages || 1;
+}
+
+async function displayEmployees() {
+  const tableBody = document.querySelector('#employeeTable tbody');
+  if (!tableBody) return;
+
+  try {
+    await fetchEmployees();
+  } catch (error) {
+    tableBody.innerHTML = '<tr><td colspan="8" class="text-center">Unable to load employees</td></tr>';
+    showNotification(error.message, 'error');
+    return;
+  }
+
+  isSearchActive = false;
+  currentPage = 1;
+  totalPages = Math.ceil(employeesData.length / itemsPerPage);
+  displayPage(employeesData);
 }
 
 function openAddForm() {
@@ -262,39 +176,76 @@ function openAddForm() {
   document.getElementById('status').value = 'Active';
   document.getElementById('formTitle').textContent = 'Add New Employee';
   document.getElementById('employeeModal').style.display = 'block';
+  document.body.classList.add('modal-open');
 }
 
 function closeModal() {
   document.getElementById('employeeModal').style.display = 'none';
+  document.body.classList.remove('modal-open');
 }
 
-function editEmployee(id) {
-  const employee = employeeCRUD.getEmployeeById(id);
+async function getEmployeeById(id) {
+  const parsedId = parseInt(id, 10);
+  let employee = employeesData.find(emp => parseInt(emp.id, 10) === parsedId);
   if (employee) {
-    document.getElementById('employeeId').value = employee.id;
-    document.getElementById('name').value = employee.name;
-    document.getElementById('email').value = employee.email;
-    document.getElementById('position').value = employee.position;
-    document.getElementById('department').value = employee.department;
-    document.getElementById('salary').value = employee.salary;
-    document.getElementById('joinDate').value = employee.joinDate;
-    document.getElementById('status').value = employee.status || 'Active';
-    document.getElementById('formTitle').textContent = 'Edit Employee';
-    document.getElementById('employeeModal').style.display = 'block';
+    return employee;
   }
+
+  const response = await fetch(`${API_URL}?id=${encodeURIComponent(parsedId)}`);
+  const result = await response.json();
+  if (!response.ok || !result.success) {
+    return null;
+  }
+
+  employee = result.data;
+  return employee;
+}
+
+async function editEmployee(id) {
+  const employee = await getEmployeeById(id);
+  if (!employee) {
+    showNotification('Employee not found', 'error');
+    return;
+  }
+
+  document.getElementById('employeeId').value = employee.id;
+  document.getElementById('name').value = employee.name;
+  document.getElementById('email').value = employee.email;
+  document.getElementById('position').value = employee.position;
+  document.getElementById('department').value = employee.department;
+  document.getElementById('salary').value = employee.salary;
+  document.getElementById('joinDate').value = employee.join_date || employee.joinDate || '';
+  document.getElementById('status').value = employee.status || 'Active';
+  document.getElementById('formTitle').textContent = 'Edit Employee';
+  document.getElementById('employeeModal').style.display = 'block';
+  document.body.classList.add('modal-open');
 }
 
 function deleteEmployee(id) {
-  if (confirm('Are you sure you want to delete this employee?')) {
-    employeeCRUD.deleteEmployee(id);
-    displayEmployees();
-    showNotification('Employee deleted successfully!', 'success');
+  if (!confirm('Are you sure you want to delete this employee?')) {
+    return;
   }
+
+  fetch(API_URL, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: `id=${encodeURIComponent(id)}`
+  })
+    .then(response => response.json())
+    .then(result => {
+      if (!result.success) {
+        throw new Error(result.message || 'Unable to delete employee');
+      }
+      showNotification('Employee deleted successfully!', 'success');
+      displayEmployees();
+    })
+    .catch(error => showNotification('An error occurred: ' + error.message, 'error'));
 }
 
 function saveEmployee() {
   const saveButton = document.querySelector('#employeeForm button[type="submit"]');
-  
   if (saveButton) {
     saveButton.disabled = true;
     saveButton.textContent = 'Saving...';
@@ -311,19 +262,23 @@ function saveEmployee() {
 
   if (!name || !email || !position || !department || !salary || !joinDate || !status) {
     showNotification('Please fill in all fields', 'error');
-    saveButton.disabled = false;
-    saveButton.textContent = 'Save Employee';
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = 'Save Employee';
+    }
     return;
   }
-  
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     showNotification('Please enter a valid email', 'error');
-    saveButton.disabled = false;
-    saveButton.textContent = 'Save Employee';
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = 'Save Employee';
+    }
     return;
   }
-  
+
   const employeeData = {
     name,
     email,
@@ -333,46 +288,55 @@ function saveEmployee() {
     joinDate,
     status
   };
-  
-  try {
-    if (id) {
-      // Update
-      employeeCRUD.updateEmployee(id, employeeData);
-      showNotification('Employee updated successfully!', 'success');
-    } else {
-      // Create new
-      employeeCRUD.createEmployee(employeeData);
-      showNotification('Employee added successfully!', 'success');
-    }
-    closeModal();
-    displayEmployees();
-  } catch (error) {
-    showNotification('An error occurred: ' + error.message, 'error');
-  } finally {
-    if (saveButton) {
-      saveButton.disabled = false;
-      saveButton.textContent = 'Save Employee';
-    }
+
+  if (id) {
+    employeeData.id = parseInt(id, 10);
   }
+
+  fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(employeeData)
+  })
+    .then(response => response.json())
+    .then(result => {
+      if (!result.success) {
+        throw new Error(result.message || 'Unable to save employee');
+      }
+      showNotification(id ? 'Employee updated successfully!' : 'Employee added successfully!', 'success');
+      closeModal();
+      displayEmployees();
+    })
+    .catch(error => showNotification('An error occurred: ' + error.message, 'error'))
+    .finally(() => {
+      if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.textContent = 'Save Employee';
+      }
+    });
 }
 
 function searchEmployees() {
   const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-  const employees = employeeCRUD.getAllEmployees();
-  
+
   if (!searchTerm) {
-    displayEmployees();
+    isSearchActive = false;
+    currentPage = 1;
+    totalPages = Math.ceil(employeesData.length / itemsPerPage);
+    displayPage(employeesData);
     return;
   }
-  
-  searchResults = employees.filter(emp =>
+
+  searchResults = employeesData.filter(emp =>
     emp.name.toLowerCase().includes(searchTerm) ||
     emp.email.toLowerCase().includes(searchTerm) ||
     emp.position.toLowerCase().includes(searchTerm) ||
     emp.department.toLowerCase().includes(searchTerm) ||
     (emp.status || 'Inactive').toLowerCase().includes(searchTerm)
   );
-  
+
   isSearchActive = true;
   currentPage = 1;
   totalPages = Math.ceil(searchResults.length / itemsPerPage);
@@ -380,14 +344,12 @@ function searchEmployees() {
 }
 
 function exportToExcel() {
-  const employees = employeeCRUD.getAllEmployees();
-  
+  const employees = employeesData;
   if (employees.length === 0) {
     showNotification('No employee data to export', 'error');
     return;
   }
 
-  // Create CSV file
   const headers = ['ID', 'Name', 'Email', 'Position', 'Department', 'Salary', 'Join Date', 'Status'];
   const csvContent = [
     headers.join(','),
@@ -398,39 +360,54 @@ function exportToExcel() {
       `"${emp.position}"`,
       `"${emp.department}"`,
       emp.salary,
-      emp.joinDate,
+      emp.join_date || emp.joinDate,
       emp.status || 'Inactive'
     ].join(','))
   ].join('\n');
 
-  // Create and download the file
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
-  
-  if (link.download !== undefined) {
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `employees_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showNotification('Employee data exported successfully!', 'success');
-  } else {
-    showNotification('Export not supported in this browser', 'error');
-  }
+  const url = URL.createObjectURL(blob);
+
+  link.setAttribute('href', url);
+  link.setAttribute('download', `employees_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showNotification('Employee data exported successfully!', 'success');
 }
 
-function importFromExcel(input) {
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
+}
+
+async function importFromExcel(input) {
   const file = input.files[0];
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     const csv = e.target.result;
     const lines = csv.split('\n').filter(line => line.trim() !== '');
-    
+
     if (lines.length < 2) {
       showNotification('Invalid file format. Please check your CSV file.', 'error');
       return;
@@ -438,9 +415,8 @@ function importFromExcel(input) {
 
     const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
     const requiredHeaders = ['ID', 'Name', 'Email', 'Position', 'Department', 'Salary', 'Join Date'];
-    const hasStatusHeader = headers.some(header => header.toLowerCase() === 'status');
 
-    const headersMatch = requiredHeaders.every(expected => 
+    const headersMatch = requiredHeaders.every(expected =>
       headers.some(header => header.toLowerCase() === expected.toLowerCase())
     );
 
@@ -449,7 +425,6 @@ function importFromExcel(input) {
       return;
     }
 
-    const employees = [];
     let successCount = 0;
     let errorCount = 0;
 
@@ -467,14 +442,15 @@ function importFromExcel(input) {
             status: values[7] ? values[7].replace(/"/g, '').trim() : 'Inactive'
           };
 
-          // Validate required fields
-          if (employee.name && employee.email && employee.position && 
-              employee.department && !isNaN(employee.salary) && employee.joinDate) {
-            
-            // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (emailRegex.test(employee.email)) {
-              employeeCRUD.createEmployee(employee);
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (employee.name && employee.email && employee.position && employee.department && !isNaN(employee.salary) && employee.joinDate && emailRegex.test(employee.email)) {
+            const response = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(employee)
+            });
+            const result = await response.json();
+            if (result.success) {
               successCount++;
             } else {
               errorCount++;
@@ -490,13 +466,9 @@ function importFromExcel(input) {
       }
     }
 
-    // Clear the file input
     input.value = '';
+    await displayEmployees();
 
-    // Refresh
-    displayEmployees();
-
-    // Show results
     if (successCount > 0) {
       showNotification(`Import completed! ${successCount} employees added successfully. ${errorCount > 0 ? errorCount + ' rows had errors.' : ''}`, 'success');
     } else {
@@ -507,33 +479,10 @@ function importFromExcel(input) {
   reader.readAsText(file);
 }
 
-function parseCSVLine(line) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  
-  result.push(current);
-  return result;
-}
-
-// Pagination Navigation Functions
 function nextPage() {
   if (currentPage < totalPages) {
     currentPage++;
-    const dataToDisplay = isSearchActive ? searchResults : employeeCRUD.getAllEmployees();
+    const dataToDisplay = isSearchActive ? searchResults : employeesData;
     displayPage(dataToDisplay);
   }
 }
@@ -541,27 +490,27 @@ function nextPage() {
 function previousPage() {
   if (currentPage > 1) {
     currentPage--;
-    const dataToDisplay = isSearchActive ? searchResults : employeeCRUD.getAllEmployees();
+    const dataToDisplay = isSearchActive ? searchResults : employeesData;
     displayPage(dataToDisplay);
   }
 }
 
 function goToFirstPage() {
   currentPage = 1;
-  const dataToDisplay = isSearchActive ? searchResults : employeeCRUD.getAllEmployees();
+  const dataToDisplay = isSearchActive ? searchResults : employeesData;
   displayPage(dataToDisplay);
 }
 
 function goToLastPage() {
   currentPage = totalPages;
-  const dataToDisplay = isSearchActive ? searchResults : employeeCRUD.getAllEmployees();
+  const dataToDisplay = isSearchActive ? searchResults : employeesData;
   displayPage(dataToDisplay);
 }
 
 window.onclick = function(event) {
   const modal = document.getElementById('employeeModal');
   if (event.target === modal) {
-    modal.style.display = 'none';
+    closeModal();
   }
 };
 

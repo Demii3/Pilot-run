@@ -132,15 +132,15 @@ header('Pragma: no-cache');
                             </div>
                             <div class="col-md-6">
                                 <label for="modalLocation" class="form-label">Location</label>
-                                <input id="modalLocation" type="text" class="form-control">
+                                <input id="modalLocation" type="text" class="form-control" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label for="modalClockIn" class="form-label">Clock In</label>
-                                <input id="modalClockIn" type="text" class="form-control">
+                                <input id="modalClockIn" type="text" class="form-control" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label for="modalClockOut" class="form-label">Clock Out</label>
-                                <input id="modalClockOut" type="text" class="form-control">
+                                <input id="modalClockOut" type="text" class="form-control" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label for="modalStatus" class="form-label">Status</label>
@@ -150,7 +150,10 @@ header('Pragma: no-cache');
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="editBtn" class="btn btn-warning">Edit</button>
+                    <button type="button" id="saveBtn" class="btn btn-success d-none" data-bs-dismiss="modal">Save</button>
+                    <button type="button" id="deleteBtn" class="btn btn-danger d-none" data-bs-dismiss="modal">Delete</button>
+                    <button type="button" id="closeBtn" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -201,7 +204,39 @@ header('Pragma: no-cache');
             document.getElementById('modalStatus').value = cells[7] || '';
             const attendanceModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
             attendanceModal.show();
+            document.getElementById('editBtn').onclick = () => editContent();
+            document.getElementById('deleteBtn').onclick = () => deleteContent(row.cells[0].textContent, row.cells[5].textContent, row.cells[6].textContent);
+            document.getElementById('saveBtn').onclick = () => saveInfo_toDB(row);
+            document.getElementById('closeBtn').onclick = () => returnProperties();
         }
+
+        function editContent(row) {
+            document.getElementById('modalClockIn').readOnly = false;
+            document.getElementById('modalClockOut').readOnly = false;
+            document.getElementById('saveBtn').classList.remove('d-none');
+            document.getElementById('deleteBtn').classList.remove('d-none');
+        }
+
+        function returnProperties() {
+            document.getElementById('modalClockIn').readOnly = true;
+            document.getElementById('modalClockOut').readOnly = true;
+            document.getElementById('saveBtn').classList.add('d-none');
+            document.getElementById('deleteBtn').classList.add('d-none');
+        }
+
+        function deleteContent(empId, clock_in, clock_out) {
+            if (confirm('Are you sure you want to delete this attendance record?')) {
+                $.post('./Employee_attendance_modules/delete_attendance.php', { emp_id: empId, date: date }, function(response) {
+                    if (response === 'success') {
+                        alert('Record deleted successfully.');
+                        location.reload();
+                    } else {
+                        alert('Error deleting record: ' + response);
+                    }
+                });
+            }
+        }
+
 
         document.querySelectorAll('.attendance-table tbody tr[role="button"]').forEach(row => {
             row.addEventListener('click', () => openRowModal(row));
