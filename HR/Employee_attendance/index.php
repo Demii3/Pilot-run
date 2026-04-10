@@ -163,17 +163,10 @@ header('Pragma: no-cache');
         const dateFilter = document.getElementById('dateFilter');
         const attendanceTable = document.getElementById('attendanceTable');
 
-        function swapDateFormat(dateString) {
-            const [year, month, day] = dateString.split('-');
-            return `${year}-${month}-${day}`;
-        }
-
         function filterAttendance() {
             const searchValue = searchInput.value.toLowerCase();
             const statusValue = statusFilter.value;
             const dateValue = dateFilter.value;
-            document.getElementById('attendance-list').textContent = `${swapDateFormat(dateFilter.value)}`;
-
 
             Array.from(attendanceTable.rows).forEach(row => {
                 const cells = row.cells;
