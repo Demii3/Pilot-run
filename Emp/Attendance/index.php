@@ -123,14 +123,48 @@ header('Pragma: no-cache');
             return parts[0] <= '08' ? 'On Time' : 'Late';
         };
 
+        function drawSelectedGeofence(coordinatesJson) {
+            if (geofenceLayer) {
+                map.removeLayer(geofenceLayer);
+                geofenceLayer = null;
+            }
+
+            if (!coordinatesJson) {
+                return;
+            }
+
+            try {
+                const points = JSON.parse(coordinatesJson);
+                if (!Array.isArray(points) || points.length < 3) {
+                    return;
+                }
+
+                geofenceLayer = L.polygon(points, {
+                    color: '#2d6cdf',
+                    weight: 2,
+                    fillColor: '#2d6cdf',
+                    fillOpacity: 0.18
+                }).addTo(map);
+
+                const bounds = geofenceLayer.getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds, { padding: [20, 20], maxZoom: 17 });
+                }
+            } catch (error) {
+                console.error('Invalid geofence coordinates:', error);
+            }
+        }
+
 
         // Check if location is selected
         locationSelect.addEventListener('change', function() {
             selectedLocation = this.value;
             if (this.value !== '') {
                 selectedCoordinates = this.options[this.selectedIndex].getAttribute('data-coordinates');
+                drawSelectedGeofence(selectedCoordinates);
             } else {
                 selectedCoordinates = null;
+                drawSelectedGeofence(null);
             }
         });
 
