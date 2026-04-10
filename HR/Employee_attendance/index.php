@@ -73,6 +73,7 @@ header('Pragma: no-cache');
                                 <th scope="col">Clock In</th>
                                 <th scope="col">Clock Out</th>
                                 <th scope="col">Status</th>
+                                <th scope="col">Duration</th>
                             </tr>
                         </thead>
                         <tbody id="attendanceTable">
@@ -90,6 +91,7 @@ header('Pragma: no-cache');
                                         echo "<td>" . $row['Clock_in'] . "</td>";
                                         echo "<td>" . $row['Clock_out'] . "</td>";
                                         echo "<td>" . $row['Status'] . "</td>";
+                                        echo "<td>" . $row['Duration'] . "</td>";
                                         echo "</tr>";
                                 }
                             ?>

@@ -114,7 +114,7 @@
   const content = document.getElementById("content-area");
 
   if (section === "employees") {
-    fetch('employees.html')
+    fetch('employees.php')
       .then(response => {
         if (!response.ok) throw new Error("Network response not OK");
         return response.text();
@@ -140,7 +140,7 @@
       });
 
   } else if (section === "sites") {
-    fetch('sites.html')
+    fetch('sites.php')
       .then(response => {
         if (!response.ok) throw new Error("Network response not OK");
         return response.text();
