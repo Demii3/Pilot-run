@@ -57,17 +57,50 @@
   <div class="sidebar">
     <h2>Payroll</h2>
 
-    <button onclick="showContent(this,'deductions')">Manage Deductions</button>
-    <button onclick="showContent(this,'tax')">Tax Table</button>
-    <button onclick="showContent(this,'sss')">SSS Table</button>
-    <button onclick="showContent(this,'philhealth')">PhilHealth</button>
-    <button onclick="showContent(this,'pagibig')">Pag-IBIG</button>
+    <button class="dropdown-btn">Payroll
+      <i class="fa fa-caret-down"></i>
+    </button>
+    <div class="dropdown-container">
+      <hr>
+      <button onclick="showContent(this,'income')">Manage Incomes</button>
+      <button onclick="showContent(this,'deductions')">Manage Deductions</button>
+      <button onclick="showContent(this,'employee_income')">Manage Employee Income</button>
+      <button onclick="showContent(this,'employee_deductions')">Manage Employee Deductions</button>
+      <button onclick="showContent(this,'attendance')">Attendance</button> 
+      <hr>
+      <button onclick="showContent(this,'tax')">Tax Table</button>
+      <button onclick="showContent(this,'sss')">SSS Table</button>
+      <button onclick="showContent(this,'philhealth')">PhilHealth</button>
+      <button onclick="showContent(this,'pagibig')">Pag-IBIG</button>
+      <hr>
+      <button onclick="showContent(this,'process')">Process Salary</button>
+      <button onclick="showContent(this,'employee_salary')">Employee Salary</button>
+      <button onclick="showContent(this,'process_13')">Process 13th Month</button>
+      <button onclick="showContent(this,'yearend')">Process Year-End Tax</button>
+      <hr>
+    </div>
 
-    <hr>
-
-    <button onclick="showContent(this,'process')">Process Salary</button>
-    <button onclick="showContent(this,'reports')">Reports</button>
-    <button onclick="showContent(this,'yearend')">Year-End Tax</button>
+    <button class="dropdown-btn">Reports
+      <i class="fa fa-caret-down"></i>
+    </button>
+    <div class="dropdown-container">
+      <hr>
+      <button onclick="showContent(this,'payslip')">Payslip</button>
+      <button onclick="showContent(this,'payroll_listing')">Payroll Listing</button>
+      <button onclick="showContent(this,'13_month_listing')">13th Month Listing</button>
+      <hr>
+      <button class="dropdown-btn">Remittances
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-container">
+        <hr>
+        <button onclick="showContent(this,'tax')">Tax</button>
+        <button onclick="showContent(this,'sss')">SSS</button>
+        <button onclick="showContent(this,'philhealth')">PhilHealth</button>
+        <button onclick="showContent(this,'pagibig')">Pag-IBIG</button>
+        <hr>
+      </div>
+    </div>
   </div>
 
   <!-- Content -->
@@ -108,6 +141,21 @@
     }
   });
 
+  document.querySelectorAll('.dropdown-container').forEach(container => {
+    container.style.display = 'none';
+  });
+
+  document.querySelectorAll('.dropdown-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      this.classList.toggle('active');
+      const dropdownContent = this.nextElementSibling;
+      if (dropdownContent.style.display === 'block') {
+        dropdownContent.style.display = 'none';
+      } else {
+        dropdownContent.style.display = 'block';
+      }
+    });
+  });
 
   function showContent(button, section) {
 
@@ -124,6 +172,35 @@
       <div class="card">
         <h2>Manage Deductions</h2>
         <p>Setup employee income and deductions here.</p>
+      </div>`;
+  }
+
+  else if (section === "income") {
+      content.innerHTML = `
+        <div class="card">
+          <h2>Manage Income</h2>
+          <p>Configure employee income details.</p>
+        </div>`;
+  }
+
+  else if (section === "employee_deductions") {
+    content.innerHTML = `
+      <div class="card">
+        <h2>Manage Employee Deductions</h2>
+        <p>Assign specific deductions to employees.</p>
+      </div>
+
+      <div class="table-card">
+        <h2>Manage Employee Deductions</h2>
+        <p>Assign specific deductions to employees.</p>
+      </div>`;
+  }
+
+  else if (section === "employee_income") {
+    content.innerHTML = `
+      <div class="card">
+        <h2>Manage Employee Income</h2>
+        <p>Assign specific income details to employees.</p>
       </div>`;
   }
 
@@ -177,6 +254,14 @@
           <li>13th Month Listing</li>
           <li>Contributions (Tax, SSS, PhilHealth, Pag-IBIG)</li>
         </ul>
+      </div>`;
+  }
+
+  else if (section === "process_13") {
+    content.innerHTML = `
+      <div class="card">
+        <h2>Process 13th Month Pay</h2>
+        <p>Calculate and generate 13th month pay for employees.</p>
       </div>`;
   }
 

@@ -264,6 +264,15 @@ html, body {
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
+.table-card {
+  background: rgb(255, 255, 255);
+  color: black;
+  margin-top: 100px;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
 /* Headings */
 h2 {
   margin-top: 0;
