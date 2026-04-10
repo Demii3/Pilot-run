@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 06, 2026 at 10:16 AM
+-- Generation Time: Apr 10, 2026 at 02:14 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -44,51 +44,82 @@ CREATE TABLE `deleted_geofences` (
 
 CREATE TABLE `employee` (
   `Emp_id` bigint(255) NOT NULL,
-  `Firstname` varchar(255) NOT NULL,
-  `Lastname` varchar(255) NOT NULL,
-  `Department` varchar(255) NOT NULL
+  `Name` varchar(255) NOT NULL,
+  `Position` varchar(255) NOT NULL,
+  `Department` varchar(255) NOT NULL,
+  `Salary` bigint(255) NOT NULL,
+  `Status` varchar(255) NOT NULL,
+  `Extra` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `employee`
 --
 
-INSERT INTO `employee` (`Emp_id`, `Firstname`, `Lastname`, `Department`) VALUES
-(1, 'Joyce', 'Bryce', 'HR'),
-(2, 'Bianca', 'Mayor', 'Project Manager'),
-(3, 'Demetri', 'Mayor', 'System Admin');
+INSERT INTO `employee` (`Emp_id`, `Name`, `Position`, `Department`, `Salary`, `Status`, `Extra`) VALUES
+(1, 'Joyce Bryce', 'HR', 'HR', 0, 'Active', ''),
+(2, 'Bianca Mayor', 'Project Manager', 'Field', 0, 'Active', ''),
+(3, 'Demetri Mayor', 'System Admin', 'HR', 0, 'Active', ''),
+(5, 'Ai Cruz', 'Human Resources', 'HR', 0, 'Active', ''),
+(6, 'Lou Reyes', 'Payroll', 'HR', 0, 'Inactive', ''),
+(7, 'George Lopez', 'Recruitment', 'HR', 0, 'Active', ''),
+(8, 'Tan Miller', 'Benifits', 'HR', 0, 'Inactive', ''),
+(9, 'Carlo Tan', 'Project Manager', 'Field', 0, 'Inactive', '');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `employees`
+-- Table structure for table `employee_attendance`
 --
 
-CREATE TABLE `employees` (
-  `employee_id` varchar(10) NOT NULL,
-  `total_hours` int(11) NOT NULL,
-  `rate_per_hour` decimal(10,2) NOT NULL,
-  `special_holiday` decimal(10,2) NOT NULL,
-  `legal_holiday` decimal(10,2) NOT NULL,
-  `overtime_rate` decimal(10,2) NOT NULL,
-  `late` decimal(10,2) NOT NULL,
-  `absent` decimal(10,2) NOT NULL,
-  `cash_advance` decimal(10,2) NOT NULL,
-  `sss` decimal(10,2) NOT NULL,
-  `philhealth` decimal(10,2) NOT NULL,
-  `pagibig` decimal(10,2) NOT NULL,
-  `tax` decimal(10,2) NOT NULL
+CREATE TABLE `employee_attendance` (
+  `Emp_id` bigint(255) NOT NULL,
+  `Date` date NOT NULL,
+  `Location` varchar(255) NOT NULL,
+  `Clock_in` time NOT NULL,
+  `Clock_out` time NOT NULL,
+  `Status` varchar(255) NOT NULL,
+  `Duration` float NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `employees`
+-- Dumping data for table `employee_attendance`
 --
 
-INSERT INTO `employees` (`employee_id`, `total_hours`, `rate_per_hour`, `special_holiday`, `legal_holiday`, `overtime_rate`, `late`, `absent`, `cash_advance`, `sss`, `philhealth`, `pagibig`, `tax`) VALUES
-('1', 8, 140.00, 5000.00, 5000.00, 150.00, 0.00, 0.00, 50000.00, 1500.00, 1500.00, 1500.00, 1500.00),
-('12345678', 200, 100.00, 1000.00, 1000.00, 1000.00, 0.00, 0.00, 1000.00, 1000.00, 1000.00, 1000.00, 1000.00),
-('202314090', 140, 187.50, 2000.00, 1500.00, 1500.00, 500.00, 1000.00, 500.00, 1000.00, 1000.00, 500.00, 500.00),
-('E12345', 160, 187.50, 2000.00, 1500.00, 1500.00, 500.00, 1000.00, 500.00, 1000.00, 1000.00, 500.00, 500.00);
+INSERT INTO `employee_attendance` (`Emp_id`, `Date`, `Location`, `Clock_in`, `Clock_out`, `Status`, `Duration`) VALUES
+(3, '2026-04-10', 'Adamson OZ', '03:57:05', '04:04:14', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:08:00', '16:13:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:08:00', '16:13:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:15:00', '16:32:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:33:00', '16:37:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:37:00', '16:41:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:41:00', '16:42:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:44:00', '00:00:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:48:00', '16:53:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '16:58:00', '16:58:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '17:00:00', '17:02:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '17:02:00', '17:03:00', 'Late', 0),
+(3, '2026-04-10', 'Adamson OZ', '17:07:00', '17:08:00', 'Late', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_location`
+--
+
+CREATE TABLE `employee_location` (
+  `User_Id` bigint(255) NOT NULL,
+  `loc_id` bigint(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `employee_location`
+--
+
+INSERT INTO `employee_location` (`User_Id`, `loc_id`) VALUES
+(3, 1),
+(3, 1),
+(2, 2);
 
 -- --------------------------------------------------------
 
@@ -97,7 +128,7 @@ INSERT INTO `employees` (`employee_id`, `total_hours`, `rate_per_hour`, `special
 --
 
 CREATE TABLE `geofences` (
-  `id` int(10) UNSIGNED NOT NULL,
+  `id` bigint(255) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
   `coordinates` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -109,7 +140,8 @@ CREATE TABLE `geofences` (
 --
 
 INSERT INTO `geofences` (`id`, `name`, `coordinates`, `created_at`, `updated_at`) VALUES
-(1, 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.587290214752265,120.98689019680025],[14.587269448765882,120.98681509494783],[14.58708255480032,120.98672389984132],[14.586765872996489,120.98683655261995],[14.586672425819803,120.98653078079224]]', '2026-04-04 15:49:22', NULL);
+(1, 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.587290214752265,120.98689019680025],[14.587269448765882,120.98681509494783],[14.58708255480032,120.98672389984132],[14.586765872996489,120.98683655261995],[14.586672425819803,120.98653078079224]]', '2026-04-04 15:49:22', NULL),
+(2, 'SM', '[[14.652350801029067,120.99225997924806],[14.643880624522094,120.99123001098634],[14.645375385333589,121.0001564025879],[14.65334727086327,120.99998474121095],[14.652350801029067,120.99225997924806]]', '2026-04-06 11:25:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -121,17 +153,23 @@ CREATE TABLE `users` (
   `User_id` bigint(255) NOT NULL,
   `Username` varchar(255) NOT NULL,
   `Password` varchar(255) NOT NULL,
-  `Type` varchar(255) NOT NULL
+  `Type` varchar(255) NOT NULL,
+  `Work_status` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`) VALUES
-(1, 'HR', '123', 'HR'),
-(2, 'bayang', '1234', 'Emp'),
-(3, 'emitter', '12345', 'Emp');
+INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`, `Work_status`) VALUES
+(1, 'HR', '123', 'HR', 'Tapped-out'),
+(2, 'bayang', '1234', 'Emp', 'Tapped-out'),
+(3, 'emitter', '12345', 'Emp', 'Tapped-out'),
+(5, 'Andrea', '123', 'Emp', 'Tapped-out'),
+(6, 'Daniel', '123', 'Emp', 'Tapped-out'),
+(7, 'Maria', '123', 'Emp', 'Tapped-out'),
+(8, 'Jason', '123', 'Emp', 'Tapped-out'),
+(9, 'Lea', '123', 'Emp', 'Tapped-out');
 
 --
 -- Indexes for dumped tables
@@ -150,10 +188,16 @@ ALTER TABLE `employee`
   ADD PRIMARY KEY (`Emp_id`);
 
 --
--- Indexes for table `employees`
+-- Indexes for table `employee_attendance`
 --
-ALTER TABLE `employees`
-  ADD PRIMARY KEY (`employee_id`);
+ALTER TABLE `employee_attendance`
+  ADD KEY `Emp_id` (`Emp_id`);
+
+--
+-- Indexes for table `employee_location`
+--
+ALTER TABLE `employee_location`
+  ADD KEY `User_Id` (`User_Id`);
 
 --
 -- Indexes for table `geofences`
@@ -181,17 +225,29 @@ ALTER TABLE `deleted_geofences`
 -- AUTO_INCREMENT for table `employee`
 --
 ALTER TABLE `employee`
-  MODIFY `Emp_id` bigint(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Emp_id` bigint(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `geofences`
 --
 ALTER TABLE `geofences`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(255) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `employee_attendance`
+--
+ALTER TABLE `employee_attendance`
+  ADD CONSTRAINT `employee_attendance_ibfk_1` FOREIGN KEY (`Emp_id`) REFERENCES `employee` (`Emp_id`);
+
+--
+-- Constraints for table `employee_location`
+--
+ALTER TABLE `employee_location`
+  ADD CONSTRAINT `employee_location_ibfk_1` FOREIGN KEY (`User_Id`) REFERENCES `employee` (`Emp_id`);
 
 --
 -- Constraints for table `users`

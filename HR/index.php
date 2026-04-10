@@ -42,14 +42,14 @@
 
     <body>
 
-        <?php include '../Modules/background.php'; ?>
+        <?php include './HR_modules/background.php'; ?>
         <?php include '../Modules/navbar.php'; ?>
         <?php include '../Modules/welcome_card.php'; ?>
 
         <!-- functions card -->
         <div class="functions-card">
             <div class="card-icons">
-                <a href="#" class="icon-item">
+                <a href="./Employee_attendance/" class="icon-item">
                     <img src="../Images/attendance.png" alt="Attendance">
                     <p>Attendance</p>
                 </a>
@@ -64,7 +64,7 @@
                     <p>Payroll</p>
                 </a>
 
-                <a href="./Employee_manage/index.php" class="icon-item">
+                <a href="./Employee_management" class="icon-item">
                     <img src="../Images/employees.png" alt="Employees">
                     <p>Employees</p>
                 </a>
