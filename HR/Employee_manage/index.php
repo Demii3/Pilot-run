@@ -18,6 +18,8 @@
         die("Connection failed: " . $conn->connect_error);
     }
 
+    $delete_error = null;
+
     // Handle CRUD operations
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['create'])) {
@@ -29,7 +31,7 @@
             $stmt->bind_param("sss", $firstname, $lastname, $department);
             $stmt->execute();
             $stmt->close();
-            header("Location: employee_management.php");
+            header("Location: index.php");
             exit;
         }
 
@@ -43,19 +45,31 @@
             $stmt->bind_param("sssi", $firstname, $lastname, $department, $emp_id);
             $stmt->execute();
             $stmt->close();
-            header("Location: employee_management.php");
+            header("Location: index.php");
             exit;
         }
 
         if (isset($_POST['delete'])) {
             $emp_id = $_POST['emp_id'];
 
-            $stmt = $conn->prepare("DELETE FROM employee WHERE Emp_id = ?");
+            // Delete any related user login record first to satisfy the foreign key constraint.
+            $stmt = $conn->prepare("DELETE FROM users WHERE User_id = ?");
             $stmt->bind_param("i", $emp_id);
             $stmt->execute();
             $stmt->close();
-            header("Location: employee_management.php");
-            exit;
+
+            $stmt = $conn->prepare("DELETE FROM employee WHERE Emp_id = ?");
+            $stmt->bind_param("i", $emp_id);
+            $stmt->execute();
+            if ($stmt->errno) {
+                $delete_error = $stmt->error;
+            }
+            $stmt->close();
+
+            if (!$delete_error) {
+                header("Location: index.php");
+                exit;
+            }
         }
     }
 
@@ -109,6 +123,11 @@
                         <h3 class="card-title mb-0">Employee Management</h3>
                     </div>
                     <div class="card-body">
+                        <?php if (!empty($delete_error)): ?>
+                            <div class="alert alert-danger" role="alert">
+                                Cannot delete employee: <?php echo htmlspecialchars($delete_error); ?>
+                            </div>
+                        <?php endif; ?>
                         <!-- Add New Employee Button -->
                         <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
                             <i class="fas fa-plus"></i> Add New Employee
@@ -213,7 +232,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editEmployeeModalLabel">Edit Employee</h5>
-                    <a href="employee_management.php" class="btn-close" aria-label="Close"></a>
+                    <a href="index.php" class="btn-close" aria-label="Close"></a>
                 </div>
                 <form method="POST">
                     <div class="modal-body">
@@ -241,7 +260,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <a href="employee_management.php" class="btn btn-secondary">Cancel</a>
+                        <a href="index.php" class="btn btn-secondary">Cancel</a>
                         <button type="submit" name="update" class="btn btn-primary">Update Employee</button>
                     </div>
                 </form>
