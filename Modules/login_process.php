@@ -20,9 +20,12 @@
             $row = mysqli_fetch_array($result);
             session_start();
             $_SESSION['login'] = '1';
-            $_SESSION['type'] = $_SESSION['bg_source'] = $row['Type'];
+            $_SESSION['type'] = $row['Type'];
+            $_SESSION['bg_source'] = $row['Type'];
             $_SESSION['username'] = $row['Username'];
             $_SESSION['emp_id'] = $row['User_id'];
+            $_SESSION['Work_status'] = $row['Work_status'];
+            $_SESSION['Clock_in'] = null;
             $msg = 'success';
         } else {
             $msg .= 'Username and Password do not match.';

@@ -78,18 +78,18 @@ header('Pragma: no-cache');
                         <tbody id="attendanceTable">
                             <?php
                                 include '../../Modules/dbcon.php';
-                                $query = "SELECT * FROM employee";
+                                $query = "SELECT employee_attendance.*, employee.Name, employee.Department FROM `employee_attendance` JOIN `employee` ON employee_attendance.Emp_id = employee.Emp_id";
                                 $result = mysqli_query($dbc, $query);
                                 while ($row = mysqli_fetch_array($result)) {
                                         echo "<tr role='button' tabindex='0'>";
                                         echo "<td class='d-none'>" . $row['Emp_id'] . "</td>";
-                                        echo "<td>" . $row['Firstname'] . " " . $row['Lastname'] . "</td>";
+                                        echo "<td>" . $row['Name'] . "</td>";
                                         echo "<td>" . $row['Department'] . "</td>";
-                                        echo "<td>--</td>";
-                                        echo "<td>--</td>";
-                                        echo "<td>--</td>";
-                                        echo "<td>--</td>";
-                                        echo "<td>--</td>";
+                                        echo "<td>" . $row['Date'] . "</td>";
+                                        echo "<td>" . $row['Location'] . "</td>";
+                                        echo "<td>" . $row['Clock_in'] . "</td>";
+                                        echo "<td>" . $row['Clock_out'] . "</td>";
+                                        echo "<td>" . $row['Status'] . "</td>";
                                         echo "</tr>";
                                 }
                             ?>
