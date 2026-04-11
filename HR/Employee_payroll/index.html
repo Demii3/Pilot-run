@@ -68,10 +68,7 @@
       <button onclick="showContent(this,'employee_deductions')">Manage Employee Deductions</button>
       <button onclick="showContent(this,'attendance')">Attendance</button> 
       <hr>
-      <button onclick="showContent(this,'tax')">Tax Table</button>
-      <button onclick="showContent(this,'sss')">SSS Table</button>
-      <button onclick="showContent(this,'philhealth')">PhilHealth</button>
-      <button onclick="showContent(this,'pagibig')">Pag-IBIG</button>
+      <button onclick="showContent(this,'premiums')">Premiums</button>
       <hr>
       <button onclick="showContent(this,'process')">Process Salary</button>
       <button onclick="showContent(this,'employee_salary')">Employee Salary</button>
@@ -172,7 +169,7 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h2>Employee Deduction Types</h2>
-          <button class="btn btn-secondary" onclick="openDeductionTypeForm()">+ Add Deduction Type</button>
+          <button class="btn btn-secondary" onclick="openDeductionTypeForm()">+ Add Deduction To EmployeeType</button>
         </div>
         <div class="card-body">
           <form id="deductionTypeForm" class="mb-4" style="display: none;">
@@ -185,18 +182,6 @@
               <div class="col-md-3">
                 <label for="deductionTypeCost" class="form-label">Cost</label>
                 <input type="number" id="deductionTypeCost" class="form-control" step="0.01" required>
-              </div>
-              <div class="col-md-2 d-flex align-items-end">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="deductionTypeTaxable" checked>
-                  <label class="form-check-label" for="deductionTypeTaxable">Taxable</label>
-                </div>
-              </div>
-              <div class="col-md-2 d-flex align-items-end">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="deductionType13th" checked>
-                  <label class="form-check-label" for="deductionType13th">13th Month</label>
-                </div>
               </div>
             </div>
             <div class="d-flex gap-2">
@@ -221,8 +206,6 @@
                 <tr>
                   <th>Type of Deduction</th>
                   <th>Cost</th>
-                  <th>Taxable / Non-Taxable</th>
-                  <th>Included in 13th Month</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -305,111 +288,83 @@
     content.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h2>Manage Employee Deductions</h2>
-          <button class="btn btn-primary">+ Add Deduction</button>
+          <div>
+            <h2>Manage Employee Deductions</h2>
+            <span class="text-muted">Search employees stored in simpletest_db</span>
+          </div>
+          <button class="btn btn-success" onclick="openEmployeeDeductionForm()">Add Deduction to Employee</button>
         </div>
         <div class="card-body">
           <div class="mb-3">
-            <input 
-              type="text" 
+            <input
+              type="text"
               id="searchDeductions" 
               class="form-control" 
               placeholder="Search by employee name or deduction type..."
+              onkeyup="filterEmployeesForDeductions()"
             >
           </div>
+
+          <form id="employeeDeductionForm" class="mb-4" style="display: none;">
+            <input type="hidden" id="employeeDeductionAssignmentId">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="deductionEmployeeSelect" class="form-label">Employee</label>
+                <select id="deductionEmployeeSelect" class="form-select" required></select>
+              </div>
+              <div class="col-md-4">
+                <label for="deductionTypeSelect" class="form-label">Deduction Type</label>
+                <select id="deductionTypeSelect" class="form-select" onchange="updateSelectedDeductionDetails()" required></select>
+              </div>
+              <div class="col-md-2">
+                <label for="selectedDeductionCost" class="form-label">Cost</label>
+                <input type="text" id="selectedDeductionCost" class="form-control" disabled>
+              </div>
+            </div>
+            <div class="mt-3 d-flex gap-2">
+              <button type="button" class="btn btn-primary" onclick="saveEmployeeDeductionAssignment()">Save Assignment</button>
+              <button type="button" class="btn btn-secondary" onclick="hideEmployeeDeductionForm()">Cancel</button>
+            </div>
+          </form>
+
           <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover" id="employeeDeductionSearchTable">
               <thead class="table-dark">
                 <tr>
                   <th>ID</th>
-                  <th>Employee Name</th>
-                  <th>Deduction Type</th>
-                  <th>Amount</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Position</th>
+                  <th>Department</th>
+                  <th>Salary</th>
                   <th>Status</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>1</td>
-                  <td>Romer Navoa</td>
-                  <td>SSS</td>
-                  <td>₱1,200.00</td>
-                  <td>Active</td>
-                  <td>
-                    <button class="btn btn-sm btn-warning">Edit</button>
-                    <button class="btn btn-sm btn-danger">Delete</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Alexis Eron</td>
-                  <td>PhilHealth</td>
-                  <td>₱600.00</td>
-                  <td>Active</td>
-                  <td>
-                    <button class="btn btn-sm btn-warning">Edit</button>
-                    <button class="btn btn-sm btn-danger">Delete</button>
-                  </td>
-                </tr>
-              </tbody>
+              <tbody></tbody>
             </table>
           </div>
-        </div>
-      </div>
 
-      
-
-      <div class="card mt-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h2>Deduction Summary</h2>
-          <button class="btn btn-success">Generate Report</button>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead class="table-dark">
-                <tr>
-                  <th>Deduction Type</th>
-                  <th>Total Amount</th>
-                  <th>Employee Count</th>
-                  <th>Last Updated</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>SSS</td>
-                  <td>₱3,600.00</td>
-                  <td>3</td>
-                  <td>2024-04-10</td>
-                  <td>
-                    <button class="btn btn-sm btn-info">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>PhilHealth</td>
-                  <td>₱1,800.00</td>
-                  <td>3</td>
-                  <td>2024-04-10</td>
-                  <td>
-                    <button class="btn btn-sm btn-info">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Pag-IBIG</td>
-                  <td>₱300.00</td>
-                  <td>3</td>
-                  <td>2024-04-10</td>
-                  <td>
-                    <button class="btn btn-sm btn-info">View</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="mt-4">
+            <h5>Assigned Deduction Items</h5>
+            <div class="table-responsive">
+              <table class="table table-hover" id="employeeDeductionAssignmentTable">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Employee</th>
+                    <th>Deduction Type</th>
+                    <th>Cost</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>`;
+    loadEmployeesForDeductions();
+    loadDeductionTypesForAssignments();
+    fetchEmployeeDeductionAssignments();
   }
 
   else if (section === "employee_income") {
@@ -434,6 +389,7 @@
           </div>
 
           <form id="employeeIncomeForm" class="mb-4" style="display: none;">
+            <input type="hidden" id="employeeIncomeAssignmentId">
             <div class="row g-3">
               <div class="col-md-4">
                 <label for="incomeEmployeeSelect" class="form-label">Employee</label>
@@ -494,6 +450,7 @@
                     <th>Cost</th>
                     <th>Taxable</th>
                     <th>13th Month</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -504,7 +461,7 @@
       </div>`;
     loadEmployees();
     loadIncomeTypesForAssignments();
-    renderEmployeeIncomeAssignments();
+    fetchEmployeeIncomeAssignments();
   }
 
   else if (section === "attendance") {
@@ -517,45 +474,46 @@
       </div>`;
   }
 
-  else if (section === "tax") {
+  else if (section === "premiums") {
     content.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h2>Employee Tax</h2>
-            <button class="btn btn-secondary" onclick="openTaxTypeForm()">+ Add Tax Type</button>
+          <div>
+            <h2>Employee Premiums</h2>
+            <span class="text-muted">Search employees stored in simpletest_db</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <input
+              type="text"
+              id="searchPremiumEmployees"
+              class="form-control"
+              placeholder="Search by name, email, position, or department..."
+              onkeyup="filterEmployeesForPremiums()"
+            >
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover" id="employeePremiumSearchTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Salary</th>
+                  <th>SSS</th>
+                  <th>PagIBIG</th>
+                  <th>Philhealth</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </div>`;
+    loadEmployeesForPremiums();
   }
 
-  else if (section === "sss") {
-    content.innerHTML = `
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h2>Employee SSS</h2>
-            <button class="btn btn-secondary" onclick="openSSSTypeForm()">+ Add SSS Type</button>
-        </div>
-      </div>`;
-  }
-
-  else if (section === "philhealth") {
-    content.innerHTML = `
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h2>Employee PhilHealth</h2>
-            <button class="btn btn-secondary" onclick="openPhilHealthTypeForm()">+ Add PhilHealth Type</button>
-        </div>
-      </div>`;
-  }
-
-  else if (section === "pagibig") {
-    content.innerHTML = `
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h2>Employee Pag-IBIG</h2>
-            <button class="btn btn-secondary" onclick="openPagIBIGTypeForm()">+ Add Pag-IBIG Type</button>
-        </div>
-      </div>`;
-  }
 
   else if (section === "process") {
     content.innerHTML = `
@@ -601,6 +559,230 @@
 let employeesForIncome = [];
 let incomeTypesForAssignments = [];
 let employeeIncomeAssignments = [];
+let employeesForDeductions = [];
+let deductionTypesForAssignments = [];
+let employeeDeductionAssignments = [];
+let employeesForPremiums = [];
+
+function computeSssContribution(salaryValue) {
+  const salary = Number(String(salaryValue ?? '').replace(/,/g, ''));
+  if (!Number.isFinite(salary) || salary < 0) {
+    return null;
+  }
+
+  if (salary < 5250) {
+    return 250;
+  }
+
+  // Table-based progression: every 500 salary bracket adds 25, capped at 1750.
+  const bracketStep = Math.floor((salary - 5250) / 500) + 1;
+  const contribution = 250 + bracketStep * 25;
+  return Math.min(contribution, 1750);
+}
+
+function computePagibigContribution(salaryValue) {
+  const salary = Number(String(salaryValue ?? '').replace(/,/g, ''));
+  if (!Number.isFinite(salary) || salary < 0) {
+    return null;
+  }
+
+  if (salary <= 1500) {
+    return salary * 0.01;
+  }
+
+  if (salary <= 10000) {
+    return salary * 0.02;
+  }
+
+  return 200;
+}
+
+function computePhilhealthContribution(salaryValue) {
+  const salary = Number(String(salaryValue ?? '').replace(/,/g, ''));
+  if (!Number.isFinite(salary) || salary < 0) {
+    return null;
+  }
+
+  if (salary <= 10000) {
+    return 275;
+  }
+
+  if (salary <= 49999) {
+    return salary * 0.0275;
+  }
+
+  return 1375;
+}
+
+function formatCurrency(value) {
+  return `₱${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+}
+
+async function loadDeductionTypes() {
+  const tableBody = document.querySelector('#deductionTypeTable tbody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
+
+  try {
+    const response = await fetch('emp_deduc_type_api.php');
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to load deduction types.');
+    }
+
+    const rows = result.data || [];
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No deduction types found.</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    rows.forEach(item => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${item.type_of_deduction}</td>
+        <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        <td>
+          <button type="button" class="btn btn-sm btn-warning edit-deduction-type">Edit</button>
+          <button type="button" class="btn btn-sm btn-danger delete-deduction-type">Delete</button>
+        </td>`;
+      tableBody.appendChild(row);
+
+      const editButton = row.querySelector('.edit-deduction-type');
+      const deleteButton = row.querySelector('.delete-deduction-type');
+      if (editButton) {
+        editButton.addEventListener('click', () => editDeductionType(item.id));
+      }
+      if (deleteButton) {
+        deleteButton.addEventListener('click', () => deleteDeductionType(item.id));
+      }
+    });
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">${error.message}</td></tr>`;
+  }
+}
+
+function openDeductionTypeForm(reset = true) {
+  const form = document.getElementById('deductionTypeForm');
+  if (!form) return;
+  form.style.display = 'block';
+
+  if (reset) {
+    document.getElementById('deductionTypeId').value = '';
+    document.getElementById('deductionTypeName').value = '';
+    document.getElementById('deductionTypeCost').value = '';
+  }
+}
+
+function hideDeductionTypeForm() {
+  const form = document.getElementById('deductionTypeForm');
+  if (!form) return;
+  form.style.display = 'none';
+}
+
+async function saveDeductionType() {
+  const id = document.getElementById('deductionTypeId').value;
+  const typeOfDeduction = document.getElementById('deductionTypeName').value.trim();
+  const cost = document.getElementById('deductionTypeCost').value;
+  const taxable = 1;
+  const includedIn13 = 1;
+
+  if (!typeOfDeduction || cost === '') {
+    alert('Please fill in both deduction type and cost.');
+    return;
+  }
+
+  const payload = {
+    type_of_deduction: typeOfDeduction,
+    cost: parseFloat(cost),
+    taxable,
+    included_in_13month: includedIn13
+  };
+
+  if (id) {
+    payload.id = Number(id);
+  }
+
+  try {
+    const response = await fetch('emp_deduc_type_api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || 'Save failed.');
+    }
+
+    hideDeductionTypeForm();
+    loadDeductionTypes();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function editDeductionType(id) {
+  try {
+    const response = await fetch(`emp_deduc_type_api.php?id=${id}`);
+    const result = await response.json();
+    if (!result.success || !result.data) {
+      throw new Error(result.message || 'Unable to load deduction type.');
+    }
+
+    const item = result.data;
+    document.getElementById('deductionTypeId').value = item.id;
+    document.getElementById('deductionTypeName').value = item.type_of_deduction;
+    document.getElementById('deductionTypeCost').value = parseFloat(item.cost).toFixed(2);
+    openDeductionTypeForm(false);
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function deleteDeductionType(id) {
+  if (!confirm('Delete this deduction type?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch('emp_deduc_type_api.php', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `id=${encodeURIComponent(id)}`
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Delete failed.');
+    }
+    loadDeductionTypes();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function filterDeductionTypes() {
+  const searchInput = document.getElementById('searchDeductionTypes');
+  const tableBody = document.querySelector('#deductionTypeTable tbody');
+  if (!searchInput || !tableBody) return;
+
+  const filter = searchInput.value.toLowerCase();
+  const rows = tableBody.getElementsByTagName('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length >= 2) {
+      const deductionType = cells[0].textContent.toLowerCase();
+      const cost = cells[1].textContent.toLowerCase();
+      if (deductionType.includes(filter) || cost.includes(filter)) {
+        rows[i].style.display = '';
+      } else {
+        rows[i].style.display = 'none';
+      }
+    }
+  }
+}
 
 async function loadIncomeTypes() {
   const tableBody = document.querySelector('#incomeTypeTable tbody');
@@ -794,11 +976,370 @@ async function loadIncomeTypesForAssignments() {
   }
 }
 
+function populateDeductionEmployeeSelect() {
+  const select = document.getElementById('deductionEmployeeSelect');
+  if (!select) return;
+  select.innerHTML = '<option value="">Select employee</option>';
+  employeesForDeductions.forEach(emp => {
+    const option = document.createElement('option');
+    option.value = emp.id;
+    option.textContent = `${emp.name} (${emp.position})`;
+    select.appendChild(option);
+  });
+}
+
+async function loadDeductionTypesForAssignments() {
+  deductionTypesForAssignments = [];
+  const select = document.getElementById('deductionTypeSelect');
+  if (select) {
+    select.innerHTML = '<option value="">Select deduction type</option>';
+  }
+
+  try {
+    const response = await fetch('emp_deduc_type_api.php');
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load deduction types.');
+    }
+
+    deductionTypesForAssignments = result.data || [];
+    if (!select) return;
+
+    deductionTypesForAssignments.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.id;
+      option.textContent = `${item.type_of_deduction} - ₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      option.dataset.cost = item.cost;
+      option.dataset.taxable = item.taxable;
+      option.dataset.includedIn13 = item.included_in_13month;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error(error.message);
+  }
+}
+
+function openEmployeeDeductionForm(reset = true) {
+  const form = document.getElementById('employeeDeductionForm');
+  if (!form) return;
+  form.style.display = 'block';
+  if (reset) {
+    document.getElementById('employeeDeductionAssignmentId').value = '';
+    document.getElementById('deductionEmployeeSelect').value = '';
+    document.getElementById('deductionTypeSelect').value = '';
+    document.getElementById('selectedDeductionCost').value = '';
+  }
+}
+
+function hideEmployeeDeductionForm() {
+  const form = document.getElementById('employeeDeductionForm');
+  if (!form) return;
+  form.style.display = 'none';
+}
+
+function openPremiumTypeForm() {
+  alert('Premium type form is not implemented yet.');
+}
+
+function updateSelectedDeductionDetails() {
+  const select = document.getElementById('deductionTypeSelect');
+  const costInput = document.getElementById('selectedDeductionCost');
+  if (!select || !costInput) return;
+
+  const selectedOption = select.options[select.selectedIndex];
+  if (!selectedOption || !selectedOption.value) {
+    costInput.value = '';
+    return;
+  }
+
+  costInput.value = parseFloat(selectedOption.dataset.cost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function saveEmployeeDeductionAssignment() {
+  const assignmentIdInput = document.getElementById('employeeDeductionAssignmentId');
+  const employeeSelect = document.getElementById('deductionEmployeeSelect');
+  const deductionTypeSelect = document.getElementById('deductionTypeSelect');
+  const costInput = document.getElementById('selectedDeductionCost');
+
+  if (!employeeSelect || !deductionTypeSelect) return;
+  if (!employeeSelect.value || !deductionTypeSelect.value) {
+    alert('Please select both an employee and a deduction type.');
+    return;
+  }
+
+  const employee = employeesForDeductions.find(emp => String(emp.id) === employeeSelect.value);
+  const deductionType = deductionTypesForAssignments.find(item => String(item.id) === deductionTypeSelect.value);
+  if (!employee || !deductionType) {
+    alert('Selected employee or deduction type is invalid.');
+    return;
+  }
+
+  const payload = {
+    name: employee.name,
+    type_of_deduction: deductionType.type_of_deduction,
+    cost: parseFloat(costInput.value),
+    taxable: 0,
+    month_13th: 0
+  };
+
+  if (assignmentIdInput && assignmentIdInput.value) {
+    payload.id = Number(assignmentIdInput.value);
+  }
+
+  fetch('assigned_emp_deduc_api.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(response => response.json())
+    .then(result => {
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to save assignment.');
+      }
+      alert('Deduction assignment saved successfully!');
+      hideEmployeeDeductionForm();
+      fetchEmployeeDeductionAssignments();
+    })
+    .catch(error => {
+      console.error('Error saving assignment:', error);
+      alert(`Error: ${error.message}`);
+    });
+}
+
+function renderEmployeeDeductionAssignments() {
+  const tableBody = document.querySelector('#employeeDeductionAssignmentTable tbody');
+  if (!tableBody) return;
+  if (employeeDeductionAssignments.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No assigned deduction items yet.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = '';
+  employeeDeductionAssignments.forEach(item => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.employeeName}</td>
+      <td>${item.deductionType}</td>
+      <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      <td>
+        <button type="button" class="btn btn-sm btn-warning edit-employee-deduction">Edit</button>
+        <button type="button" class="btn btn-sm btn-danger delete-employee-deduction">Delete</button>
+      </td>
+    `;
+    tableBody.appendChild(row);
+
+    const editButton = row.querySelector('.edit-employee-deduction');
+    const deleteButton = row.querySelector('.delete-employee-deduction');
+    if (editButton) {
+      editButton.addEventListener('click', () => editEmployeeDeductionAssignment(item.id));
+    }
+    if (deleteButton) {
+      deleteButton.addEventListener('click', () => deleteEmployeeDeductionAssignment(item.id));
+    }
+  });
+}
+
+function editEmployeeDeductionAssignment(id) {
+  const assignment = employeeDeductionAssignments.find(item => String(item.id) === String(id));
+  if (!assignment) {
+    alert('Assignment not found.');
+    return;
+  }
+
+  openEmployeeDeductionForm(false);
+  document.getElementById('employeeDeductionAssignmentId').value = assignment.id;
+
+  const employee = employeesForDeductions.find(emp => emp.name === assignment.employeeName);
+  const deductionType = deductionTypesForAssignments.find(type => type.type_of_deduction === assignment.deductionType);
+
+  document.getElementById('deductionEmployeeSelect').value = employee ? String(employee.id) : '';
+  document.getElementById('deductionTypeSelect').value = deductionType ? String(deductionType.id) : '';
+  document.getElementById('selectedDeductionCost').value = parseFloat(assignment.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+async function deleteEmployeeDeductionAssignment(id) {
+  if (!confirm('Delete this assigned deduction item?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch('assigned_emp_deduc_api.php', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `id=${encodeURIComponent(id)}`
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Delete failed.');
+    }
+    fetchEmployeeDeductionAssignments();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function loadEmployeesForDeductions() {
+  const tableBody = document.querySelector('#employeeDeductionSearchTable tbody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading employees...</td></tr>';
+
+  try {
+    const response = await fetch('../Employee_management/employees_api.php');
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load employees.');
+    }
+
+    const rows = result.data || [];
+    employeesForDeductions = rows;
+    populateDeductionEmployeeSelect();
+
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found.</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    rows.forEach(emp => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${emp.id}</td>
+        <td>${emp.name}</td>
+        <td>${emp.email}</td>
+        <td>${emp.position}</td>
+        <td>${emp.department}</td>
+        <td>₱${parseFloat(emp.salary).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        <td>${emp.status}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+  }
+}
+
+async function loadEmployeesForPremiums() {
+  const tableBody = document.querySelector('#employeePremiumSearchTable tbody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading employees...</td></tr>';
+
+  try {
+    const response = await fetch('../Employee_management/employees_api.php');
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load employees.');
+    }
+
+    const rows = result.data || [];
+    employeesForPremiums = rows;
+
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No employees found.</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    rows.forEach(emp => {
+      const salary = Number(emp.salary || 0);
+      const sssContribution = computeSssContribution(salary);
+      const pagibigContribution = computePagibigContribution(salary);
+      const philhealthContribution = computePhilhealthContribution(salary);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${emp.id}</td>
+        <td>${emp.name}</td>
+        <td>${formatCurrency(salary)}</td>
+        <td>${sssContribution === null ? '' : formatCurrency(sssContribution)}</td>
+        <td>${pagibigContribution === null ? '' : formatCurrency(pagibigContribution)}</td>
+        <td>${philhealthContribution === null ? '' : formatCurrency(philhealthContribution)}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`;
+  }
+}
+
+function filterEmployeesForPremiums() {
+  const searchInput = document.getElementById('searchPremiumEmployees');
+  const filter = (searchInput?.value || '').toLowerCase();
+  const tableBody = document.querySelector('#employeePremiumSearchTable tbody');
+  if (!tableBody) return;
+  const rows = tableBody.getElementsByTagName('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length >= 6) {
+      const name = cells[1].textContent.toLowerCase();
+      const salary = cells[2].textContent.toLowerCase();
+      const sss = cells[3].textContent.toLowerCase();
+      const pagibig = cells[4].textContent.toLowerCase();
+      const philhealth = cells[5].textContent.toLowerCase();
+      if (name.includes(filter) || salary.includes(filter) || sss.includes(filter) || pagibig.includes(filter) || philhealth.includes(filter)) {
+        rows[i].style.display = '';
+      } else {
+        rows[i].style.display = 'none';
+      }
+    }
+  }
+}
+
+function filterEmployeesForDeductions() {
+  const searchInput = document.getElementById('searchDeductions');
+  const filter = (searchInput?.value || '').toLowerCase();
+  const tableBody = document.querySelector('#employeeDeductionSearchTable tbody');
+  if (!tableBody) return;
+  const rows = tableBody.getElementsByTagName('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length >= 5) {
+      const name = cells[1].textContent.toLowerCase();
+      const email = cells[2].textContent.toLowerCase();
+      const position = cells[3].textContent.toLowerCase();
+      const department = cells[4].textContent.toLowerCase();
+      if (name.includes(filter) || email.includes(filter) || position.includes(filter) || department.includes(filter)) {
+        rows[i].style.display = '';
+      } else {
+        rows[i].style.display = 'none';
+      }
+    }
+  }
+}
+
+async function fetchEmployeeDeductionAssignments() {
+  try {
+    const response = await fetch('assigned_emp_deduc_api.php');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    if (data.success) {
+      employeeDeductionAssignments = data.data.map(item => ({
+        id: item.id,
+        employeeName: item.name,
+        deductionType: item.type_of_deduction,
+        cost: item.cost
+      }));
+      renderEmployeeDeductionAssignments();
+    } else {
+      console.error('Failed to fetch assignments:', data.message);
+      alert(`Error: ${data.message}`);
+    }
+  } catch (error) {
+    console.error('Error fetching assignments:', error);
+    alert(`Error: ${error.message}`);
+  }
+}
+
 function openEmployeeIncomeForm(reset = true) {
   const form = document.getElementById('employeeIncomeForm');
   if (!form) return;
   form.style.display = 'block';
   if (reset) {
+    document.getElementById('employeeIncomeAssignmentId').value = '';
     document.getElementById('incomeEmployeeSelect').value = '';
     document.getElementById('incomeTypeSelect').value = '';
     document.getElementById('selectedIncomeCost').value = '';
@@ -834,6 +1375,7 @@ function updateSelectedIncomeDetails() {
 }
 
 function saveEmployeeIncomeAssignment() {
+  const assignmentIdInput = document.getElementById('employeeIncomeAssignmentId');
   const employeeSelect = document.getElementById('incomeEmployeeSelect');
   const incomeTypeSelect = document.getElementById('incomeTypeSelect');
   const costInput = document.getElementById('selectedIncomeCost');
@@ -862,6 +1404,10 @@ function saveEmployeeIncomeAssignment() {
     month_13th: included13Checkbox.checked ? 1 : 0
   };
 
+  if (assignmentIdInput && assignmentIdInput.value) {
+    payload.id = Number(assignmentIdInput.value);
+  }
+
   fetch('assigned_emp_inc_api.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -874,7 +1420,7 @@ function saveEmployeeIncomeAssignment() {
       }
       alert('Assignment saved successfully!');
       hideEmployeeIncomeForm();
-      renderEmployeeIncomeAssignments();
+      fetchEmployeeIncomeAssignments();
     })
     .catch(error => {
       console.error('Error saving assignment:', error);
@@ -886,7 +1432,7 @@ function renderEmployeeIncomeAssignments() {
   const tableBody = document.querySelector('#employeeIncomeAssignmentTable tbody');
   if (!tableBody) return;
   if (employeeIncomeAssignments.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No assigned income items yet.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No assigned income items yet.</td></tr>';
     return;
   }
 
@@ -899,9 +1445,63 @@ function renderEmployeeIncomeAssignments() {
       <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
       <td>${item.taxable ? 'Yes' : 'No'}</td>
       <td>${item.included13 ? 'Yes' : 'No'}</td>
+      <td>
+        <button type="button" class="btn btn-sm btn-warning edit-employee-income">Edit</button>
+        <button type="button" class="btn btn-sm btn-danger delete-employee-income">Delete</button>
+      </td>
     `;
     tableBody.appendChild(row);
+
+    const editButton = row.querySelector('.edit-employee-income');
+    const deleteButton = row.querySelector('.delete-employee-income');
+    if (editButton) {
+      editButton.addEventListener('click', () => editEmployeeIncomeAssignment(item.id));
+    }
+    if (deleteButton) {
+      deleteButton.addEventListener('click', () => deleteEmployeeIncomeAssignment(item.id));
+    }
   });
+}
+
+function editEmployeeIncomeAssignment(id) {
+  const assignment = employeeIncomeAssignments.find(item => String(item.id) === String(id));
+  if (!assignment) {
+    alert('Assignment not found.');
+    return;
+  }
+
+  openEmployeeIncomeForm(false);
+  document.getElementById('employeeIncomeAssignmentId').value = assignment.id;
+
+  const employee = employeesForIncome.find(emp => emp.name === assignment.employeeName);
+  const incomeType = incomeTypesForAssignments.find(type => type.type_of_income === assignment.incomeType);
+
+  document.getElementById('incomeEmployeeSelect').value = employee ? String(employee.id) : '';
+  document.getElementById('incomeTypeSelect').value = incomeType ? String(incomeType.id) : '';
+  document.getElementById('selectedIncomeCost').value = parseFloat(assignment.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  document.getElementById('selectedIncomeTaxable').checked = assignment.taxable == 1;
+  document.getElementById('selectedIncome13th').checked = assignment.included13 == 1;
+}
+
+async function deleteEmployeeIncomeAssignment(id) {
+  if (!confirm('Delete this assigned income item?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch('assigned_emp_inc_api.php', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `id=${encodeURIComponent(id)}`
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Delete failed.');
+    }
+    fetchEmployeeIncomeAssignments();
+  } catch (error) {
+    alert(error.message);
+  }
 }
 
 function filterIncomeTypes() {
@@ -995,6 +1595,7 @@ async function fetchEmployeeIncomeAssignments() {
     const data = await response.json();
     if (data.success) {
       employeeIncomeAssignments = data.data.map(item => ({
+        id: item.id,
         employeeName: item.name,
         incomeType: item.type_of_income,
         cost: item.cost,

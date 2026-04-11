@@ -39,8 +39,20 @@ function columnExists($dbc, $table, $column) {
 }
 
 function ensureEmployeeTableColumns($dbc) {
+    if (!columnExists($dbc, 'employees', 'email')) {
+        mysqli_query($dbc, "ALTER TABLE `employees` ADD COLUMN `email` VARCHAR(255) NOT NULL DEFAULT '' AFTER `name`");
+    }
+    if (!columnExists($dbc, 'employees', 'username')) {
+        mysqli_query($dbc, "ALTER TABLE `employees` ADD COLUMN `username` VARCHAR(255) NOT NULL DEFAULT '' AFTER `email`");
+    }
     if (!columnExists($dbc, 'employees', 'password')) {
         mysqli_query($dbc, "ALTER TABLE `employees` ADD COLUMN `password` VARCHAR(255) NOT NULL DEFAULT '' AFTER `username`");
+    }
+    if (!columnExists($dbc, 'employees', 'type')) {
+        mysqli_query($dbc, "ALTER TABLE `employees` ADD COLUMN `type` VARCHAR(50) NOT NULL DEFAULT 'Emp' AFTER `password`");
+    }
+    if (!columnExists($dbc, 'employees', 'status')) {
+        mysqli_query($dbc, "ALTER TABLE `employees` ADD COLUMN `status` VARCHAR(50) NOT NULL DEFAULT 'Active' AFTER `join_date`");
     }
 }
 
