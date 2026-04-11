@@ -37,17 +37,28 @@
                 if ($_SESSION['Clock-status'] == 'Tapped-out') {
                     $_SESSION['AttendanceID'] = '';
                     $_SESSION['Date'] = '';
-                    $_SESSION['Location'] = '';
+                    $_SESSION['Location'] = [];
+                    $_SESSION['Coordinates'] = [];
                     $_SESSION['Clock-in'] = '';
                     $_SESSION['Clock-inStatus'] = '';
-                } else {
-                    $query2 = "SELECT * FROM employee_attendance WHERE employee_attendance.Attendance_ID = (SELECT MAX(employee_attendance.Attendance_ID) AS `Most_recent` FROM `employee_attendance` WHERE employee_attendance.Emp_id = '" . $_SESSION['emp_id'] . "');";
+                    $query2 = "SELECT geofences.name, geofences.coordinates FROM geofences WHERE geofences.id IN (SELECT employee_location.loc_id FROM employee_location WHERE employee_location.User_Id = " . $_SESSION['emp_id'] . ")";
                     $result2 = mysqli_query($dbc, $query2);
                     if (mysqli_num_rows($result2) > 0) {
-                        $row2 = mysqli_fetch_array($result2);
+                        while ($row2 = mysqli_fetch_array($result2)) {
+                            $_SESSION['Location'][] = $row2['name'];
+                            $_SESSION['Coordinates'][] = $row2['coordinates'];
+                        }
+                    }
+
+                } else {
+                    $query3 = "SELECT * FROM employee_attendance WHERE employee_attendance.Attendance_ID = (SELECT MAX(employee_attendance.Attendance_ID) AS `Most_recent` FROM `employee_attendance` WHERE employee_attendance.Emp_id = '" . $_SESSION['emp_id'] . "');";
+                    $result3 = mysqli_query($dbc, $query3);
+                    if (mysqli_num_rows($result3) > 0) {
+                        $row3 = mysqli_fetch_array($result3);
                         $_SESSION['AttendanceID'] = $row2['Attendance_ID'];
                         $_SESSION['Date'] = $row2['Date'];
                         $_SESSION['Location'] = $row2['Location'];
+                        $_SESSION['Coordinates'] = $row2['Coordinates'];
                         $_SESSION['Clock-in'] = $row2['Clock_in'];
                         $_SESSION['Clock-inStatus'] = $row2['Clock_inStatus'];
                     }

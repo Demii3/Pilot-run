@@ -33,6 +33,7 @@
         $("#loginBtn").click(function(){
             $.post("Modules/login_process.php",$("form#formlogin").serialize(),function(d){
                 if(d=='success'){
+                    alert(d);
                     document.location = "./";
                 } else {
                     alert(d);

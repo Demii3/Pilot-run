@@ -1,15 +1,17 @@
 <?php
-session_start();
-if (!isset($_SESSION['login']) || $_SESSION['type'] != "Emp") {
-    header("Location: ../");
-    exit();
+    session_start();
+    if (!isset($_SESSION['login']) || $_SESSION['type'] != "Emp") {
+        header("Location: ../");
+        exit();
 
-}
+    }
 
-header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
-header('Cache-Control: no-store, no-cache, must-revalidate');
-header('Cache-Control: post-check=0, pre-check=0', FALSE);
-header('Pragma: no-cache');
+    echo count($_SESSION['Location']);
+
+    header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Cache-Control: post-check=0, pre-check=0', FALSE);
+    header('Pragma: no-cache');
 ?>
 
 <!DOCTYPE html>
@@ -28,6 +30,7 @@ header('Pragma: no-cache');
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./Attendance_assets/Attendance_js.js"></script>
 
 </head>
 <body>
@@ -39,13 +42,11 @@ header('Pragma: no-cache');
         <div class="location-select">
             <label for="locationSelect" class="form-label">Select Location</label>
             <select id="locationSelect" class="form-select">
-                <?php 
-                    include "./Attendance_modules/dbcon.php";
-                    $sql = "SELECT `name`, `coordinates` FROM geofences WHERE id IN (SELECT loc_id FROM employee_location WHERE User_id = " . $_SESSION['emp_id'] . ")";
-                    $result = mysqli_query($dbc, $sql);
-                    echo "<option value=''>Select your location</option>";
-                    while ($row = mysqli_fetch_array($result)) {
-                        echo "<option value='" . $row['name'] . "' data-coordinates='" . $row['coordinates'] . "'>" . $row['name'] . "</option>";
+                <?php
+                    echo '<option value="" data-coordinates="">-- Select Location --</option>';
+                    $i = count($_SESSION['Location']); 
+                    for ($i = 0; $i < count($_SESSION['Location']); $i++) {
+                        echo '<option value="' . $_SESSION['Location'][$i] . '" data-coordinates=\'' . $_SESSION['Coordinates'][$i] . '\'>' . $_SESSION['Location'][$i] . '</option>';
                     }
                 ?>
             </select>
@@ -66,6 +67,21 @@ header('Pragma: no-cache');
     </div>
 
     <script>
+        let ClockinStatus = '<?php echo $_SESSION['Clock-status']; ?>';
+
+        switch (ClockinStatus) {
+            case 'Tapped-in':
+                document.getElementById('tapButton').textContent = 'Tap Out';
+                document.getElementById('tapButton').classList.add('tapped-out');
+                document.getElementById('selectLocation').value = '<?php echo $_SESSION['Location']; ?>';
+                document.getElementById('selectLocation').disabled = true;
+                break;
+            default:
+                document.getElementById('tapButton').textContent = 'Tap In';
+                document.getElementById('tapButton').classList.add('tapped-out');
+                document.getElementById('selectLocation').disabled = false;
+        };
+
         // object ID's
         const tapButton = document.getElementById('tapButton');
         let locationSelect = document.getElementById('locationSelect');
@@ -75,9 +91,6 @@ header('Pragma: no-cache');
         let dateString = new Date().toLocaleDateString();
         let timeString = '';
         let statusClockin = '';
-
-        // user's work status
-        let workStatus = "<?php echo $_SESSION['Work_status']; ?>";
 
         // map variables
         let map = L.map('map').setView([0, 0], 2);
@@ -116,38 +129,9 @@ header('Pragma: no-cache');
             }
         });
 
-        // function for checking user location if within geofence on tap
-        function isPointInPolygon(point, polygon) {
-            let x = point[0], y = point[1];
-            let inside = false;
-            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-                let xi = polygon[i][0], yi = polygon[i][1];
-                let xj = polygon[j][0], yj = polygon[j][1];
-                if ((yi > y) !== (yj > y) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
-                    inside = !inside;
-                }
-            }
-            return inside;
-        };
-
-        // function to convert time to 24-hour format (can be used for comparing and operations)
-        function to24HourTime(dateObj) {
-            return dateObj.toLocaleTimeString('en-GB', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-        };
-
-        // function to determine if tap in is on time or late
-        function clockinStatus(timeStr) {
-            const parts = String(timeStr).split(':');
-            return parts[0] <= '08' ? 'On Time' : 'Late';
-        };
-
         // main function for tap button click event
         function Click() {
-            if (workStatus == 'Tapped-out') {
+            if (ClockinStatus == 'Tapped-out') {
                 if (selectedLocation === '') {
                     alert('Please select a location before tapping in.');
                     return;
@@ -159,18 +143,18 @@ header('Pragma: no-cache');
                     dateString = tapInTime.toLocaleDateString();
                     statusClockin = clockinStatus(to24HourTime(tapInTime));
                     $.post('./Attendance_modules/save_clockin.php', {
-                            Emp_id: <?php echo $_SESSION['emp_id']; ?>,
+                            emp_id: <?php echo $_SESSION['emp_id']; ?>,
                             Date: dateString,
                             Location: selectedLocation,
                             Clock_in: timeString,
                             Status: statusClockin,
-                            Work_status: 'Tapped-in'
+                            Clockin_status: 'Tapped-in'
                         }, function(response) {
                             alert(response);
                             document.location = './';
                     });
                 } else {
-                    alert('You are not within the geofenced area. Please move closer to the location and try again.');
+                    alert(JSON.parse(selectedCoordinates));
                 };
             } else {
                 let tapInTime = new Date();
@@ -178,7 +162,7 @@ header('Pragma: no-cache');
                 $.post('./Attendance_modules/save_clockout.php', {
                     Emp_id: <?php echo $_SESSION['emp_id']; ?>,
                     Clock_out: timeString,
-                    Work_status: 'Tapped-out'
+                    Clockin_status: 'Tapped-out'
                 }, function(response) {
                     alert(response);
                     document.location = './';
@@ -188,28 +172,6 @@ header('Pragma: no-cache');
             
         };
 
-        switch (workStatus) {
-            case 'Tapped-in':
-                tapButton.textContent = 'Tap Out';
-                tapButton.classList.add('tapped-out');
-                locationSelect.disable = true;
-                statusDisplay.innerHTML = `
-                            <div class="status-present">
-                                <strong>Tapped In</strong><br>
-                                <p class="d-none">
-                                User ID: <?php echo $_SESSION['emp_id']; ?> 
-                                </p>
-                                Date: ${dateString}<br>
-                                Time: <?php echo $_SESSION['Clock_in']; ?><br>
-                            </div>
-                        `;
-                break;
-            case 'Tapped-out':
-                tapButton.textContent = 'Tap In';
-                tapButton.classList.remove('tapped-out');
-                break;
-            default:
-                tapButton.textContent = 'Tap In';
-        };
-
     </script>
+</body>
+</html>
