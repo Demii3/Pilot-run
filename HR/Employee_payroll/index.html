@@ -178,30 +178,274 @@
   else if (section === "income") {
       content.innerHTML = `
         <div class="card">
-          <h2>Manage Income</h2>
-          <p>Configure employee income details.</p>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>Employee Income Types</h2>
+            <button class="btn btn-secondary" onclick="openIncomeTypeForm()">+ Add Income Type</button>
+          </div>
+          <div class="card-body">
+            <form id="incomeTypeForm" class="mb-4" style="display: none;">
+              <input type="hidden" id="incomeTypeId">
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label for="incomeTypeName" class="form-label">Type of Income</label>
+                  <input type="text" id="incomeTypeName" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                  <label for="incomeTypeCost" class="form-label">Cost</label>
+                  <input type="number" id="incomeTypeCost" class="form-control" step="0.01" required>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="incomeTypeTaxable" checked>
+                    <label class="form-check-label" for="incomeTypeTaxable">Taxable</label>
+                  </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="incomeType13th" checked>
+                    <label class="form-check-label" for="incomeType13th">13th Month</label>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary" onclick="saveIncomeType()">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="hideIncomeTypeForm()">Cancel</button>
+              </div>
+            </form>
+
+            <div class="mb-3">
+              <input 
+                type="text" 
+                id="searchIncomeTypes" 
+                class="form-control" 
+                placeholder="Search by income type or cost..."
+                onkeyup="filterIncomeTypes()"
+              >
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover" id="incomeTypeTable">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Type of Income</th>
+                    <th>Cost</th>
+                    <th>Taxable / Non-Taxable</th>
+                    <th>Included in 13th Month</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>`;
+      loadIncomeTypes();
   }
 
   else if (section === "employee_deductions") {
     content.innerHTML = `
       <div class="card">
-        <h2>Manage Employee Deductions</h2>
-        <p>Assign specific deductions to employees.</p>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Manage Employee Deductions</h2>
+          <button class="btn btn-primary">+ Add Deduction</button>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <input 
+              type="text" 
+              id="searchDeductions" 
+              class="form-control" 
+              placeholder="Search by employee name or deduction type..."
+            >
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Employee Name</th>
+                  <th>Deduction Type</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Romer Navoa</td>
+                  <td>SSS</td>
+                  <td>₱1,200.00</td>
+                  <td>Active</td>
+                  <td>
+                    <button class="btn btn-sm btn-warning">Edit</button>
+                    <button class="btn btn-sm btn-danger">Delete</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>Alexis Eron</td>
+                  <td>PhilHealth</td>
+                  <td>₱600.00</td>
+                  <td>Active</td>
+                  <td>
+                    <button class="btn btn-sm btn-warning">Edit</button>
+                    <button class="btn btn-sm btn-danger">Delete</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <div class="table-card">
-        <h2>Manage Employee Deductions</h2>
-        <p>Assign specific deductions to employees.</p>
+      
+
+      <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Deduction Summary</h2>
+          <button class="btn btn-success">Generate Report</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Deduction Type</th>
+                  <th>Total Amount</th>
+                  <th>Employee Count</th>
+                  <th>Last Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SSS</td>
+                  <td>₱3,600.00</td>
+                  <td>3</td>
+                  <td>2024-04-10</td>
+                  <td>
+                    <button class="btn btn-sm btn-info">View</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>PhilHealth</td>
+                  <td>₱1,800.00</td>
+                  <td>3</td>
+                  <td>2024-04-10</td>
+                  <td>
+                    <button class="btn btn-sm btn-info">View</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Pag-IBIG</td>
+                  <td>₱300.00</td>
+                  <td>3</td>
+                  <td>2024-04-10</td>
+                  <td>
+                    <button class="btn btn-sm btn-info">View</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>`;
   }
 
   else if (section === "employee_income") {
     content.innerHTML = `
       <div class="card">
-        <h2>Manage Employee Income</h2>
-        <p>Assign specific income details to employees.</p>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h2>Manage Employee Income</h2>
+            <span class="text-muted">Search employees stored in simpletest_db</span>
+          </div>
+          <button class="btn btn-success" onclick="openEmployeeIncomeForm()">Add Income to Employee</button>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <input
+              type="text"
+              id="searchEmployees"
+              class="form-control"
+              placeholder="Search by name, email, position, or department..."
+              onkeyup="filterEmployees()"
+            >
+          </div>
+
+          <form id="employeeIncomeForm" class="mb-4" style="display: none;">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="incomeEmployeeSelect" class="form-label">Employee</label>
+                <select id="incomeEmployeeSelect" class="form-select" required></select>
+              </div>
+              <div class="col-md-4">
+                <label for="incomeTypeSelect" class="form-label">Income Type</label>
+                <select id="incomeTypeSelect" class="form-select" onchange="updateSelectedIncomeDetails()" required></select>
+              </div>
+              <div class="col-md-2">
+                <label for="selectedIncomeCost" class="form-label">Cost</label>
+                <input type="text" id="selectedIncomeCost" class="form-control" disabled>
+              </div>
+              <div class="col-md-1 d-flex align-items-center">
+                <div class="form-check mt-3">
+                  <input class="form-check-input" type="checkbox" id="selectedIncomeTaxable" disabled>
+                  <label class="form-check-label" for="selectedIncomeTaxable">Taxable</label>
+                </div>
+              </div>
+              <div class="col-md-1 d-flex align-items-center">
+                <div class="form-check mt-3">
+                  <input class="form-check-input" type="checkbox" id="selectedIncome13th" disabled>
+                  <label class="form-check-label" for="selectedIncome13th">13th</label>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3 d-flex gap-2">
+              <button type="button" class="btn btn-primary" onclick="saveEmployeeIncomeAssignment()">Save Assignment</button>
+              <button type="button" class="btn btn-secondary" onclick="hideEmployeeIncomeForm()">Cancel</button>
+            </div>
+          </form>
+
+          <div class="table-responsive">
+            <table class="table table-hover" id="employeeSearchTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Position</th>
+                  <th>Department</th>
+                  <th>Salary</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="mt-4">
+            <h5>Assigned Income Items</h5>
+            <div class="table-responsive">
+              <table class="table table-hover" id="employeeIncomeAssignmentTable">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Employee</th>
+                    <th>Income Type</th>
+                    <th>Cost</th>
+                    <th>Taxable</th>
+                    <th>13th Month</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>`;
+    loadEmployees();
+    loadIncomeTypesForAssignments();
+    renderEmployeeIncomeAssignments();
   }
 
   else if (section === "tax") {
@@ -271,6 +515,376 @@
         <h2>Year-End Tax</h2>
         <p>Process annual tax adjustments and summaries.</p>
       </div>`;
+  }
+}
+
+let employeesForIncome = [];
+let incomeTypesForAssignments = [];
+let employeeIncomeAssignments = [];
+
+async function loadIncomeTypes() {
+  const tableBody = document.querySelector('#incomeTypeTable tbody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
+
+  try {
+    const response = await fetch('emp_inc_type_api.php');
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to load income types.');
+    }
+
+    const rows = result.data || [];
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No income types found.</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    rows.forEach(item => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${item.type_of_income}</td>
+        <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        <td><input type="checkbox" disabled ${item.taxable == 1 ? 'checked' : ''}></td>
+        <td><input type="checkbox" disabled ${item.included_in_13month == 1 ? 'checked' : ''}></td>
+        <td>
+          <button type="button" class="btn btn-sm btn-warning edit-income-type">Edit</button>
+          <button type="button" class="btn btn-sm btn-danger delete-income-type">Delete</button>
+        </td>`;
+      tableBody.appendChild(row);
+
+      const editButton = row.querySelector('.edit-income-type');
+      const deleteButton = row.querySelector('.delete-income-type');
+      if (editButton) {
+        editButton.addEventListener('click', () => editIncomeType(item.id));
+      }
+      if (deleteButton) {
+        deleteButton.addEventListener('click', () => deleteIncomeType(item.id));
+      }
+    });
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
+  }
+}
+
+function openIncomeTypeForm(reset = true) {
+  const form = document.getElementById('incomeTypeForm');
+  if (!form) return;
+  form.style.display = 'block';
+  if (reset) {
+    document.getElementById('incomeTypeId').value = '';
+    document.getElementById('incomeTypeName').value = '';
+    document.getElementById('incomeTypeCost').value = '';
+    document.getElementById('incomeTypeTaxable').checked = true;
+    document.getElementById('incomeType13th').checked = true;
+  }
+}
+
+function hideIncomeTypeForm() {
+  const form = document.getElementById('incomeTypeForm');
+  if (!form) return;
+  form.style.display = 'none';
+}
+
+async function saveIncomeType() {
+  const id = document.getElementById('incomeTypeId').value;
+  const typeOfIncome = document.getElementById('incomeTypeName').value.trim();
+  const cost = document.getElementById('incomeTypeCost').value;
+  const taxable = document.getElementById('incomeTypeTaxable').checked ? 1 : 0;
+  const includedIn13 = document.getElementById('incomeType13th').checked ? 1 : 0;
+
+  if (!typeOfIncome || cost === '') {
+    alert('Please fill in both income type and cost.');
+    return;
+  }
+
+  const payload = {
+    type_of_income: typeOfIncome,
+    cost: parseFloat(cost),
+    taxable,
+    included_in_13month: includedIn13
+  };
+
+  if (id) {
+    payload.id = Number(id);
+  }
+
+  try {
+    const response = await fetch('emp_inc_type_api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || 'Save failed.');
+    }
+
+    hideIncomeTypeForm();
+    loadIncomeTypes();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function editIncomeType(id) {
+  try {
+    const response = await fetch(`emp_inc_type_api.php?id=${id}`);
+    const result = await response.json();
+    if (!result.success || !result.data) {
+      throw new Error(result.message || 'Unable to load income type.');
+    }
+
+    const item = result.data;
+    document.getElementById('incomeTypeId').value = item.id;
+    document.getElementById('incomeTypeName').value = item.type_of_income;
+    document.getElementById('incomeTypeCost').value = parseFloat(item.cost).toFixed(2);
+    document.getElementById('incomeTypeTaxable').checked = item.taxable == 1;
+    document.getElementById('incomeType13th').checked = item.included_in_13month == 1;
+    openIncomeTypeForm(false);
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function deleteIncomeType(id) {
+  if (!confirm('Delete this income type?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch('emp_inc_type_api.php', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `id=${encodeURIComponent(id)}`
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Delete failed.');
+    }
+    loadIncomeTypes();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function populateEmployeeSelect() {
+  const select = document.getElementById('incomeEmployeeSelect');
+  if (!select) return;
+  select.innerHTML = '<option value="">Select employee</option>';
+  employeesForIncome.forEach(emp => {
+    const option = document.createElement('option');
+    option.value = emp.id;
+    option.textContent = `${emp.name} (${emp.position})`;
+    select.appendChild(option);
+  });
+}
+
+async function loadIncomeTypesForAssignments() {
+  incomeTypesForAssignments = [];
+  const select = document.getElementById('incomeTypeSelect');
+  if (select) {
+    select.innerHTML = '<option value="">Select income type</option>';
+  }
+
+  try {
+    const response = await fetch('emp_inc_type_api.php');
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load income types.');
+    }
+
+    incomeTypesForAssignments = result.data || [];
+    if (!select) return;
+
+    incomeTypesForAssignments.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.id;
+      option.textContent = `${item.type_of_income} - ₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      option.dataset.cost = item.cost;
+      option.dataset.taxable = item.taxable;
+      option.dataset.includedIn13 = item.included_in_13month;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error(error.message);
+  }
+}
+
+function openEmployeeIncomeForm(reset = true) {
+  const form = document.getElementById('employeeIncomeForm');
+  if (!form) return;
+  form.style.display = 'block';
+  if (reset) {
+    document.getElementById('incomeEmployeeSelect').value = '';
+    document.getElementById('incomeTypeSelect').value = '';
+    document.getElementById('selectedIncomeCost').value = '';
+    document.getElementById('selectedIncomeTaxable').checked = false;
+    document.getElementById('selectedIncome13th').checked = false;
+  }
+}
+
+function hideEmployeeIncomeForm() {
+  const form = document.getElementById('employeeIncomeForm');
+  if (!form) return;
+  form.style.display = 'none';
+}
+
+function updateSelectedIncomeDetails() {
+  const select = document.getElementById('incomeTypeSelect');
+  const costInput = document.getElementById('selectedIncomeCost');
+  const taxableCheckbox = document.getElementById('selectedIncomeTaxable');
+  const included13Checkbox = document.getElementById('selectedIncome13th');
+  if (!select || !costInput || !taxableCheckbox || !included13Checkbox) return;
+
+  const selectedOption = select.options[select.selectedIndex];
+  if (!selectedOption || !selectedOption.value) {
+    costInput.value = '';
+    taxableCheckbox.checked = false;
+    included13Checkbox.checked = false;
+    return;
+  }
+
+  costInput.value = parseFloat(selectedOption.dataset.cost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  taxableCheckbox.checked = selectedOption.dataset.taxable === '1';
+  included13Checkbox.checked = selectedOption.dataset.includedIn13 === '1';
+}
+
+function saveEmployeeIncomeAssignment() {
+  const employeeSelect = document.getElementById('incomeEmployeeSelect');
+  const incomeTypeSelect = document.getElementById('incomeTypeSelect');
+  const costInput = document.getElementById('selectedIncomeCost');
+  const taxableCheckbox = document.getElementById('selectedIncomeTaxable');
+  const included13Checkbox = document.getElementById('selectedIncome13th');
+
+  if (!employeeSelect || !incomeTypeSelect) return;
+  if (!employeeSelect.value || !incomeTypeSelect.value) {
+    alert('Please select both an employee and an income type.');
+    return;
+  }
+
+  const employee = employeesForIncome.find(emp => String(emp.id) === employeeSelect.value);
+  const incomeType = incomeTypesForAssignments.find(item => String(item.id) === incomeTypeSelect.value);
+  if (!employee || !incomeType) {
+    alert('Selected employee or income type is invalid.');
+    return;
+  }
+
+  employeeIncomeAssignments.push({
+    employeeName: employee.name,
+    incomeType: incomeType.type_of_income,
+    cost: incomeType.cost,
+    taxable: incomeType.taxable === 1,
+    included13: incomeType.included_in_13month === 1
+  });
+  hideEmployeeIncomeForm();
+  renderEmployeeIncomeAssignments();
+}
+
+function renderEmployeeIncomeAssignments() {
+  const tableBody = document.querySelector('#employeeIncomeAssignmentTable tbody');
+  if (!tableBody) return;
+  if (employeeIncomeAssignments.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No assigned income items yet.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = '';
+  employeeIncomeAssignments.forEach(item => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.employeeName}</td>
+      <td>${item.incomeType}</td>
+      <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      <td>${item.taxable ? 'Yes' : 'No'}</td>
+      <td>${item.included13 ? 'Yes' : 'No'}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+function filterIncomeTypes() {
+  const searchInput = document.getElementById('searchIncomeTypes');
+  const filter = searchInput.value.toLowerCase();
+  const tableBody = document.querySelector('#incomeTypeTable tbody');
+  const rows = tableBody.getElementsByTagName('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length >= 2) {
+      const incomeType = cells[0].textContent.toLowerCase();
+      const cost = cells[1].textContent.toLowerCase();
+      if (incomeType.includes(filter) || cost.includes(filter)) {
+        rows[i].style.display = '';
+      } else {
+        rows[i].style.display = 'none';
+      }
+    }
+  }
+}
+
+async function loadEmployees() {
+  const tableBody = document.querySelector('#employeeSearchTable tbody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading employees...</td></tr>';
+
+  try {
+    const response = await fetch('../Employee_management/employees_api.php');
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load employees.');
+    }
+
+    const rows = result.data || [];
+    employeesForIncome = rows;
+    populateEmployeeSelect();
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found.</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    rows.forEach(emp => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${emp.id}</td>
+        <td>${emp.name}</td>
+        <td>${emp.email}</td>
+        <td>${emp.position}</td>
+        <td>${emp.department}</td>
+        <td>₱${parseFloat(emp.salary).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        <td>${emp.status}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+  }
+}
+
+function filterEmployees() {
+  const searchInput = document.getElementById('searchEmployees');
+  const filter = searchInput.value.toLowerCase();
+  const tableBody = document.querySelector('#employeeSearchTable tbody');
+  const rows = tableBody.getElementsByTagName('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length >= 4) {
+      const name = cells[1].textContent.toLowerCase();
+      const email = cells[2].textContent.toLowerCase();
+      const position = cells[3].textContent.toLowerCase();
+      const department = cells[4].textContent.toLowerCase();
+      if (name.includes(filter) || email.includes(filter) || position.includes(filter) || department.includes(filter)) {
+        rows[i].style.display = '';
+      } else {
+        rows[i].style.display = 'none';
+      }
+    }
   }
 }
 
