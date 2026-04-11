@@ -15,7 +15,7 @@
     $result1 = mysqli_query($dbc, $sql1);
     
     $sql2 = "UPDATE users 
-             SET `Clockin_status` = '" . $_POST['clockin_status'] . "' 
+             SET `Clockin_status` = 'Tapped-in' 
              WHERE `User_id` = " . $_POST['emp_id'];
 
     $result2 = mysqli_query($dbc, $sql2);

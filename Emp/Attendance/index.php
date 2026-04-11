@@ -120,10 +120,21 @@
         }
 
         function ClockoutClick(locationName, coordinates) {
+            const Time = new Date();
+            const TimeString = Time.toLocaleTimeString();
+            const ClockoutStatus = checkClockoutStatus(TimeString.split(' '));
             document.getElementById('tapButton').textContent = 'Tap in';
             document.getElementById('tapButton').classList.remove('tapped-out');
             document.getElementById('tapButton').onclick = () => ClockinClick(locationName, coordinates);
             document.getElementById('locationSelect').disabled = false;
+            $.post('./Attendance_modules/save_clockout.php', {
+                Attendance_id: <?php echo $_SESSION['Attendance_id']; ?>,
+                clockout_time: TimeString,
+                clockout_status: ClockoutStatus,
+                duration: subtractTime(TimeString.split(' '), "<?php echo $_SESSION['Clock-in']; ?>".split(' ')),
+            }, function(response) {
+                alert(response);
+            });
         }
     </script>
 </body>

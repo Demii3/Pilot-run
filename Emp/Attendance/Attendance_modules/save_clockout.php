@@ -1,17 +1,25 @@
 <?php
     session_start();
     $msg = '';
-    $duration = (strtotime($_POST['Clock_out']) - strtotime($_SESSION['Clock_in'])) / 60;
+
     include './dbcon.php';
-    $sql = "UPDATE employee_attendance SET `Clock_out` = '" . $_POST['Clock_out'] . "', `Duration` = '" . $duration . "' WHERE `Emp_id` = " . $_POST['Emp_id'] . " AND `Clock_in` = '" . $_SESSION['Clock_in'] . "'";
-    $result = mysqli_query($dbc, $sql);
-    $sql2 = "UPDATE users SET `Work_status` = '" . $_POST['Clockin_status'] . "' WHERE `User_id` = " . $_POST['Emp_id'];
+    $sql1 = "UPDATE employee_attendance 
+             SET `Clock_out` = '" . $_POST['clockout_time'] . "',
+                 `Clockout_Status` = '" . $_POST['clockout_status'] . "',
+                 `Duration` = '" . $_POST['duration'] . "'
+            WHERE `Attendance_id` = '" . $_SESSION['Attendance_id'] . "'";
+    $result1 = mysqli_query($dbc, $sql1);
+
+    $sql2 = "UPDATE users 
+             SET `Clockin_status` = 'Tapped-out' 
+             WHERE `User_id` = " . $_SESSION['id'];
     $result2 = mysqli_query($dbc, $sql2);
-    if($result && $result2) {
-        $msg .= $duration . " minutes worked. Attendance recorded successfully.";
+
+    if($result1 && $result2) {
+        $msg .= $_POST['duration'] . " minutes worked. Attendance recorded successfully.";
     } else {
         $msg .= "Error recording attendance: " . mysqli_error($dbc);
     }
-    $_SESSION['Clock-status'] = $_POST['Clockin_status'];
+    $_SESSION['Clockout-status'] = $_POST['clockout_status'];
     echo $msg;
 ?>
