@@ -2,14 +2,14 @@
 header('Content-Type: application/json');
 
 include '../../Modules/dbcon.php';
-include 'Emp_Inc_Type_query.php';
+include 'Emp_Deduc_Type_query.php';
 
 if (!$dbc) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed.']);
     exit;
 }
 
-mysqli_query($dbc, getEmpIncTypeTableSql());
+mysqli_query($dbc, getEmpDeducTypeTableSql());
 if (mysqli_errno($dbc)) {
     echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($dbc)]);
     exit;
@@ -34,7 +34,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 if ($method === 'GET') {
     if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $id = intval($_GET['id']);
-        $stmt = mysqli_prepare($dbc, "SELECT id, type_of_income, cost, taxable, included_in_13month FROM Emp_Inc_Type WHERE id = ?");
+        $stmt = mysqli_prepare($dbc, "SELECT id, type_of_deduction, cost, taxable, included_in_13month FROM Emp_Deduc_Type WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'i', $id);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
@@ -42,8 +42,8 @@ if ($method === 'GET') {
         respond(true, $row ?? null);
     }
 
-    // Fetch all rows from the emp_inc_type table
-    $query = "SELECT * FROM emp_inc_type";
+    // Fetch all rows from the emp_deduc_type table
+    $query = "SELECT * FROM emp_deduc_type";
     $result = mysqli_query($dbc, $query);
 
     if (!$result) {
@@ -67,32 +67,32 @@ if ($method === 'POST') {
     }
 
     $id = isset($input['id']) && is_numeric($input['id']) ? intval($input['id']) : null;
-    $typeOfIncome = trim($input['type_of_income'] ?? '');
+    $typeOfDeduction = trim($input['type_of_deduction'] ?? '');
     $cost = isset($input['cost']) ? floatval($input['cost']) : null;
     $taxable = isset($input['taxable']) && ($input['taxable'] == 1 || $input['taxable'] === true || $input['taxable'] === '1') ? 1 : 0;
     $includedIn13 = isset($input['included_in_13month']) && ($input['included_in_13month'] == 1 || $input['included_in_13month'] === true || $input['included_in_13month'] === '1') ? 1 : 0;
 
-    if ($typeOfIncome === '' || $cost === null) {
+    if ($typeOfDeduction === '' || $cost === null) {
         respond(false, null, 'Missing required fields.');
     }
 
     if ($id) {
-        $stmt = mysqli_prepare($dbc, "UPDATE Emp_Inc_Type SET type_of_income = ?, cost = ?, taxable = ?, included_in_13month = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, 'sdiii', $typeOfIncome, $cost, $taxable, $includedIn13, $id);
+        $stmt = mysqli_prepare($dbc, "UPDATE Emp_Deduc_Type SET type_of_deduction = ?, cost = ?, taxable = ?, included_in_13month = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'sdiii', $typeOfDeduction, $cost, $taxable, $includedIn13, $id);
         if (!mysqli_stmt_execute($stmt)) {
             respond(false, null, 'Update failed: ' . mysqli_error($dbc));
         }
-        respond(true, ['id' => $id, 'type_of_income' => $typeOfIncome, 'cost' => $cost, 'taxable' => $taxable, 'included_in_13month' => $includedIn13], 'Income type updated.');
+        respond(true, ['id' => $id, 'type_of_deduction' => $typeOfDeduction, 'cost' => $cost, 'taxable' => $taxable, 'included_in_13month' => $includedIn13], 'Deduction type updated.');
     }
 
-    $stmt = mysqli_prepare($dbc, "INSERT INTO Emp_Inc_Type (type_of_income, cost, taxable, included_in_13month) VALUES (?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, 'sdii', $typeOfIncome, $cost, $taxable, $includedIn13);
+    $stmt = mysqli_prepare($dbc, "INSERT INTO Emp_Deduc_Type (type_of_deduction, cost, taxable, included_in_13month) VALUES (?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, 'sdii', $typeOfDeduction, $cost, $taxable, $includedIn13);
     if (!mysqli_stmt_execute($stmt)) {
         respond(false, null, 'Insert failed: ' . mysqli_error($dbc));
     }
 
     $insertedId = mysqli_insert_id($dbc);
-    respond(true, ['id' => $insertedId, 'type_of_income' => $typeOfIncome, 'cost' => $cost, 'taxable' => $taxable, 'included_in_13month' => $includedIn13], 'Income type created.');
+    respond(true, ['id' => $insertedId, 'type_of_deduction' => $typeOfDeduction, 'cost' => $cost, 'taxable' => $taxable, 'included_in_13month' => $includedIn13], 'Deduction type created.');
 }
 
 if ($method === 'DELETE') {
@@ -102,12 +102,12 @@ if ($method === 'DELETE') {
     }
 
     $id = intval($input['id']);
-    $stmt = mysqli_prepare($dbc, "DELETE FROM Emp_Inc_Type WHERE id = ?");
+    $stmt = mysqli_prepare($dbc, "DELETE FROM Emp_Deduc_Type WHERE id = ?");
     mysqli_stmt_bind_param($stmt, 'i', $id);
     if (!mysqli_stmt_execute($stmt)) {
         respond(false, null, 'Delete failed: ' . mysqli_error($dbc));
     }
-    respond(true, null, 'Income type deleted.');
+    respond(true, null, 'Deduction type deleted.');
 }
 
 respond(false, null, 'Unsupported request method.');

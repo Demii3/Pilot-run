@@ -170,9 +170,68 @@
   if (section === "deductions") {
     content.innerHTML = `
       <div class="card">
-        <h2>Manage Deductions</h2>
-        <p>Setup employee income and deductions here.</p>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Employee Deduction Types</h2>
+          <button class="btn btn-secondary" onclick="openDeductionTypeForm()">+ Add Deduction Type</button>
+        </div>
+        <div class="card-body">
+          <form id="deductionTypeForm" class="mb-4" style="display: none;">
+            <input type="hidden" id="deductionTypeId">
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label for="deductionTypeName" class="form-label">Type of Deduction</label>
+                <input type="text" id="deductionTypeName" class="form-control" required>
+              </div>
+              <div class="col-md-3">
+                <label for="deductionTypeCost" class="form-label">Cost</label>
+                <input type="number" id="deductionTypeCost" class="form-control" step="0.01" required>
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deductionTypeTaxable" checked>
+                  <label class="form-check-label" for="deductionTypeTaxable">Taxable</label>
+                </div>
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deductionType13th" checked>
+                  <label class="form-check-label" for="deductionType13th">13th Month</label>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-primary" onclick="saveDeductionType()">Save</button>
+              <button type="button" class="btn btn-secondary" onclick="hideDeductionTypeForm()">Cancel</button>
+            </div>
+          </form>
+
+          <div class="mb-3">
+            <input 
+              type="text" 
+              id="searchDeductionTypes" 
+              class="form-control" 
+              placeholder="Search by deduction type or cost..."
+              onkeyup="filterDeductionTypes()"
+            >
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover" id="deductionTypeTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>Type of Deduction</th>
+                  <th>Cost</th>
+                  <th>Taxable / Non-Taxable</th>
+                  <th>Included in 13th Month</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
       </div>`;
+    loadDeductionTypes();
   }
 
   else if (section === "income") {
@@ -448,35 +507,53 @@
     renderEmployeeIncomeAssignments();
   }
 
+  else if (section === "attendance") {
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>Employee Attendance</h2>
+            <button class="btn btn-secondary" onclick="openAttendanceForm()">+ Add Attendance</button>
+        </div>
+      </div>`;
+  }
+
   else if (section === "tax") {
     content.innerHTML = `
       <div class="card">
-        <h2>Tax Table</h2>
-        <p>Configure tax brackets and rules.</p>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>Employee Tax</h2>
+            <button class="btn btn-secondary" onclick="openTaxTypeForm()">+ Add Tax Type</button>
+        </div>
       </div>`;
   }
 
   else if (section === "sss") {
     content.innerHTML = `
       <div class="card">
-        <h2>SSS Table</h2>
-        <p>Manage SSS contributions.</p>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>Employee SSS</h2>
+            <button class="btn btn-secondary" onclick="openSSSTypeForm()">+ Add SSS Type</button>
+        </div>
       </div>`;
   }
 
   else if (section === "philhealth") {
     content.innerHTML = `
       <div class="card">
-        <h2>PhilHealth</h2>
-        <p>Setup PhilHealth contributions.</p>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>Employee PhilHealth</h2>
+            <button class="btn btn-secondary" onclick="openPhilHealthTypeForm()">+ Add PhilHealth Type</button>
+        </div>
       </div>`;
   }
 
   else if (section === "pagibig") {
     content.innerHTML = `
       <div class="card">
-        <h2>Pag-IBIG</h2>
-        <p>Configure Pag-IBIG deductions.</p>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>Employee Pag-IBIG</h2>
+            <button class="btn btn-secondary" onclick="openPagIBIGTypeForm()">+ Add Pag-IBIG Type</button>
+        </div>
       </div>`;
   }
 
@@ -517,6 +594,9 @@
       </div>`;
   }
 }
+
+
+
 
 let employeesForIncome = [];
 let incomeTypesForAssignments = [];
@@ -773,15 +853,33 @@ function saveEmployeeIncomeAssignment() {
     return;
   }
 
-  employeeIncomeAssignments.push({
-    employeeName: employee.name,
-    incomeType: incomeType.type_of_income,
-    cost: incomeType.cost,
-    taxable: incomeType.taxable === 1,
-    included13: incomeType.included_in_13month === 1
-  });
-  hideEmployeeIncomeForm();
-  renderEmployeeIncomeAssignments();
+  // Push values into the assigned_emp_inc table using the assigned_emp_inc_api
+  const payload = {
+    name: employee.name,
+    type_of_income: incomeType.type_of_income,
+    cost: parseFloat(costInput.value),
+    taxable: taxableCheckbox.checked ? 1 : 0,
+    month_13th: included13Checkbox.checked ? 1 : 0
+  };
+
+  fetch('assigned_emp_inc_api.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(response => response.json())
+    .then(result => {
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to save assignment.');
+      }
+      alert('Assignment saved successfully!');
+      hideEmployeeIncomeForm();
+      renderEmployeeIncomeAssignments();
+    })
+    .catch(error => {
+      console.error('Error saving assignment:', error);
+      alert(`Error: ${error.message}`);
+    });
 }
 
 function renderEmployeeIncomeAssignments() {
@@ -888,6 +986,34 @@ function filterEmployees() {
   }
 }
 
+async function fetchEmployeeIncomeAssignments() {
+  try {
+    const response = await fetch('assigned_emp_inc_api.php');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    if (data.success) {
+      employeeIncomeAssignments = data.data.map(item => ({
+        employeeName: item.name,
+        incomeType: item.type_of_income,
+        cost: item.cost,
+        taxable: item.taxable,
+        included13: item['month_13th']
+      }));
+      renderEmployeeIncomeAssignments();
+    } else {
+      console.error('Failed to fetch assignments:', data.message);
+      alert(`Error: ${data.message}`);
+    }
+  } catch (error) {
+    console.error('Error fetching assignments:', error);
+    alert(`Error: ${error.message}`);
+  }
+}
+
+// Call fetchEmployeeIncomeAssignments when the page loads or data needs to be refreshed
+fetchEmployeeIncomeAssignments();
 </script>
 
 
