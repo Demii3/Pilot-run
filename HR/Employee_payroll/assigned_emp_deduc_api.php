@@ -17,16 +17,13 @@ function respond($success, $data = null, $message = '', $statusCode = 200) {
     exit;
 }
 
-function ensureAssignedEmpIncTable($dbc) {
-    $createSql = "CREATE TABLE IF NOT EXISTS `assigned_emp_inc` (
+function ensureAssignedEmpDeducTable($dbc) {
+    $createSql = "CREATE TABLE IF NOT EXISTS `assigned_emp_deduc` (
       `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
       `name` VARCHAR(255) NOT NULL,
-      `type_of_income` VARCHAR(255) NOT NULL,
+      `type_of_deduction` VARCHAR(255) NOT NULL,
       `cost` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
-      `taxable` TINYINT(1) NOT NULL DEFAULT 0,
-      `month_13th` TINYINT(1) NOT NULL DEFAULT 0,
       `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
@@ -37,7 +34,7 @@ function ensureAssignedEmpIncTable($dbc) {
 }
 
 function handleGetRequest($dbc) {
-    $query = "SELECT id, name, type_of_income, cost, taxable, month_13th FROM assigned_emp_inc ORDER BY id DESC";
+    $query = "SELECT id, name, type_of_deduction, cost, created_at FROM assigned_emp_deduc ORDER BY id DESC";
     $result = mysqli_query($dbc, $query);
 
     if (!$result) {
@@ -54,27 +51,25 @@ function handlePostRequest($dbc) {
         $input = $_POST;
     }
 
-    if (!isset($input['name'], $input['type_of_income'], $input['cost'], $input['taxable'], $input['month_13th'])) {
+    if (!isset($input['name'], $input['type_of_deduction'], $input['cost'])) {
         respond(false, null, 'Invalid input.', 400);
     }
 
     $id = isset($input['id']) && is_numeric($input['id']) ? intval($input['id']) : null;
     $name = trim($input['name']);
-    $type_of_income = trim($input['type_of_income']);
+    $type_of_deduction = trim($input['type_of_deduction']);
     $cost = floatval($input['cost']);
-    $taxable = ($input['taxable'] == 1 || $input['taxable'] === true || $input['taxable'] === '1') ? 1 : 0;
-    $month_13th = ($input['month_13th'] == 1 || $input['month_13th'] === true || $input['month_13th'] === '1') ? 1 : 0;
 
-    if ($name === '' || $type_of_income === '') {
-        respond(false, null, 'Name and income type are required.', 400);
+    if ($name === '' || $type_of_deduction === '') {
+        respond(false, null, 'Name and deduction type are required.', 400);
     }
 
     if ($id) {
-        $stmt = mysqli_prepare($dbc, "UPDATE assigned_emp_inc SET name = ?, type_of_income = ?, cost = ?, taxable = ?, month_13th = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, 'ssdiii', $name, $type_of_income, $cost, $taxable, $month_13th, $id);
+        $stmt = mysqli_prepare($dbc, "UPDATE assigned_emp_deduc SET name = ?, type_of_deduction = ?, cost = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'ssdi', $name, $type_of_deduction, $cost, $id);
     } else {
-        $stmt = mysqli_prepare($dbc, "INSERT INTO assigned_emp_inc (name, type_of_income, cost, taxable, month_13th) VALUES (?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'ssdii', $name, $type_of_income, $cost, $taxable, $month_13th);
+        $stmt = mysqli_prepare($dbc, "INSERT INTO assigned_emp_deduc (name, type_of_deduction, cost) VALUES (?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, 'ssd', $name, $type_of_deduction, $cost);
     }
 
     if (!mysqli_stmt_execute($stmt)) {
@@ -92,7 +87,7 @@ function handleDeleteRequest($dbc) {
     }
 
     $id = intval($input['id']);
-    $stmt = mysqli_prepare($dbc, "DELETE FROM assigned_emp_inc WHERE id = ?");
+    $stmt = mysqli_prepare($dbc, "DELETE FROM assigned_emp_deduc WHERE id = ?");
     mysqli_stmt_bind_param($stmt, 'i', $id);
 
     if (!mysqli_stmt_execute($stmt)) {
@@ -107,7 +102,7 @@ try {
         respond(false, null, 'Database connection failed.', 500);
     }
 
-    ensureAssignedEmpIncTable($dbc);
+    ensureAssignedEmpDeducTable($dbc);
 
     $method = $_SERVER['REQUEST_METHOD'];
 
@@ -127,5 +122,3 @@ try {
 } catch (Throwable $e) {
     respond(false, null, 'Server error: ' . $e->getMessage(), 500);
 }
-
-
