@@ -1,13 +1,21 @@
 <?php
+ob_start();
 header('Content-Type: application/json');
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
 
 include 'dbcon.php';
 
+try {
 // Ensure the employees table exists.
 $createTableSql = "CREATE TABLE IF NOT EXISTS `employees` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL,
   `email` VARCHAR(255) NOT NULL,
+  `username` VARCHAR(255) NOT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `type` VARCHAR(50) NOT NULL DEFAULT 'Emp',
   `position` VARCHAR(255) NOT NULL,
   `department` VARCHAR(255) NOT NULL,
   `salary` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
@@ -23,56 +31,109 @@ if (mysqli_errno($dbc)) {
     exit;
 }
 
+function columnExists($dbc, $table, $column) {
+    $table = mysqli_real_escape_string($dbc, $table);
+    $column = mysqli_real_escape_string($dbc, $column);
+    $result = mysqli_query($dbc, "SHOW COLUMNS FROM `" . $table . "` LIKE '" . $column . "'");
+    return $result && mysqli_num_rows($result) > 0;
+}
+
+function ensureEmployeeTableColumns($dbc) {
+    if (!columnExists($dbc, 'employees', 'password')) {
+        mysqli_query($dbc, "ALTER TABLE `employees` ADD COLUMN `password` VARCHAR(255) NOT NULL DEFAULT '' AFTER `username`");
+    }
+}
+
+ensureEmployeeTableColumns($dbc);
+
 function tableExists($dbc, $name) {
     $name = mysqli_real_escape_string($dbc, $name);
     $result = mysqli_query($dbc, "SHOW TABLES LIKE '" . $name . "'");
     return $result && mysqli_num_rows($result) > 0;
 }
 
-function legacyEmployeeTableExists($dbc) {
-    return tableExists($dbc, 'employee');
+function ensureUsersTable($dbc) {
+    if (!tableExists($dbc, 'users')) {
+        $createUsersSql = "CREATE TABLE IF NOT EXISTS `users` (
+            `User_id` bigint(255) NOT NULL,
+            `Username` varchar(255) NOT NULL,
+            `Password` varchar(255) NOT NULL,
+            `Type` varchar(255) NOT NULL,
+            `Work_status` varchar(255) NOT NULL DEFAULT 'Tapped-out',
+            PRIMARY KEY (`User_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        mysqli_query($dbc, $createUsersSql);
+    }
+
+    if (!columnExists($dbc, 'users', 'User_id')) {
+        mysqli_query($dbc, "ALTER TABLE `users` ADD COLUMN `User_id` bigint(255) NOT NULL");
+    }
+    if (!columnExists($dbc, 'users', 'Username')) {
+        mysqli_query($dbc, "ALTER TABLE `users` ADD COLUMN `Username` varchar(255) NOT NULL");
+    }
+    if (!columnExists($dbc, 'users', 'Password')) {
+        mysqli_query($dbc, "ALTER TABLE `users` ADD COLUMN `Password` varchar(255) NOT NULL");
+    }
+    if (!columnExists($dbc, 'users', 'Type')) {
+        mysqli_query($dbc, "ALTER TABLE `users` ADD COLUMN `Type` varchar(255) NOT NULL");
+    }
+    if (!columnExists($dbc, 'users', 'Work_status')) {
+        mysqli_query($dbc, "ALTER TABLE `users` ADD COLUMN `Work_status` varchar(255) NOT NULL DEFAULT 'Tapped-out'");
+    }
 }
 
-function migrateLegacyEmployeeTable($dbc) {
-    if (!legacyEmployeeTableExists($dbc)) {
-        return;
-    }
+ensureUsersTable($dbc);
 
-    $countResult = mysqli_query($dbc, "SELECT COUNT(*) AS cnt FROM employees");
-    $countRow = mysqli_fetch_assoc($countResult);
-    if ($countRow && intval($countRow['cnt']) > 0) {
-        return;
-    }
+function ensureUserRow($dbc, $id, $username, $password, $type) {
+    $id = intval($id);
+    $existingPassword = '';
+    $workStatus = 'Tapped-out';
 
-    $result = mysqli_query($dbc, "SELECT Emp_id, Name, Position, Department, Salary, Status FROM employee");
-    if (!$result) {
-        return;
-    }
-
-    while ($row = mysqli_fetch_assoc($result)) {
-        $stmt = mysqli_prepare($dbc, "INSERT INTO employees (id, name, email, position, department, salary, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        if (!$stmt) {
-            continue;
-        }
-
-        $id = intval($row['Emp_id']);
-        $name = $row['Name'];
-        $email = '';
-        $position = $row['Position'];
-        $department = $row['Department'];
-        $salary = floatval($row['Salary']);
-        $joinDate = date('Y-m-d');
-        $status = $row['Status'] ?: 'Active';
-
-        mysqli_stmt_bind_param($stmt, 'isssdsss', $id, $name, $email, $position, $department, $salary, $joinDate, $status);
+    $stmt = mysqli_prepare($dbc, "SELECT `User_id`, `Password`, `Work_status` FROM `users` WHERE `User_id` = ?");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, 'i', $id);
         mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        if ($result && mysqli_num_rows($result) > 0) {
+            $row = mysqli_fetch_assoc($result);
+            $existingPassword = $row['Password'];
+            $workStatus = $row['Work_status'] ?: $workStatus;
+            if ($password === null) {
+                $password = $existingPassword;
+            }
+            mysqli_stmt_close($stmt);
+
+            $updateStmt = mysqli_prepare($dbc, "UPDATE `users` SET `Username` = ?, `Password` = ?, `Type` = ? WHERE `User_id` = ?");
+            if ($updateStmt) {
+                mysqli_stmt_bind_param($updateStmt, 'sssi', $username, $password, $type, $id);
+                mysqli_stmt_execute($updateStmt);
+                mysqli_stmt_close($updateStmt);
+            }
+            return;
+        }
         mysqli_stmt_close($stmt);
     }
+
+    if ($password === null) {
+        $password = '';
+    }
+
+    $insertStmt = mysqli_prepare($dbc, "INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`, `Work_status`) VALUES (?, ?, ?, ?, ?)");
+    if ($insertStmt) {
+        mysqli_stmt_bind_param($insertStmt, 'issss', $id, $username, $password, $type, $workStatus);
+        mysqli_stmt_execute($insertStmt);
+        mysqli_stmt_close($insertStmt);
+    }
 }
 
-migrateLegacyEmployeeTable($dbc);
+// Legacy migration is disabled here because `employees` is the source of truth.
+// Existing data in `employee` should not repopulate `employees`.
+// migrateLegacyEmployeeTable($dbc);
 
 function respond($success, $data = null, $message = '') {
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
     echo json_encode(['success' => $success, 'data' => $data, 'message' => $message]);
     exit;
 }
@@ -82,7 +143,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $id = intval($_GET['id']);
-        $stmt = mysqli_prepare($dbc, "SELECT id, name, email, position, department, salary, DATE_FORMAT(join_date, '%Y-%m-%d') AS join_date, status FROM employees WHERE id = ?");
+        $stmt = mysqli_prepare($dbc, "SELECT id, name, email, username, password, type, position, department, salary, DATE_FORMAT(join_date, '%Y-%m-%d') AS join_date, status FROM employees WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'i', $id);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
@@ -90,7 +151,7 @@ if ($method === 'GET') {
         respond(true, $employee ?? null);
     }
 
-    $result = mysqli_query($dbc, "SELECT id, name, email, position, department, salary, DATE_FORMAT(join_date, '%Y-%m-%d') AS join_date, status FROM employees ORDER BY id ASC");
+    $result = mysqli_query($dbc, "SELECT id, name, email, username, type, position, department, salary, DATE_FORMAT(join_date, '%Y-%m-%d') AS join_date, status FROM employees ORDER BY id ASC");
     $employees = [];
     while ($row = mysqli_fetch_assoc($result)) {
         $employees[] = $row;
@@ -106,13 +167,16 @@ if ($method === 'POST') {
 
     $name = trim($input['name'] ?? '');
     $email = trim($input['email'] ?? '');
+    $username = trim($input['username'] ?? '');
+    $password = isset($input['password']) ? $input['password'] : null;
+    $type = trim($input['type'] ?? '');
     $position = trim($input['position'] ?? '');
     $department = trim($input['department'] ?? '');
     $salary = $input['salary'] ?? null;
     $joinDate = trim($input['joinDate'] ?? '');
     $status = trim($input['status'] ?? 'Active');
 
-    if (!$name || !$email || !$position || !$department || $salary === null || $joinDate === '') {
+    if (!$name || !$email || !$username || (!$password && !isset($input['id'])) || !$type || !$position || !$department || $salary === null || $joinDate === '') {
         respond(false, null, 'Missing required employee fields.');
     }
 
@@ -122,26 +186,29 @@ if ($method === 'POST') {
 
     $salary = floatval($salary);
     $status = $status ?: 'Active';
+    $type = $type ?: 'Emp';
 
     if (isset($input['id']) && is_numeric($input['id'])) {
         $id = intval($input['id']);
-        $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, 'ssssdssi', $name, $email, $position, $department, $salary, $joinDate, $status, $id);
+        $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, username = ?, type = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'ssssssdssi', $name, $email, $username, $type, $position, $department, $salary, $joinDate, $status, $id);
         if (!mysqli_stmt_execute($stmt)) {
             respond(false, null, 'Database update failed: ' . mysqli_error($dbc));
         }
-        respond(true, ['id' => $id, 'name' => $name, 'email' => $email, 'position' => $position, 'department' => $department, 'salary' => $salary, 'join_date' => $joinDate, 'status' => $status], 'Employee updated.');
+        ensureUserRow($dbc, $id, $username, $password, $type);
+        respond(true, ['id' => $id, 'name' => $name, 'email' => $email, 'username' => $username, 'type' => $type, 'position' => $position, 'department' => $department, 'salary' => $salary, 'join_date' => $joinDate, 'status' => $status], 'Employee updated.');
     }
 
-    $stmt = mysqli_prepare($dbc, "INSERT INTO employees (name, email, position, department, salary, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, 'ssssdss', $name, $email, $position, $department, $salary, $joinDate, $status);
+    $stmt = mysqli_prepare($dbc, "INSERT INTO employees (name, email, username, password, type, position, department, salary, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, 'sssssssdss', $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status);
 
     if (!mysqli_stmt_execute($stmt)) {
         respond(false, null, 'Database insert failed: ' . mysqli_error($dbc));
     }
 
     $insertedId = mysqli_insert_id($dbc);
-    respond(true, ['id' => $insertedId, 'name' => $name, 'email' => $email, 'position' => $position, 'department' => $department, 'salary' => $salary, 'join_date' => $joinDate, 'status' => $status], 'Employee created.');
+    ensureUserRow($dbc, $insertedId, $username, $password, $type);
+    respond(true, ['id' => $insertedId, 'name' => $name, 'email' => $email, 'username' => $username, 'type' => $type, 'position' => $position, 'department' => $department, 'salary' => $salary, 'join_date' => $joinDate, 'status' => $status], 'Employee created.');
 }
 
 if ($method === 'DELETE') {
@@ -156,7 +223,22 @@ if ($method === 'DELETE') {
     if (!mysqli_stmt_execute($stmt)) {
         respond(false, null, 'Delete failed: ' . mysqli_error($dbc));
     }
+
+    $userDeleteStmt = mysqli_prepare($dbc, "DELETE FROM `users` WHERE `User_id` = ?");
+    if ($userDeleteStmt) {
+        mysqli_stmt_bind_param($userDeleteStmt, 'i', $id);
+        mysqli_stmt_execute($userDeleteStmt);
+        mysqli_stmt_close($userDeleteStmt);
+    }
+
     respond(true, null, 'Employee deleted.');
 }
 
 respond(false, null, 'Unsupported request method.');
+} catch (Throwable $e) {
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+    echo json_encode(['success' => false, 'data' => null, 'message' => 'Server error: ' . $e->getMessage()]);
+    exit;
+}

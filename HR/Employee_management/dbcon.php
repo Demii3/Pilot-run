@@ -7,6 +7,11 @@
     $dbasename = "simpletest_db";           /* if0_41495707_st */
 
     $dbc = mysqli_connect($hostname, $username, $password);
-    mysqli_select_db($dbc, $dbasename);
+    if (!$dbc) {
+        throw new Exception('Database connection failed: ' . mysqli_connect_error());
+    }
+    if (!mysqli_select_db($dbc, $dbasename)) {
+        throw new Exception('Database selection failed: ' . mysqli_error($dbc));
+    }
 
 ?>

@@ -44,12 +44,6 @@
       <button class="active" onclick="window.location.href='sites.php'">Manage Sites</button>
     </div>
 
-    <div class="content">
-      <div class="card">
-        <h2>Manage Sites</h2>
-        <p>Add, edit, and delete project sites.</p>
-      </div>
-
       <div class="card sites-card">
         <div class="sites-header">
           <h3>Saved Sites</h3>
