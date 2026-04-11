@@ -6,7 +6,7 @@
 
     }
 
-    echo count($_SESSION['Location']);
+    echo ($_SESSION['locations'][0]);
 
     header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
     header('Cache-Control: no-store, no-cache, must-revalidate');
@@ -25,13 +25,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="icon" type="image/png" href="../../Images/logo.jpg"/>
-    <link rel="stylesheet" href="../Assets/login.css">
     <link rel="stylesheet" href="./Attendance_assets/Attendance.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="./Attendance_assets/Attendance_js.js"></script>
-
+    <script src="./Attendance_assets/Attendance.js"></script>
 </head>
 <body>
     <a href="../" class="back-link">← Back to Dashboard</a>
@@ -43,23 +41,23 @@
             <label for="locationSelect" class="form-label">Select Location</label>
             <select id="locationSelect" class="form-select">
                 <?php
-                    echo '<option value="" data-coordinates="">-- Select Location --</option>';
-                    $i = count($_SESSION['Location']); 
-                    for ($i = 0; $i < count($_SESSION['Location']); $i++) {
-                        echo '<option value="' . $_SESSION['Location'][$i] . '" data-coordinates=\'' . $_SESSION['Coordinates'][$i] . '\'>' . $_SESSION['Location'][$i] . '</option>';
+                    echo '<option value="0" data-coordinates="">-- Select Location --</option>';
+                    $i = count($_SESSION['locations']); 
+                    for ($i = 0; $i < count($_SESSION['locations']); $i++) {
+                        echo '<option value="' . $_SESSION['locations'][$i] . '" data-coordinates=\'' . $_SESSION['coordinates'][$i] . '\'>' . $_SESSION['locations'][$i] . '</option>';
                     }
                 ?>
             </select>
         </div>
 
-        <button id="tapButton" class="tap-button" onclick="Click()">
-            Tap In
+        <div id="map" style="height: 300px; width: 100%; margin-top: 20px; display: block;"></div>
+
+        <button id="tapButton" class="tap-button" disabled>
+            Disabled
         </button>
 
         <div id="statusDisplay" class="status-display" style="display: block;">
         </div>
-
-        <div id="map" style="height: 300px; width: 100%; margin-top: 20px; display: block;"></div>
 
         <div class="mt-4 text-muted">
             <small>Welcome, <?php echo $_SESSION['username'] ?? 'Employee'; ?>!</small>
@@ -67,111 +65,66 @@
     </div>
 
     <script>
-        let ClockinStatus = '<?php echo $_SESSION['Clock-status']; ?>';
-
-        switch (ClockinStatus) {
-            case 'Tapped-in':
-                document.getElementById('tapButton').textContent = 'Tap Out';
-                document.getElementById('tapButton').classList.add('tapped-out');
-                document.getElementById('selectLocation').value = '<?php echo $_SESSION['Location']; ?>';
-                document.getElementById('selectLocation').disabled = true;
-                break;
-            default:
-                document.getElementById('tapButton').textContent = 'Tap In';
-                document.getElementById('tapButton').classList.add('tapped-out');
-                document.getElementById('selectLocation').disabled = false;
-        };
-
-        // object ID's
-        const tapButton = document.getElementById('tapButton');
-        let locationSelect = document.getElementById('locationSelect');
-        const statusDisplay = document.getElementById('statusDisplay');
-
-        // time variables
-        let dateString = new Date().toLocaleDateString();
-        let timeString = '';
-        let statusClockin = '';
-
-        // map variables
+        // map initialization
         let map = L.map('map').setView([0, 0], 2);
-        let userlat = '';
-        let userlong = '';
-        let userMarker = null;
-
-        // map setup
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
-                userlat = position.coords.latitude;
-                userlong = position.coords.longitude;
+                const userlat = position.coords.latitude;
+                const userlong = position.coords.longitude;
                 map.setView([userlat, userlong], 15);
-                userMarker = L.marker([userlat, userlong]).addTo(map).bindPopup('Your current location').openPopup();
+                const userMarker = L.marker([userlat, userlong]).addTo(map).bindPopup('Your current location').openPopup();
                 map.invalidateSize();
             }, function(error) {
                 console.log('Geolocation error:', error.message);
             });
         };
 
-        // select location variables
-        let selectedLocation = '';
-        let selectedCoordinates = null;
+        const selectLocation = document.getElementById('locationSelect');
+        selectLocation.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const coordinates = selectedOption.getAttribute('data-coordinates');
+            if (selectedOption.value === "0"){
+                document.getElementById('tapButton').disabled = true;
+                document.getElementById('tapButton').textContent = 'Disabled';
 
-        // select location change event
-        locationSelect.addEventListener('change', function() {
-            selectedLocation = this.value;
-            if (this.value !== '') {
-                selectedCoordinates = this.options[this.selectedIndex].getAttribute('data-coordinates');
             } else {
-                selectedCoordinates = null;
+                document.getElementById('tapButton').disabled = false;
+                document.getElementById('tapButton').textContent = 'Tap in';
+                document.getElementById('tapButton').onclick = () => ClockinClick(selectedOption.value, coordinates);
             }
         });
 
-        // main function for tap button click event
-        function Click() {
-            if (ClockinStatus == 'Tapped-out') {
-                if (selectedLocation === '') {
-                    alert('Please select a location before tapping in.');
-                    return;
-                };
+        function ClockinClick(locationName, coordinates) {
+            const Time = new Date();
+            const dateStr = formatDateToYYYYMMDD(Time.toDateString());
+            const TimeString = Time.toLocaleTimeString();
+            const ClockinStatus = checkClockinStatus(TimeString.split(' '));
+            document.getElementById('tapButton').textContent = 'Tap out';
+            document.getElementById('tapButton').classList.add('tapped-out');
+            document.getElementById('tapButton').onclick = () => ClockoutClick(locationName, coordinates);
+            document.getElementById('locationSelect').disabled = true;
+            $.post('./Attendance_modules/save_clockin.php', {
+                emp_id: <?php echo $_SESSION['id']; ?>,
+                date: dateStr,
+                location: locationName,
+                coordinates: coordinates,
+                clockin_time: TimeString,
+                clockin_status: ClockinStatus,
+            }, function(response) {
+                alert(response);
+            });
+        }
 
-                if (isPointInPolygon([userlat, userlong], JSON.parse(selectedCoordinates))) {
-                    let tapInTime = new Date();
-                    timeString = to24HourTime(tapInTime);
-                    dateString = tapInTime.toLocaleDateString();
-                    statusClockin = clockinStatus(to24HourTime(tapInTime));
-                    $.post('./Attendance_modules/save_clockin.php', {
-                            emp_id: <?php echo $_SESSION['emp_id']; ?>,
-                            Date: dateString,
-                            Location: selectedLocation,
-                            Clock_in: timeString,
-                            Status: statusClockin,
-                            Clockin_status: 'Tapped-in'
-                        }, function(response) {
-                            alert(response);
-                            document.location = './';
-                    });
-                } else {
-                    alert(JSON.parse(selectedCoordinates));
-                };
-            } else {
-                let tapInTime = new Date();
-                timeString = to24HourTime(tapInTime);
-                $.post('./Attendance_modules/save_clockout.php', {
-                    Emp_id: <?php echo $_SESSION['emp_id']; ?>,
-                    Clock_out: timeString,
-                    Clockin_status: 'Tapped-out'
-                }, function(response) {
-                    alert(response);
-                    document.location = './';
-                });
-            };
-
-            
-        };
-
+        function ClockoutClick(locationName, coordinates) {
+            document.getElementById('tapButton').textContent = 'Tap in';
+            document.getElementById('tapButton').classList.remove('tapped-out');
+            document.getElementById('tapButton').onclick = () => ClockinClick(locationName, coordinates);
+            document.getElementById('locationSelect').disabled = false;
+        }
     </script>
 </body>
 </html>

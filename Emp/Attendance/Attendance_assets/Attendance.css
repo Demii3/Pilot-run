@@ -39,7 +39,7 @@ body {
     box-shadow: 0 12px 35px rgba(76, 175, 80, 0.4);
 }
 
- .tap-button.tapped-out {
+.tapped-out {
     background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
     box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
 }

@@ -31,7 +31,7 @@
         <link rel="stylesheet" href="../Assets/home_employee.css">
 
         <!-- Company Logo -->
-        <link rel="icon" type="image/png" href="../Images/logo.jpg"/>
+        <link rel="icon" type="image/png" href="../../Images/logo.jpg"/>
 
         <!-- Scripts -->
         <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin ="anonymous"></script>
@@ -41,7 +41,7 @@
     </head>
 
     <body>
-        <?php include '../Modules/background.php'; ?>
+        <?php include './background.php'; ?>
         <?php include '../Modules/navbar.php'; ?>
         <?php include '../Modules/welcome_card.php'; ?>
 
