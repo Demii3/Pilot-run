@@ -71,12 +71,13 @@ header('Pragma: no-cache');
                             <tr>
                                 <th scope="col" class="d-none">Employee ID</th>
                                 <th scope="col">Name</th>
-                                <th scope="col">Department</th>
+                                <th scope="col" class="department-col">Department</th>
                                 <th scope="col">Date</th>
                                 <th scope="col">Location</th>
-                                <th scope="col">Clock In</th>
+                                <th scope="col">Clock In </th>
+                                <th scope="col" class="clkinStatus-col">Clockin Status</th>
                                 <th scope="col">Clock Out</th>
-                                <th scope="col">Status</th>
+                                <th scope="col" class="clkinStatus-col">Clockout Status</th>
                                 <th scope="col">Duration</th>
                             </tr>
                         </thead>
@@ -89,12 +90,13 @@ header('Pragma: no-cache');
                                         echo "<tr role='button' tabindex='0'>";
                                         echo "<td class='d-none'>" . $row['Emp_id'] . "</td>";
                                         echo "<td>" . $row['Name'] . "</td>";
-                                        echo "<td>" . $row['Department'] . "</td>";
+                                        echo "<td class='department-col'>" . $row['Department'] . "</td>";
                                         echo "<td>" . $row['Date'] . "</td>";
                                         echo "<td>" . $row['Location'] . "</td>";
                                         echo "<td>" . $row['Clock_in'] . "</td>";
+                                        echo "<td class='clkinStatus-col'>" . $row['Clockin_status'] . "</td>";
                                         echo "<td>" . $row['Clock_out'] . "</td>";
-                                        echo "<td>" . $row['Status'] . "</td>";
+                                        echo "<td>" . '---' . "</td>";
                                         echo "<td>" . $row['Duration'] . "</td>";
                                         echo "</tr>";
                                 }
@@ -138,15 +140,30 @@ header('Pragma: no-cache');
                             </div>
                             <div class="col-md-6">
                                 <label for="modalClockIn" class="form-label">Clock In</label>
-                                <input id="modalClockIn" type="text" class="form-control" readonly>
+                                <div class="input-group">
+                                    <input id="modalClockIn" type="time" class="form-control" readonly>
+                                    <button type="button" id="NAbtn" class="btn btn-outline-secondary btn-sm" disabled>N/A</button>
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <label for="modalClockOut" class="form-label">Clock Out</label>
-                                <input id="modalClockOut" type="text" class="form-control" readonly>
+                                <input id="modalClockOut" type="time" class="form-control" readonly>
                             </div>
                             <div class="col-md-6">
-                                <label for="modalStatus" class="form-label">Status</label>
-                                <input id="modalStatus" type="text" class="form-control" readonly>
+                                <label for="modalStatus" class="form-label">Clock-in Status</label>
+                                <select id="modalStatus" class="form-select" disabled>
+                                    <option value="Late">Late</option>
+                                    <option value="On-time">On-time</option>
+                                    <option value="Absent">Absent</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalStatus" class="form-label">Clock-out Status</label>
+                                <select id="modalStatus" class="form-select" disabled>
+                                    <option value="Late">Late</option>
+                                    <option value="On-time">On-time</option>
+                                    <option value="Absent">Absent</option>
+                                </select>
                             </div>
                         </div>
                     </form>
@@ -154,7 +171,7 @@ header('Pragma: no-cache');
                 <div class="modal-footer">
                     <button type="button" id="editBtn" class="btn btn-warning">Edit</button>
                     <button type="button" id="saveBtn" class="btn btn-success d-none" data-bs-dismiss="modal">Save</button>
-                    <button type="button" id="deleteBtn" class="btn btn-danger d-none" data-bs-dismiss="modal">Delete</button>
+                    <button type="button" id="deleteBtn" class="btn btn-danger d-none">Delete</button>
                     <button type="button" id="closeBtn" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -167,6 +184,15 @@ header('Pragma: no-cache');
         const statusFilter = document.getElementById('statusFilter');
         const dateFilter = document.getElementById('dateFilter');
         const attendanceTable = document.getElementById('attendanceTable');
+        const attendanceModalElement = document.getElementById('attendanceModal');
+        const modalClockIn = document.getElementById('modalClockIn');
+        const modalClockOut = document.getElementById('modalClockOut');
+        const modalStatus = document.getElementById('modalStatus');
+        let isNA = false;
+        let tempval1 = '';
+        let tempval2 = '';
+
+        attendanceModalElement.addEventListener('hidden.bs.modal', returnProperties);
 
         function filterAttendance() {
             const searchValue = searchInput.value.toLowerCase();
@@ -179,7 +205,7 @@ header('Pragma: no-cache');
                 const nameText = cells[1] ? cells[1].textContent.toLowerCase() : '';
                 const deptText = cells[2] ? cells[2].textContent.toLowerCase() : '';
                 const dateText = cells[3] ? cells[3].textContent.trim() : '';
-                const statusText = cells[7] ? cells[7].textContent.trim() : '';
+                const statusText = cells[6] ? cells[6].textContent.trim() : '';
                 
                 const matchesSearch = searchValue === '' || nameText.includes(searchValue) || deptText.includes(searchValue);
                 const matchesDate = dateValue === '' || dateText.includes(dateValue);
@@ -202,33 +228,40 @@ header('Pragma: no-cache');
             document.getElementById('modalDate').value = cells[3] || '';
             document.getElementById('modalLocation').value = cells[4] || '';
             document.getElementById('modalClockIn').value = cells[5] || '';
-            document.getElementById('modalClockOut').value = cells[6] || '';
-            document.getElementById('modalStatus').value = cells[7] || '';
+            document.getElementById('modalStatus').value = cells[6] || '';
+            document.getElementById('modalClockOut').value = cells[7] || '';
             const attendanceModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
             attendanceModal.show();
             document.getElementById('editBtn').onclick = () => editContent();
-            document.getElementById('deleteBtn').onclick = () => deleteContent(row.cells[0].textContent, row.cells[5].textContent, row.cells[6].textContent);
-            document.getElementById('saveBtn').onclick = () => saveInfo_toDB(row.cells[0].textContent, row.cells[5].textContent, row.cells[6].textContent);
             document.getElementById('closeBtn').onclick = () => returnProperties();
+            document.getElementById('deleteBtn').onclick = () => deleteContent(row.cells[0].textContent);
+            document.getElementById('saveBtn').onclick = () => saveInfo_toDB(row.cells[0].textContent, row.cells[5].textContent, row.cells[7].textContent);
+            document.getElementById('NAbtn').onclick = () => setmodalClockinNA();
         }
 
         function editContent() {
             document.getElementById('modalClockIn').readOnly = false;
             document.getElementById('modalClockOut').readOnly = false;
+            document.getElementById('modalStatus').disabled = false;
+            document.getElementById('NAbtn').disabled = false;
             document.getElementById('saveBtn').classList.remove('d-none');
             document.getElementById('deleteBtn').classList.remove('d-none');
+            tempval1 = document.getElementById('modalClockIn').value;
+            tempval2 = document.getElementById('modalStatus').value;
         }
 
         function returnProperties() {
             document.getElementById('modalClockIn').readOnly = true;
             document.getElementById('modalClockOut').readOnly = true;
+            document.getElementById('modalStatus').disabled = true;
+            document.getElementById('NAbtn').disabled = true;
             document.getElementById('saveBtn').classList.add('d-none');
             document.getElementById('deleteBtn').classList.add('d-none');
         }
 
-        function deleteContent(empId, clock_in, clock_out) {
-            if (confirm('Are you sure you want to delete this attendance record?')) {
-                $.post('./Employee_attendance_modules/delete_attendance.php', { emp_Id: empId, clock_in: clock_in, clock_out: clock_out }, function(response) {
+        function deleteContent(Attendance_ID) {
+            if (confirm('Are you sure you want to delete this attendance record?. This action cannot be undone.')) {
+                $.post('./Employee_attendance_modules/delete_attendance.php', {Attendance_ID: Attendance_ID}, function(response) {
                     if (response === 'success') {
                         alert('Record deleted successfully.');
                         location.reload();
@@ -236,14 +269,22 @@ header('Pragma: no-cache');
                         alert('Error deleting record: ' + response);
                     }
                 });
-            }
+            } else {
+                return;
+            };
         }
 
-        function saveInfo_toDB(empId, old_clockIn, old_clockOut) {
+        function saveInfo_toDB(Attendance_ID, old_clockIn, old_clockOut) {
             const new_clockIn = document.getElementById('modalClockIn').value;
             const new_clockOut = document.getElementById('modalClockOut').value;
 
-            $.post('./Employee_attendance_modules/save_attendance.php', { Emp_id: empId, newClock_in: new_clockIn, newClock_out: new_clockOut, old_clockIn: old_clockIn, old_clockOut: old_clockOut }, function(response) {
+            $.post('./Employee_attendance_modules/save_attendance.php',
+                {   Attendance_ID: Attendance_ID, 
+                    newClock_in: new_clockIn,
+                    newClock_out: new_clockOut, 
+                    old_clockIn: old_clockIn, 
+                    old_clockOut: old_clockOut },
+                function(response) {
                 if (response === 'success') {
                     alert('Record updated successfully.');
                     location.reload();
@@ -253,6 +294,51 @@ header('Pragma: no-cache');
             });
         }
 
+        function setmodalClockinNA() {
+            if (isNA) {
+                modalClockIn.value = tempval1;
+                modalStatus.value = tempval2;
+                isNA = false;
+                document.getElementById('NAbtn').textContent = isNA ? 'Prev. val.' : 'N/A';
+            } else { 
+                modalClockIn.value = 'N/A';
+                modalStatus.value = 'Absent'
+                isNA = true;
+                document.getElementById('NAbtn').textContent = isNA ? 'Prev. val.' : 'N/A';
+            }
+        }
+
+        modalClockIn.addEventListener('change', () => {
+            const clockInValue = modalClockIn.value;
+
+            if (clockInValue <= '08:00') {
+                modalStatus.value = 'On-time';
+            } else {
+                modalStatus.value = 'Late';
+            }
+        });
+
+        modalStatus.addEventListener('change', () => {
+            const modalStatusvalue = modalStatus.value;
+
+            switch(modalStatusvalue) {
+                case 'On-time':
+                    if (tempval2 == 'On-time') {
+                        return;
+                    } else {
+                        modalClockIn.value = '08:00';
+                    }
+                    break;
+                case 'Late':
+                    if (modalClockIn.value === 'N/A' || modalClockIn.value <= '08:00') {
+                        modalClockIn.value = '08:01';
+                    }
+                    break;
+                case 'Absent':
+                    modalClockIn.value = 'N/A';
+                    break;
+            }
+        });
 
         document.querySelectorAll('.attendance-table tbody tr[role="button"]').forEach(row => {
             row.addEventListener('click', () => openRowModal(row));

@@ -44,6 +44,14 @@ body {
     white-space: nowrap;
 }
 
+.attendance-table .department-col {
+    width: 10%;
+}
+
+.attendance-table .clkinStatus-col {
+    width: 12%;
+}
+
 .attendance-table tbody tr {
     cursor: pointer;
 }
