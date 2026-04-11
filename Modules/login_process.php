@@ -14,59 +14,39 @@
 
     if($login_start){
         include("dbcon.php");
-        $query = "SELECT users.*, employee.Status FROM users JOIN employee ON users.User_id = employee.Emp_id WHERE Username='".mysqli_real_escape_string($dbc, $_POST['username'])."' and password='".mysqli_real_escape_string($dbc, $_POST['password'])."'";
+        $query = "SELECT id, username, `password`, `type`, `status` FROM employees 
+                  WHERE Username='".mysqli_real_escape_string($dbc, $_POST['username'])."' 
+                  AND password='".mysqli_real_escape_string($dbc, $_POST['password'])."'";
+
         $result = mysqli_query($dbc, $query);
+
         if(mysqli_num_rows($result)>0){ // if with records found
             $row = mysqli_fetch_array($result);
+            if($row['status'] == 'Inactive'){
+                echo $msg .= 'Inactive';
+                exit();
+            }
             session_start();
-            $_SESSION['login'] = '1';
-            $_SESSION['type'] = $row['Type'];
-            $_SESSION['username'] = $row['Username'];
-            $_SESSION['emp_id'] = $row['User_id'];
-            $_SESSION['Clock-status'] = $row['Work_status'];
-            $_SESSION['Work-status'] = $row['Status'];
+            $_SESSION['login'] = true;
+            $_SESSION['id'] = $row['id'];
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['type'] = $row['type'];
+            $_SESSION['status'] = $row['status'];
+            $_SESSION['locations'] = [];
+            $_SESSION['coordinates'] = [];
+            $another__query = "SELECT `name`, `coordinates` FROM geofences WHERE geofences.id IN (SELECT loc_id FROM employee_location WHERE User_id = " . $row['id'] . ")";
+
+
+            $result2 = mysqli_query($dbc, $another__query);
+            while($row2 = mysqli_fetch_array($result2)){
+                $_SESSION['locations'][] = $row2['name'];
+                $_SESSION['coordinates'][] = $row2['coordinates'];
+            }
             $msg = 'success';
         } else {
             $msg .= 'Username and Password do not match.';
         };
-
-        if (isset($_SESSION['Work-status'])) {
-            if ($_SESSION['Work-status'] == 'Inactive') {
-                return;
-            } else {
-                if ($_SESSION['Clock-status'] == 'Tapped-out') {
-                    $_SESSION['AttendanceID'] = '';
-                    $_SESSION['Date'] = '';
-                    $_SESSION['Location'] = [];
-                    $_SESSION['Coordinates'] = [];
-                    $_SESSION['Clock-in'] = '';
-                    $_SESSION['Clock-inStatus'] = '';
-                    $query2 = "SELECT geofences.name, geofences.coordinates FROM geofences WHERE geofences.id IN (SELECT employee_location.loc_id FROM employee_location WHERE employee_location.User_Id = " . $_SESSION['emp_id'] . ")";
-                    $result2 = mysqli_query($dbc, $query2);
-                    if (mysqli_num_rows($result2) > 0) {
-                        while ($row2 = mysqli_fetch_array($result2)) {
-                            $_SESSION['Location'][] = $row2['name'];
-                            $_SESSION['Coordinates'][] = $row2['coordinates'];
-                        }
-                    }
-
-                } else {
-                    $query3 = "SELECT * FROM employee_attendance WHERE employee_attendance.Attendance_ID = (SELECT MAX(employee_attendance.Attendance_ID) AS `Most_recent` FROM `employee_attendance` WHERE employee_attendance.Emp_id = '" . $_SESSION['emp_id'] . "');";
-                    $result3 = mysqli_query($dbc, $query3);
-                    if (mysqli_num_rows($result3) > 0) {
-                        $row3 = mysqli_fetch_array($result3);
-                        $_SESSION['AttendanceID'] = $row2['Attendance_ID'];
-                        $_SESSION['Date'] = $row2['Date'];
-                        $_SESSION['Location'] = $row2['Location'];
-                        $_SESSION['Coordinates'] = $row2['Coordinates'];
-                        $_SESSION['Clock-in'] = $row2['Clock_in'];
-                        $_SESSION['Clock-inStatus'] = $row2['Clock_inStatus'];
-                    }
-                }
-            }
-        } else {
-            $_SESSION['Work-status'] = '';
-        }
-        echo $msg;
     }
+
+    echo $msg;
 ?>

@@ -35,7 +35,10 @@
                 if(d=='success'){
                     alert(d);
                     document.location = "./";
-                } else {
+                } else if(d=='Inactive'){
+                    alert('Your account is inactive. Please contact the administrator.');
+                }
+                 else {
                     alert(d);
                 }
             });
