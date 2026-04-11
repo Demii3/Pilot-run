@@ -41,6 +41,15 @@
             if (!isset($_SESSION['login'])) {
                 include("Modules/login_card.php");
             } else {
+                if ($_SESSION['Work-status'] == 'Inactive') {
+                    echo "<script>alert('Your account is inactive. Please contact HR for assistance.');</script>";
+                    header("location: ./?logout=true");
+                } else {
+                    echo "<script>alert('Wrong password');</script>";
+                    header("location: ./?logout=true");
+                }
+                ; 
+
                 if ($_SESSION['type'] == 'HR') {
                     header("location: ./HR");
                 } else {
