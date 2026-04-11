@@ -42,11 +42,14 @@ function formatDateToYYYYMMDD(dateStr) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
 
-    return `${year}-${month}-${day}`;
+    return `${year}-${month}-${day}`;   
 };
 
 function checkClockinStatus(timeStr) {
-    const [h1, m1, s1] = timeStr[0].split(':').map(Number);
+    let [h1, m1, s1] = timeStr[0].split(':').map(Number);
+    if(h1 === 12 && timeStr[1] === 'AM') { 
+        h1 = 0; // Convert 12 AM to 0 hours for easier comparison{
+    };
     const timeinMinutes = timeStr[1] == 'PM' ? (h1 * 60 + m1) + 720 : h1 * 60 + m1; // Adjust for PM if needed
     return timeinMinutes <= 480 ? 'On Time' : 'Late'; // 480 minutes = 8 hours
 };

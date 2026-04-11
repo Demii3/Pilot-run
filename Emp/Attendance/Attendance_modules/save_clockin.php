@@ -4,19 +4,35 @@
     $msg = '';
 
     include './dbcon.php';
-    $sql = "INSERT INTO employee_attendance (Emp_id, `Date`, `Location`, `Clock_in`, `Clockin_Status`) VALUES (" . $_POST['emp_id'] . ", '" . date('Y-m-d', strtotime($_POST['Date'])) . "', '" . $_POST['Location'] . "', '" . $_POST['Clock_in'] . "', '" . $_POST['Status'] . "')";
-    $result = mysqli_query($dbc, $sql);
-    $sql2 = "UPDATE users SET `Work_status` = '" . $_POST['Clockin_status'] . "' WHERE `User_id` = " . $_POST['emp_id'];
+    $sql1 = "INSERT INTO employee_attendance (Emp_id, `Date`, `Location`, `Coordinates`, `Clock_in`, `Clockin_Status`) 
+            VALUES (" . $_POST['emp_id'] . ", 
+                    '" . $_POST['date'] . "', 
+                    '" . $_POST['location'] . "', 
+                    '" . $_POST['coordinates'] . "', 
+                    '" . $_POST['clockin_time'] . "', 
+                    '" . $_POST['clockin_status'] . "')";
+
+    $result1 = mysqli_query($dbc, $sql1);
+    
+    $sql2 = "UPDATE users 
+             SET `Clockin_status` = '" . $_POST['clockin_status'] . "' 
+             WHERE `User_id` = " . $_POST['emp_id'];
+
     $result2 = mysqli_query($dbc, $sql2);
-    if($result && $result2) {
+
+    $sql3 = "SELECT MAX(Attendance_id) AS last_id FROM employee_attendance WHERE Emp_id = " . $_POST['emp_id'];
+
+    $result3 = mysqli_query($dbc, $sql3);
+
+    if($result1 && $result2 && $result3) {
         $msg .=" attendance recorded successfully.";
+        $_SESSION['Clock-in'] = $_POST['clockin_time'];
+        $_SESSION['date'] = $_POST['date'];
+        $_SESSION['selectedLocation'] = $_POST['location'];
+        $_SESSION['Clockin-status'] = $_POST['clockin_status'];
+        $_SESSION['Attendance_id'] = mysqli_fetch_array($result3)['last_id'];
     } else {
         $msg .= "Error recording attendance: " . mysqli_error($dbc);
     };
-
-    $_SESSION['Clock-in'] = $_POST['Clock_in'];
-    $_SESSION['Clock-status'] = $_POST['Clockin_status'];
-    $_SESSION['Location'] = [$_POST['Location']];
-    $_SESSION['Clock-inStatus'] = [$_POST['Status']];
     echo $msg;
 ?>
