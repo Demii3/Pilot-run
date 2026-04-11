@@ -121,6 +121,10 @@
       })
       .then(html => {
         content.innerHTML = html;
+        const modal = document.getElementById('employeeModal');
+        if (modal && modal.parentElement !== document.body) {
+          document.body.appendChild(modal);
+        }
         // Call displayEmployees after content is loaded
         if (typeof displayEmployees === 'function') {
           displayEmployees();

@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 10, 2026 at 02:14 PM
+-- Generation Time: Apr 10, 2026 at 04:36 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -65,6 +65,41 @@ INSERT INTO `employee` (`Emp_id`, `Name`, `Position`, `Department`, `Salary`, `S
 (7, 'George Lopez', 'Recruitment', 'HR', 0, 'Active', ''),
 (8, 'Tan Miller', 'Benifits', 'HR', 0, 'Inactive', ''),
 (9, 'Carlo Tan', 'Project Manager', 'Field', 0, 'Inactive', '');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employees`
+--
+
+CREATE TABLE `employees` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `position` varchar(255) NOT NULL,
+  `department` varchar(255) NOT NULL,
+  `salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `join_date` date NOT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'Active'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `employees`
+--
+
+INSERT INTO `employees` (`id`, `name`, `email`, `position`, `department`, `salary`, `join_date`, `status`) VALUES
+(3, 'Romer Navoa', 'romer.navoa@gmail.com', 'Director', 'CpE', 123456.00, '2004-09-26', 'Inactive'),
+(4, 'Alexis Eron', 'axiserondc@gmail.com', 'Chief Operating Office', 'CpE', 45000.50, '2026-04-09', 'Active'),
+(5, 'Romer Navoa', 'romer.navoa09@gmail.com', 'Sex', 'Office', 100000.00, '2025-12-29', 'Inactive'),
+(6, 'Justine Simone Garcia', 'justingarcia@adamson.edu.ph', 'ewan ko', 'CpE', 123456.00, '2025-09-10', 'Active'),
+(7, 'Demetri Mayor', 'demetri@yahoo.com', 'Baka', 'CpE', 123656.00, '2026-04-09', 'Active'),
+(8, 'Jeremiah Guarino', 'palemlem@gmail.com', 'Doggy', 'CpE', 123456.00, '2026-04-09', 'Active'),
+(9, 'Joseph Mayor', 'joseph@yahoo.com', 'asdfgsdfa', 'adfs', 1234.00, '2001-12-31', 'Active'),
+(10, 'Simone Factor', 'factor@simone.com', 'adik', 'PDEA', 1236.00, '2001-03-31', 'Active'),
+(11, 'Ken Axel Quanico', '12343556kenaxelquanico@gmail.com', 'Yearner', 'CpE', 676767.00, '2003-12-31', 'Active'),
+(12, 'Eron De La Cruz', 'eronski@gmail.com', 'Bully', 'CpE', 124245.00, '2026-04-09', 'Active'),
+(13, 'Factor Bread', 'breadfactor@gmail.com', 'Sakit sa Ulo', 'CpE', 689.00, '2026-04-09', 'Active'),
+(14, 'Simone The Factor', 'simonef@gmail.com', 'kahit ano', 'cpe', 12389.00, '2003-09-12', 'Active');
 
 -- --------------------------------------------------------
 
@@ -188,6 +223,12 @@ ALTER TABLE `employee`
   ADD PRIMARY KEY (`Emp_id`);
 
 --
+-- Indexes for table `employees`
+--
+ALTER TABLE `employees`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `employee_attendance`
 --
 ALTER TABLE `employee_attendance`
@@ -226,6 +267,12 @@ ALTER TABLE `deleted_geofences`
 --
 ALTER TABLE `employee`
   MODIFY `Emp_id` bigint(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `employees`
+--
+ALTER TABLE `employees`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `geofences`
