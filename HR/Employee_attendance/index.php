@@ -22,6 +22,8 @@ header('Pragma: no-cache');
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="../../Images/logo.jpg"/>
     <link rel="stylesheet" href="../HR_Assets/Employee_attendance.css">
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin ="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
 </head>
 
@@ -206,11 +208,11 @@ header('Pragma: no-cache');
             attendanceModal.show();
             document.getElementById('editBtn').onclick = () => editContent();
             document.getElementById('deleteBtn').onclick = () => deleteContent(row.cells[0].textContent, row.cells[5].textContent, row.cells[6].textContent);
-            document.getElementById('saveBtn').onclick = () => saveInfo_toDB(row);
+            document.getElementById('saveBtn').onclick = () => saveInfo_toDB(row.cells[0].textContent, row.cells[5].textContent, row.cells[6].textContent);
             document.getElementById('closeBtn').onclick = () => returnProperties();
         }
 
-        function editContent(row) {
+        function editContent() {
             document.getElementById('modalClockIn').readOnly = false;
             document.getElementById('modalClockOut').readOnly = false;
             document.getElementById('saveBtn').classList.remove('d-none');
@@ -226,7 +228,7 @@ header('Pragma: no-cache');
 
         function deleteContent(empId, clock_in, clock_out) {
             if (confirm('Are you sure you want to delete this attendance record?')) {
-                $.post('./Employee_attendance_modules/delete_attendance.php', { emp_id: empId, date: date }, function(response) {
+                $.post('./Employee_attendance_modules/delete_attendance.php', { emp_Id: empId, clock_in: clock_in, clock_out: clock_out }, function(response) {
                     if (response === 'success') {
                         alert('Record deleted successfully.');
                         location.reload();
@@ -235,6 +237,20 @@ header('Pragma: no-cache');
                     }
                 });
             }
+        }
+
+        function saveInfo_toDB(empId, old_clockIn, old_clockOut) {
+            const new_clockIn = document.getElementById('modalClockIn').value;
+            const new_clockOut = document.getElementById('modalClockOut').value;
+
+            $.post('./Employee_attendance_modules/save_attendance.php', { Emp_id: empId, newClock_in: new_clockIn, newClock_out: new_clockOut, old_clockIn: old_clockIn, old_clockOut: old_clockOut }, function(response) {
+                if (response === 'success') {
+                    alert('Record updated successfully.');
+                    location.reload();
+                } else {
+                    alert('Error updating record: ' + response);
+                }
+            });
         }
 
 
