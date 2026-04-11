@@ -99,10 +99,20 @@ function showNotification(message, type = 'info') {
   }, 5000);
 }
 
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('Invalid JSON response from', url, 'status', response.status, text);
+    throw new Error('Server returned invalid JSON. See console for response.');
+  }
+}
+
 async function fetchEmployees() {
-  const response = await fetch(API_URL);
-  const result = await response.json();
-  if (!response.ok || !result.success) {
+  const result = await fetchJson(API_URL);
+  if (!result.success) {
     throw new Error(result.message || 'Failed to load employees');
   }
   employeesData = result.data || [];
@@ -114,7 +124,7 @@ function displayPage(dataToDisplay) {
   tableBody.innerHTML = '';
 
   if (dataToDisplay.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No employees found</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No employees found</td></tr>';
     updatePaginationInfo(0);
     return;
   }
@@ -129,9 +139,12 @@ function displayPage(dataToDisplay) {
       <td>${emp.id}</td>
       <td>${emp.name}</td>
       <td>${emp.email}</td>
+      <td>${emp.username || ''}</td>
+      <td>${emp.password || ''}</td>
       <td>${emp.position}</td>
       <td>${emp.department}</td>
       <td>₱${parseFloat(emp.salary).toLocaleString()}</td>
+      <td>${emp.type || ''}</td>
       <td>${emp.status || 'Inactive'}</td>
       <td>
         <button class="btn btn-sm btn-warning" onclick="editEmployee(${emp.id})">Edit</button>
@@ -159,7 +172,7 @@ async function displayEmployees() {
   try {
     await fetchEmployees();
   } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="8" class="text-center">Unable to load employees</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Unable to load employees</td></tr>';
     showNotification(error.message, 'error');
     return;
   }
@@ -191,9 +204,8 @@ async function getEmployeeById(id) {
     return employee;
   }
 
-  const response = await fetch(`${API_URL}?id=${encodeURIComponent(parsedId)}`);
-  const result = await response.json();
-  if (!response.ok || !result.success) {
+  const result = await fetchJson(`${API_URL}?id=${encodeURIComponent(parsedId)}`);
+  if (!result.success) {
     return null;
   }
 
@@ -211,6 +223,9 @@ async function editEmployee(id) {
   document.getElementById('employeeId').value = employee.id;
   document.getElementById('name').value = employee.name;
   document.getElementById('email').value = employee.email;
+  document.getElementById('username').value = employee.username || '';
+  document.getElementById('password').value = employee.password || '';
+  document.getElementById('type').value = employee.type || 'Emp';
   document.getElementById('position').value = employee.position;
   document.getElementById('department').value = employee.department;
   document.getElementById('salary').value = employee.salary;
@@ -226,14 +241,13 @@ function deleteEmployee(id) {
     return;
   }
 
-  fetch(API_URL, {
+  fetchJson(API_URL, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
     body: `id=${encodeURIComponent(id)}`
   })
-    .then(response => response.json())
     .then(result => {
       if (!result.success) {
         throw new Error(result.message || 'Unable to delete employee');
@@ -254,13 +268,16 @@ function saveEmployee() {
   const id = document.getElementById('employeeId').value;
   const name = document.getElementById('name').value.trim();
   const email = document.getElementById('email').value.trim();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const type = document.getElementById('type').value;
   const position = document.getElementById('position').value.trim();
   const department = document.getElementById('department').value.trim();
   const salary = document.getElementById('salary').value.trim();
   const joinDate = document.getElementById('joinDate').value;
   const status = document.getElementById('status').value;
 
-  if (!name || !email || !position || !department || !salary || !joinDate || !status) {
+  if (!name || !email || !username || (!id && !password) || !type || !position || !department || !salary || !joinDate || !status) {
     showNotification('Please fill in all fields', 'error');
     if (saveButton) {
       saveButton.disabled = false;
@@ -282,6 +299,8 @@ function saveEmployee() {
   const employeeData = {
     name,
     email,
+    username,
+    type,
     position,
     department,
     salary: parseFloat(salary),
@@ -289,18 +308,21 @@ function saveEmployee() {
     status
   };
 
+  if (password) {
+    employeeData.password = password;
+  }
+
   if (id) {
     employeeData.id = parseInt(id, 10);
   }
 
-  fetch(API_URL, {
+  fetchJson(API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(employeeData)
   })
-    .then(response => response.json())
     .then(result => {
       if (!result.success) {
         throw new Error(result.message || 'Unable to save employee');
@@ -332,8 +354,10 @@ function searchEmployees() {
   searchResults = employeesData.filter(emp =>
     emp.name.toLowerCase().includes(searchTerm) ||
     emp.email.toLowerCase().includes(searchTerm) ||
+    (emp.username || '').toLowerCase().includes(searchTerm) ||
     emp.position.toLowerCase().includes(searchTerm) ||
     emp.department.toLowerCase().includes(searchTerm) ||
+    (emp.type || '').toLowerCase().includes(searchTerm) ||
     (emp.status || 'Inactive').toLowerCase().includes(searchTerm)
   );
 
@@ -350,13 +374,16 @@ function exportToExcel() {
     return;
   }
 
-  const headers = ['ID', 'Name', 'Email', 'Position', 'Department', 'Salary', 'Join Date', 'Status'];
+  const headers = ['ID', 'Name', 'Email', 'Username', 'Password', 'Type', 'Position', 'Department', 'Salary', 'Join Date', 'Status'];
   const csvContent = [
     headers.join(','),
     ...employees.map(emp => [
       emp.id,
       `"${emp.name}"`,
       emp.email,
+      `"${emp.username || ''}"`,
+      `"${emp.password || ''}"`,
+      emp.type || '',
       `"${emp.position}"`,
       `"${emp.department}"`,
       emp.salary,
@@ -414,7 +441,7 @@ async function importFromExcel(input) {
     }
 
     const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-    const requiredHeaders = ['ID', 'Name', 'Email', 'Position', 'Department', 'Salary', 'Join Date'];
+    const requiredHeaders = ['ID', 'Name', 'Email', 'Username', 'Password', 'Type', 'Position', 'Department', 'Salary', 'Join Date'];
 
     const headersMatch = requiredHeaders.every(expected =>
       headers.some(header => header.toLowerCase() === expected.toLowerCase())
@@ -431,25 +458,27 @@ async function importFromExcel(input) {
     for (let i = 1; i < lines.length; i++) {
       try {
         const values = parseCSVLine(lines[i]);
-        if (values.length >= 7) {
+        if (values.length >= 11) {
           const employee = {
             name: values[1].replace(/"/g, '').trim(),
             email: values[2].replace(/"/g, '').trim(),
-            position: values[3].replace(/"/g, '').trim(),
-            department: values[4].replace(/"/g, '').trim(),
-            salary: parseFloat(values[5].replace(/"/g, '').trim()),
-            joinDate: values[6].replace(/"/g, '').trim(),
-            status: values[7] ? values[7].replace(/"/g, '').trim() : 'Inactive'
+            username: values[3].replace(/"/g, '').trim(),
+            password: values[4].replace(/"/g, '').trim(),
+            type: values[5].replace(/"/g, '').trim() || 'Emp',
+            position: values[6].replace(/"/g, '').trim(),
+            department: values[7].replace(/"/g, '').trim(),
+            salary: parseFloat(values[8].replace(/"/g, '').trim()),
+            joinDate: values[9].replace(/"/g, '').trim(),
+            status: values[10] ? values[10].replace(/"/g, '').trim() : 'Inactive'
           };
 
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (employee.name && employee.email && employee.position && employee.department && !isNaN(employee.salary) && employee.joinDate && emailRegex.test(employee.email)) {
-            const response = await fetch(API_URL, {
+            const result = await fetchJson(API_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(employee)
             });
-            const result = await response.json();
             if (result.success) {
               successCount++;
             } else {

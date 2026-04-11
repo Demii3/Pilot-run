@@ -27,9 +27,12 @@
             <th>ID</th>
             <th>Name</th>
             <th>Email</th>
+            <th>Username</th>
+            <th>Password</th>
             <th>Position</th>
             <th>Department</th>
             <th>Salary</th>
+            <th>Type</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -69,6 +72,24 @@
       <div class="form-group">
         <label for="email">Email:</label>
         <input type="email" id="email" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label for="type">Type:</label>
+        <select id="type" class="form-control" required>
+          <option value="HR">HR</option>
+          <option value="Emp">Emp</option>
+        </select>
       </div>
 
       <div class="form-group">
