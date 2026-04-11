@@ -25,9 +25,9 @@
 <nav class="custom-navbar">
 
   <div class="nav-left">
-    <div class="logo-circle">
+    <a class="logo-circle" href="../index.php" aria-label="Go to Home">
       <img src="../../Images/logo.jpg" alt="Logo">
-    </div>
+    </a>
     <span class="company-name">Chengshi <br>Construction Corp</span>
   </div>
 
@@ -86,6 +86,8 @@
 
 <!-- JAVA RICE -->
 <script>
+  const sidebarButtons = document.querySelectorAll('.sidebar button');
+
   function toggleMenu() {
     document.getElementById("profileMenu").classList.toggle("active");
   }
@@ -105,7 +107,7 @@
 
   function showContent(button, section) {
 
-  document.querySelectorAll(".sidebar button").forEach(btn => {
+  sidebarButtons.forEach(btn => {
     btn.classList.remove("active");
   });
 
@@ -144,21 +146,28 @@
       });
 
   } else if (section === "sites") {
-    fetch('sites.php')
-      .then(response => {
-        if (!response.ok) throw new Error("Network response not OK");
-        return response.text();
-      })
-      .then(html => {
-        content.innerHTML = html;
-      })
-      .catch(err => {
-        content.innerHTML = "<p>Error loading content</p>";
-        console.error(err);
-      });
+    window.location.href = 'geofence/sites.php';
+    return;
   }
 
 }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+
+    if (!section) {
+      return;
+    }
+
+    const targetButton = Array.from(sidebarButtons).find(function(btn) {
+      return btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'" + section + "'");
+    });
+
+    if (targetButton) {
+      showContent(targetButton, section);
+    }
+  });
 
 </script>
 
