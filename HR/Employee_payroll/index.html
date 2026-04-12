@@ -70,7 +70,6 @@
       <hr>
       <button onclick="showContent(this,'premiums')">Premiums</button>
       <hr>
-      <button onclick="showContent(this,'process')">Process Salary</button>
       <button onclick="showContent(this,'employee_salary')">Employee Salary</button>
       <button onclick="showContent(this,'process_13')">Process 13th Month</button>
       <button onclick="showContent(this,'yearend')">Process Year-End Tax</button>
@@ -525,6 +524,23 @@
             </table>
           </div>
           <div id="attendancePagination" class="d-flex justify-content-between align-items-center mt-3"></div>
+
+          <div class="mt-4">
+            <h5>Attendance Summary</h5>
+            <div class="table-responsive">
+              <table class="table table-hover" id="attendanceSummaryTable">
+                <thead class="table-dark">
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Total_Hours</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>`;
     loadAttendance();
@@ -561,6 +577,7 @@
                   <th>PagIBIG</th>
                   <th>Philhealth</th>
                   <th>Withholding Tax</th>
+                  <th>Total Deductions</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -572,23 +589,44 @@
     loadEmployeesForPremiums();
   }
 
-
-  else if (section === "process") {
-    content.innerHTML = `
-      <div class="card">
-        <h2>Process Salary</h2>
-        <p>Calculate employee salaries and generate payroll.</p>
-      </div>`;
-  }
-
   else if (section === "employee_salary") {
     content.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h2>Employee Salary</h2>
-            <button class="btn btn-secondary" onclick="openEmployeeSalaryForm()">+ Add Salary</button>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <input
+              type="text"
+              id="searchEmployeeSalary"
+              class="form-control"
+              placeholder="Search by ID, name, gross pay, allowance, deduction, holiday, or net pay..."
+              onkeyup="filterEmployeeSalary()"
+            >
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover" id="employeeSalaryTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Gross Pay Per Day</th>
+                  <th>Hours of Work</th>
+                  <th>Total Allowance</th>
+                  <th>Legal Holiday</th>
+                  <th>Special Holiday</th>
+                  <th>Total Deduction</th>
+                  <th>Net Pay</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="employeeSalaryPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
         </div>
       </div>`;
+    loadEmployeeSalary();
   }
 
   else if (section === "process_13") {
@@ -659,6 +697,7 @@ let employeesForDeductions = [];
 let deductionTypesForAssignments = [];
 let employeeDeductionAssignments = [];
 let employeesForPremiums = [];
+let employeesForSalary = [];
 let attendanceRows = [];
 let filteredAttendanceRows = [];
 let attendanceCurrentPage = 1;
@@ -1524,7 +1563,7 @@ async function loadEmployeesForPremiums() {
   const tableBody = document.querySelector('#employeePremiumSearchTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading employees...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="8" class="text-center">Loading employees...</td></tr>';
 
   try {
     const [employeeResponse, assignedIncomeResponse] = await Promise.all([
@@ -1559,7 +1598,7 @@ async function loadEmployeesForPremiums() {
     employeesForPremiums = rows;
 
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No employees found.</td></tr>';
       paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
       return;
     }
@@ -1574,6 +1613,7 @@ async function loadEmployeesForPremiums() {
       const employeeNameKey = String(emp.name || '').trim().toLowerCase();
       const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
       const withholdingTax = computeWithholdingTax(salary, sssContribution, philhealthContribution, pagibigContribution, nonTaxableIncome);
+      const totalDeductions = (Number(sssContribution) || 0) + (Number(pagibigContribution) || 0) + (Number(philhealthContribution) || 0) + (Number(withholdingTax) || 0);
 
       premiumRecords.push({
         employee_id: Number(emp.id),
@@ -1581,7 +1621,8 @@ async function loadEmployeesForPremiums() {
         sss: sssContribution === null ? 0 : sssContribution,
         philhealth: philhealthContribution === null ? 0 : philhealthContribution,
         pagibig: pagibigContribution === null ? 0 : pagibigContribution,
-        withholding_tax: withholdingTax === null ? 0 : withholdingTax
+        withholding_tax: withholdingTax === null ? 0 : withholdingTax,
+        total_premium: totalDeductions
       });
 
       const row = document.createElement('tr');
@@ -1593,6 +1634,7 @@ async function loadEmployeesForPremiums() {
         <td>${pagibigContribution === null ? '' : formatCurrency(pagibigContribution)}</td>
         <td>${philhealthContribution === null ? '' : formatCurrency(philhealthContribution)}</td>
         <td>${formatCurrency(withholdingTax)}</td>
+        <td>${formatCurrency(totalDeductions)}</td>
       `;
       tableBody.appendChild(row);
     });
@@ -1609,7 +1651,7 @@ async function loadEmployeesForPremiums() {
     }
     paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
   }
 }
@@ -1623,14 +1665,15 @@ function filterEmployeesForPremiums() {
 
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 7) {
+    if (cells.length >= 8) {
       const name = cells[1].textContent.toLowerCase();
       const salary = cells[2].textContent.toLowerCase();
       const sss = cells[3].textContent.toLowerCase();
       const pagibig = cells[4].textContent.toLowerCase();
       const philhealth = cells[5].textContent.toLowerCase();
       const withholdingTax = cells[6].textContent.toLowerCase();
-      if (name.includes(filter) || salary.includes(filter) || sss.includes(filter) || pagibig.includes(filter) || philhealth.includes(filter) || withholdingTax.includes(filter)) {
+      const totalDeductions = cells[7].textContent.toLowerCase();
+      if (name.includes(filter) || salary.includes(filter) || sss.includes(filter) || pagibig.includes(filter) || philhealth.includes(filter) || withholdingTax.includes(filter) || totalDeductions.includes(filter)) {
         rows[i].dataset.filterVisible = '1';
       } else {
         rows[i].dataset.filterVisible = '0';
@@ -2015,6 +2058,68 @@ function renderAttendanceTable() {
   });
 
   renderAttendancePagination(totalPages);
+  renderAttendanceSummaryTable();
+}
+
+function renderAttendanceSummaryTable() {
+  const tableBody = document.querySelector('#attendanceSummaryTable tbody');
+  if (!tableBody) return;
+
+  const summaryByEmployeeAndPeriod = new Map();
+
+  filteredAttendanceRows.forEach(item => {
+    const employeeId = item.id ?? '';
+    const employeeName = item.name ?? '';
+    const itemDate = item.date ? new Date(`${item.date}T00:00:00`) : null;
+    if (!itemDate || Number.isNaN(itemDate.getTime())) {
+      return;
+    }
+
+    const periodLabel = getAttendanceHalfMonthLabel(itemDate);
+    const durationMinutes = Number(item.duration) || 0;
+    const isAO = Number(item.ao) === 1;
+    const effectiveMinutes = durationMinutes > 480 ? (isAO ? durationMinutes : 480) : durationMinutes;
+    const summaryKey = `${employeeId}::${employeeName}::${periodLabel}`;
+    const existing = summaryByEmployeeAndPeriod.get(summaryKey) || {
+      id: employeeId,
+      name: employeeName,
+      date: periodLabel,
+      totalHours: 0
+    };
+    existing.totalHours += effectiveMinutes / 60;
+    summaryByEmployeeAndPeriod.set(summaryKey, existing);
+  });
+
+  const summaryRows = Array.from(summaryByEmployeeAndPeriod.values());
+  if (summaryRows.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No attendance summary available.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = '';
+  summaryRows.forEach(item => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.id}</td>
+      <td>${item.name}</td>
+      <td>${item.totalHours.toFixed(2)}</td>
+      <td>${item.date}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+function getAttendanceHalfMonthLabel(date) {
+  const month = date.getMonth() + 1;
+  const year = String(date.getFullYear()).slice(-2);
+  const day = date.getDate();
+
+  if (day <= 15) {
+    return `${month}-1-${year} - ${month}-15-${year}`;
+  }
+
+  const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return `${month}-16-${year} - ${month}-${lastDayOfMonth}-${year}`;
 }
 
 function renderAttendancePagination(totalPages) {
@@ -2230,6 +2335,97 @@ function filterEmployees() {
   }
 
   paginateTable('employeeSearchTable', 'employeeSearchPagination', true);
+}
+
+function filterEmployeeSalary() {
+  const searchInput = document.getElementById('searchEmployeeSalary');
+  const tableBody = document.querySelector('#employeeSalaryTable tbody');
+  if (!searchInput || !tableBody) return;
+
+  const filter = searchInput.value.toLowerCase();
+  const rows = tableBody.getElementsByTagName('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length >= 9) {
+      const id = cells[0].textContent.toLowerCase();
+      const name = cells[1].textContent.toLowerCase();
+      const grossPayPerDay = cells[2].textContent.toLowerCase();
+      const hoursOfWork = cells[3].textContent.toLowerCase();
+      const totalAllowance = cells[4].textContent.toLowerCase();
+      const legalHoliday = cells[5].textContent.toLowerCase();
+      const specialHoliday = cells[6].textContent.toLowerCase();
+      const totalDeduction = cells[7].textContent.toLowerCase();
+      const netPay = cells[8].textContent.toLowerCase();
+
+      if (
+        id.includes(filter) ||
+        name.includes(filter) ||
+        grossPayPerDay.includes(filter) ||
+        hoursOfWork.includes(filter) ||
+        totalAllowance.includes(filter) ||
+        legalHoliday.includes(filter) ||
+        specialHoliday.includes(filter) ||
+        totalDeduction.includes(filter) ||
+        netPay.includes(filter)
+      ) {
+        rows[i].dataset.filterVisible = '1';
+      } else {
+        rows[i].dataset.filterVisible = '0';
+      }
+    }
+  }
+
+  paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+}
+
+async function loadEmployeeSalary() {
+  const tableBody = document.querySelector('#employeeSalaryTable tbody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Loading employees...</td></tr>';
+
+  try {
+    const response = await fetch('../Employee_management/employees_api.php');
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load employees.');
+    }
+
+    const rows = result.data || [];
+    employeesForSalary = rows;
+
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No employees found.</td></tr>';
+      paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    rows.forEach(emp => {
+      const salary = Number(emp.salary || 0);
+      const grossPayPerDay = (salary * 12) / 261;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${emp.id}</td>
+        <td>${emp.name}</td>
+        <td>${formatCurrency(grossPayPerDay)}</td>
+        <td>0</td>
+        <td>0.00</td>
+        <td>0.00</td>
+        <td>0.00</td>
+        <td>0.00</td>
+        <td>${formatCurrency(grossPayPerDay)}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+
+    paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+  }
 }
 
 async function fetchEmployeeIncomeAssignments() {

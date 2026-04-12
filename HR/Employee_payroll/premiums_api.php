@@ -26,6 +26,7 @@ function ensurePremiumsTable($dbc) {
       `philhealth` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
       `pagibig` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
       `withholding_tax` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
+            `total_premium` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
       `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (`id`),
@@ -39,7 +40,7 @@ function ensurePremiumsTable($dbc) {
 }
 
 function handleGetRequest($dbc) {
-    $query = "SELECT id, employee_id, employee_name, sss, philhealth, pagibig, withholding_tax, updated_at FROM premiums ORDER BY employee_name ASC";
+    $query = "SELECT id, employee_id, employee_name, sss, philhealth, pagibig, withholding_tax, total_premium, updated_at FROM premiums ORDER BY employee_name ASC";
     $result = mysqli_query($dbc, $query);
 
     if (!$result) {
@@ -67,14 +68,15 @@ function handlePostRequest($dbc) {
         respond(false, null, 'Invalid input. Provide at least one record.', 400);
     }
 
-    $sql = "INSERT INTO premiums (employee_id, employee_name, sss, philhealth, pagibig, withholding_tax)
-            VALUES (?, ?, ?, ?, ?, ?)
+        $sql = "INSERT INTO premiums (employee_id, employee_name, sss, philhealth, pagibig, withholding_tax, total_premium)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
               employee_name = VALUES(employee_name),
               sss = VALUES(sss),
               philhealth = VALUES(philhealth),
               pagibig = VALUES(pagibig),
-              withholding_tax = VALUES(withholding_tax)";
+                            withholding_tax = VALUES(withholding_tax),
+                            total_premium = VALUES(total_premium)";
 
     $stmt = mysqli_prepare($dbc, $sql);
     if (!$stmt) {
@@ -97,8 +99,9 @@ function handlePostRequest($dbc) {
         $philhealth = isset($record['philhealth']) ? floatval($record['philhealth']) : 0;
         $pagibig = isset($record['pagibig']) ? floatval($record['pagibig']) : 0;
         $withholdingTax = isset($record['withholding_tax']) ? floatval($record['withholding_tax']) : 0;
+        $totalPremium = isset($record['total_premium']) ? floatval($record['total_premium']) : ($sss + $philhealth + $pagibig + $withholdingTax);
 
-        mysqli_stmt_bind_param($stmt, 'isdddd', $employeeId, $employeeName, $sss, $philhealth, $pagibig, $withholdingTax);
+        mysqli_stmt_bind_param($stmt, 'isddddd', $employeeId, $employeeName, $sss, $philhealth, $pagibig, $withholdingTax, $totalPremium);
 
         if (!mysqli_stmt_execute($stmt)) {
             respond(false, null, 'Failed saving premiums: ' . mysqli_error($dbc), 500);
