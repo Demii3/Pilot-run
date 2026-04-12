@@ -212,6 +212,7 @@
               <tbody></tbody>
             </table>
           </div>
+          <div id="deductionTypePagination" class="d-flex justify-content-between align-items-center mt-3"></div>
         </div>
       </div>`;
     loadDeductionTypes();
@@ -279,6 +280,7 @@
                 <tbody></tbody>
               </table>
             </div>
+            <div id="incomeTypePagination" class="d-flex justify-content-between align-items-center mt-3"></div>
           </div>
         </div>`;
       loadIncomeTypes();
@@ -343,6 +345,7 @@
               <tbody></tbody>
             </table>
           </div>
+          <div id="employeeDeductionSearchPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
 
           <div class="mt-4">
             <h5>Assigned Deduction Items</h5>
@@ -359,6 +362,7 @@
                 <tbody></tbody>
               </table>
             </div>
+            <div id="employeeDeductionAssignmentPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
           </div>
         </div>
       </div>`;
@@ -438,6 +442,7 @@
               <tbody></tbody>
             </table>
           </div>
+          <div id="employeeSearchPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
 
           <div class="mt-4">
             <h5>Assigned Income Items</h5>
@@ -456,6 +461,7 @@
                 <tbody></tbody>
               </table>
             </div>
+            <div id="employeeIncomeAssignmentPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
           </div>
         </div>
       </div>`;
@@ -469,9 +475,59 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h2>Employee Attendance</h2>
-            <button class="btn btn-secondary" onclick="openAttendanceForm()">+ Add Attendance</button>
+        </div>
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input
+                type="text"
+                id="searchAttendance"
+                class="form-control"
+                placeholder="Search by ID, name, date, status, or duration..."
+                onkeyup="filterAttendance()"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="attendanceDateFrom" class="form-label mb-1">From</label>
+              <input
+                type="date"
+                id="attendanceDateFrom"
+                class="form-control"
+                onchange="filterAttendance()"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="attendanceDateTo" class="form-label mb-1">To</label>
+              <input
+                type="date"
+                id="attendanceDateTo"
+                class="form-control"
+                onchange="filterAttendance()"
+              >
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover" id="attendanceTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Date</th>
+                  <th>Clock In</th>
+                  <th>Clock Out</th>
+                  <th>Clock In Status</th>
+                  <th>Clock Out Status</th>
+                  <th>Duration(Minutes)</th>
+                  <th>AO</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="attendancePagination" class="d-flex justify-content-between align-items-center mt-3"></div>
         </div>
       </div>`;
+    loadAttendance();
   }
 
   else if (section === "premiums") {
@@ -510,6 +566,7 @@
               <tbody></tbody>
             </table>
           </div>
+          <div id="employeePremiumSearchPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
         </div>
       </div>`;
     loadEmployeesForPremiums();
@@ -537,9 +594,37 @@
   else if (section === "process_13") {
     content.innerHTML = `
       <div class="card">
-        <h2>Process 13th Month Pay</h2>
-        <p>Calculate and generate 13th month pay for employees.</p>
+        <div class="card-header">
+          <h2>Process 13th Month Pay</h2>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <input
+              type="text"
+              id="searchProcess13"
+              class="form-control"
+              placeholder="Search by ID, name, annual, or 13th month pay..."
+              onkeyup="filterProcess13()"
+            >
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover" id="process13Table">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Salary</th>
+                  <th>Annual</th>
+                  <th>13th Month Pay</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="process13Pagination" class="d-flex justify-content-between align-items-center mt-3"></div>
+        </div>
       </div>`;
+    loadEmployeesForProcess13();
   }
 
   else if (section === "yearend") {
@@ -574,6 +659,156 @@ let employeesForDeductions = [];
 let deductionTypesForAssignments = [];
 let employeeDeductionAssignments = [];
 let employeesForPremiums = [];
+let attendanceRows = [];
+let filteredAttendanceRows = [];
+let attendanceCurrentPage = 1;
+const attendancePageSize = 10;
+const tablePageSize = 10;
+const tablePaginationState = {};
+
+function getCompactPageSequence(totalPages, currentPage) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const pages = [1];
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+
+  if (start > 2) {
+    pages.push('ellipsis-left');
+  }
+
+  for (let page = start; page <= end; page++) {
+    pages.push(page);
+  }
+
+  if (end < totalPages - 1) {
+    pages.push('ellipsis-right');
+  }
+
+  pages.push(totalPages);
+  return pages;
+}
+
+function applyTableRowVisibility(row) {
+  const filterVisible = row.dataset.filterVisible !== '0';
+  const pageVisible = row.dataset.pageVisible !== '0';
+  row.style.display = filterVisible && pageVisible ? '' : 'none';
+}
+
+function paginateTable(tableId, paginationId, resetPage = false) {
+  const tableBody = document.querySelector(`#${tableId} tbody`);
+  const paginationContainer = document.getElementById(paginationId);
+  if (!tableBody || !paginationContainer) return;
+
+  const rows = Array.from(tableBody.getElementsByTagName('tr'));
+  if (rows.length === 0) {
+    paginationContainer.innerHTML = '';
+    return;
+  }
+
+  if (rows.length === 1) {
+    const firstRowCells = rows[0].getElementsByTagName('td');
+    const singleMessageRow = firstRowCells.length === 1 && firstRowCells[0].hasAttribute('colspan');
+    if (singleMessageRow) {
+      paginationContainer.innerHTML = '';
+      return;
+    }
+  }
+
+  rows.forEach(row => {
+    if (!row.dataset.filterVisible) {
+      row.dataset.filterVisible = '1';
+    }
+    row.dataset.pageVisible = '1';
+    applyTableRowVisibility(row);
+  });
+
+  const visibleRows = rows.filter(row => row.dataset.filterVisible !== '0');
+  if (visibleRows.length === 0) {
+    paginationContainer.innerHTML = '<small class="text-muted">Showing 0 of 0 records</small>';
+    rows.forEach(row => {
+      row.dataset.pageVisible = '0';
+      applyTableRowVisibility(row);
+    });
+    return;
+  }
+
+  const totalPages = Math.ceil(visibleRows.length / tablePageSize);
+  let currentPage = tablePaginationState[tableId] || 1;
+  if (resetPage) {
+    currentPage = 1;
+  }
+  if (currentPage > totalPages) {
+    currentPage = totalPages;
+  }
+  if (currentPage < 1) {
+    currentPage = 1;
+  }
+  tablePaginationState[tableId] = currentPage;
+
+  const startIndex = (currentPage - 1) * tablePageSize;
+  const endIndex = startIndex + tablePageSize;
+  visibleRows.forEach((row, index) => {
+    row.dataset.pageVisible = index >= startIndex && index < endIndex ? '1' : '0';
+    applyTableRowVisibility(row);
+  });
+
+  const filteredOutRows = rows.filter(row => row.dataset.filterVisible === '0');
+  filteredOutRows.forEach(row => {
+    row.dataset.pageVisible = '1';
+    applyTableRowVisibility(row);
+  });
+
+  if (totalPages <= 1) {
+    paginationContainer.innerHTML = `<small class="text-muted">Showing ${visibleRows.length} of ${visibleRows.length} records</small>`;
+    return;
+  }
+
+  const pageSequence = getCompactPageSequence(totalPages, currentPage);
+  let pageButtons = '';
+  pageSequence.forEach(item => {
+    if (typeof item === 'number') {
+      pageButtons += `
+        <button
+          type="button"
+          class="btn btn-sm ${item === currentPage ? 'btn-primary' : 'btn-outline-primary'}"
+          onclick="goToTablePage('${tableId}', '${paginationId}', ${item})"
+        >${item}</button>
+      `;
+      return;
+    }
+
+    pageButtons += '<span class="px-1 align-self-center text-muted">...</span>';
+  });
+
+  const showingStart = startIndex + 1;
+  const showingEnd = Math.min(endIndex, visibleRows.length);
+  paginationContainer.innerHTML = `
+    <small class="text-muted">Showing ${showingStart}-${showingEnd} of ${visibleRows.length} records</small>
+    <div class="d-flex gap-1 flex-wrap justify-content-end">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        onclick="goToTablePage('${tableId}', '${paginationId}', ${currentPage - 1})"
+        ${currentPage === 1 ? 'disabled' : ''}
+      >Previous</button>
+      ${pageButtons}
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        onclick="goToTablePage('${tableId}', '${paginationId}', ${currentPage + 1})"
+        ${currentPage === totalPages ? 'disabled' : ''}
+      >Next</button>
+    </div>
+  `;
+}
+
+function goToTablePage(tableId, paginationId, page) {
+  tablePaginationState[tableId] = page;
+  paginateTable(tableId, paginationId, false);
+}
 
 function computeSssContribution(salaryValue) {
   const salary = Number(String(salaryValue ?? '').replace(/,/g, ''));
@@ -668,6 +903,7 @@ async function loadDeductionTypes() {
     const rows = result.data || [];
     if (rows.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No deduction types found.</td></tr>';
+      paginateTable('deductionTypeTable', 'deductionTypePagination', true);
       return;
     }
 
@@ -692,8 +928,10 @@ async function loadDeductionTypes() {
         deleteButton.addEventListener('click', () => deleteDeductionType(item.id));
       }
     });
+    paginateTable('deductionTypeTable', 'deductionTypePagination', true);
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('deductionTypeTable', 'deductionTypePagination', true);
   }
 }
 
@@ -810,12 +1048,14 @@ function filterDeductionTypes() {
       const deductionType = cells[0].textContent.toLowerCase();
       const cost = cells[1].textContent.toLowerCase();
       if (deductionType.includes(filter) || cost.includes(filter)) {
-        rows[i].style.display = '';
+        rows[i].dataset.filterVisible = '1';
       } else {
-        rows[i].style.display = 'none';
+        rows[i].dataset.filterVisible = '0';
       }
     }
   }
+
+  paginateTable('deductionTypeTable', 'deductionTypePagination', true);
 }
 
 async function loadIncomeTypes() {
@@ -835,6 +1075,7 @@ async function loadIncomeTypes() {
     const rows = result.data || [];
     if (rows.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No income types found.</td></tr>';
+      paginateTable('incomeTypeTable', 'incomeTypePagination', true);
       return;
     }
 
@@ -863,8 +1104,10 @@ async function loadIncomeTypes() {
         deleteButton.addEventListener('click', () => deleteIncomeType(item.id));
       }
     });
+    paginateTable('incomeTypeTable', 'incomeTypePagination', true);
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('incomeTypeTable', 'incomeTypePagination', true);
   }
 }
 
@@ -1164,6 +1407,7 @@ function renderEmployeeDeductionAssignments() {
   if (!tableBody) return;
   if (employeeDeductionAssignments.length === 0) {
     tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No assigned deduction items yet.</td></tr>';
+    paginateTable('employeeDeductionAssignmentTable', 'employeeDeductionAssignmentPagination', true);
     return;
   }
 
@@ -1190,6 +1434,7 @@ function renderEmployeeDeductionAssignments() {
       deleteButton.addEventListener('click', () => deleteEmployeeDeductionAssignment(item.id));
     }
   });
+  paginateTable('employeeDeductionAssignmentTable', 'employeeDeductionAssignmentPagination', true);
 }
 
 function editEmployeeDeductionAssignment(id) {
@@ -1250,6 +1495,7 @@ async function loadEmployeesForDeductions() {
 
     if (rows.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found.</td></tr>';
+      paginateTable('employeeDeductionSearchTable', 'employeeDeductionSearchPagination', true);
       return;
     }
 
@@ -1267,8 +1513,10 @@ async function loadEmployeesForDeductions() {
       `;
       tableBody.appendChild(row);
     });
+    paginateTable('employeeDeductionSearchTable', 'employeeDeductionSearchPagination', true);
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('employeeDeductionSearchTable', 'employeeDeductionSearchPagination', true);
   }
 }
 
@@ -1312,9 +1560,11 @@ async function loadEmployeesForPremiums() {
 
     if (rows.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found.</td></tr>';
+      paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
       return;
     }
 
+    const premiumRecords = [];
     tableBody.innerHTML = '';
     rows.forEach(emp => {
       const salary = Number(emp.salary || 0);
@@ -1323,6 +1573,17 @@ async function loadEmployeesForPremiums() {
       const philhealthContribution = computePhilhealthContribution(salary);
       const employeeNameKey = String(emp.name || '').trim().toLowerCase();
       const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
+      const withholdingTax = computeWithholdingTax(salary, sssContribution, philhealthContribution, pagibigContribution, nonTaxableIncome);
+
+      premiumRecords.push({
+        employee_id: Number(emp.id),
+        employee_name: emp.name,
+        sss: sssContribution === null ? 0 : sssContribution,
+        philhealth: philhealthContribution === null ? 0 : philhealthContribution,
+        pagibig: pagibigContribution === null ? 0 : pagibigContribution,
+        withholding_tax: withholdingTax === null ? 0 : withholdingTax
+      });
+
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${emp.id}</td>
@@ -1331,12 +1592,25 @@ async function loadEmployeesForPremiums() {
         <td>${sssContribution === null ? '' : formatCurrency(sssContribution)}</td>
         <td>${pagibigContribution === null ? '' : formatCurrency(pagibigContribution)}</td>
         <td>${philhealthContribution === null ? '' : formatCurrency(philhealthContribution)}</td>
-        <td>${formatCurrency(computeWithholdingTax(salary, sssContribution, philhealthContribution, pagibigContribution, nonTaxableIncome))}</td>
+        <td>${formatCurrency(withholdingTax)}</td>
       `;
       tableBody.appendChild(row);
     });
+
+    // Persist computed premiums into a separate table for reporting and auditing.
+    try {
+      await fetch('premiums_api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: premiumRecords })
+      });
+    } catch (persistError) {
+      console.error('Unable to persist premiums snapshot:', persistError);
+    }
+    paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
   }
 }
 
@@ -1357,12 +1631,14 @@ function filterEmployeesForPremiums() {
       const philhealth = cells[5].textContent.toLowerCase();
       const withholdingTax = cells[6].textContent.toLowerCase();
       if (name.includes(filter) || salary.includes(filter) || sss.includes(filter) || pagibig.includes(filter) || philhealth.includes(filter) || withholdingTax.includes(filter)) {
-        rows[i].style.display = '';
+        rows[i].dataset.filterVisible = '1';
       } else {
-        rows[i].style.display = 'none';
+        rows[i].dataset.filterVisible = '0';
       }
     }
   }
+
+  paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
 }
 
 function filterEmployeesForDeductions() {
@@ -1380,12 +1656,14 @@ function filterEmployeesForDeductions() {
       const position = cells[3].textContent.toLowerCase();
       const department = cells[4].textContent.toLowerCase();
       if (name.includes(filter) || email.includes(filter) || position.includes(filter) || department.includes(filter)) {
-        rows[i].style.display = '';
+        rows[i].dataset.filterVisible = '1';
       } else {
-        rows[i].style.display = 'none';
+        rows[i].dataset.filterVisible = '0';
       }
     }
   }
+
+  paginateTable('employeeDeductionSearchTable', 'employeeDeductionSearchPagination', true);
 }
 
 async function fetchEmployeeDeductionAssignments() {
@@ -1512,6 +1790,7 @@ function renderEmployeeIncomeAssignments() {
   if (!tableBody) return;
   if (employeeIncomeAssignments.length === 0) {
     tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No assigned income items yet.</td></tr>';
+    paginateTable('employeeIncomeAssignmentTable', 'employeeIncomeAssignmentPagination', true);
     return;
   }
 
@@ -1542,6 +1821,8 @@ function renderEmployeeIncomeAssignments() {
       deleteButton.addEventListener('click', () => deleteEmployeeIncomeAssignment(item.id));
     }
   });
+
+  paginateTable('employeeIncomeAssignmentTable', 'employeeIncomeAssignmentPagination', true);
 }
 
 function editEmployeeIncomeAssignment(id) {
@@ -1597,11 +1878,290 @@ function filterIncomeTypes() {
       const incomeType = cells[0].textContent.toLowerCase();
       const cost = cells[1].textContent.toLowerCase();
       if (incomeType.includes(filter) || cost.includes(filter)) {
-        rows[i].style.display = '';
+        rows[i].dataset.filterVisible = '1';
       } else {
-        rows[i].style.display = 'none';
+        rows[i].dataset.filterVisible = '0';
       }
     }
+  }
+
+  paginateTable('incomeTypeTable', 'incomeTypePagination', true);
+}
+
+function filterProcess13() {
+  const searchInput = document.getElementById('searchProcess13');
+  const tableBody = document.querySelector('#process13Table tbody');
+  if (!searchInput || !tableBody) return;
+
+  const filter = searchInput.value.toLowerCase();
+  const rows = tableBody.getElementsByTagName('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length >= 5) {
+      const id = cells[0].textContent.toLowerCase();
+      const name = cells[1].textContent.toLowerCase();
+      const salary = cells[2].textContent.toLowerCase();
+      const annual = cells[3].textContent.toLowerCase();
+      const month13 = cells[4].textContent.toLowerCase();
+
+      if (id.includes(filter) || name.includes(filter) || salary.includes(filter) || annual.includes(filter) || month13.includes(filter)) {
+        rows[i].dataset.filterVisible = '1';
+      } else {
+        rows[i].dataset.filterVisible = '0';
+      }
+    }
+  }
+
+  paginateTable('process13Table', 'process13Pagination', true);
+}
+
+function filterAttendance() {
+  const searchInput = document.getElementById('searchAttendance');
+  const dateFromInput = document.getElementById('attendanceDateFrom');
+  const dateToInput = document.getElementById('attendanceDateTo');
+  if (!searchInput) return;
+
+  const filter = searchInput.value.toLowerCase();
+  const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
+  const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
+
+  filteredAttendanceRows = attendanceRows.filter(item => {
+    const id = String(item.id ?? '').toLowerCase();
+    const name = String(item.name ?? '').toLowerCase();
+    const date = String(item.date ?? '').toLowerCase();
+    const clockIn = String(item.clockIn ?? '').toLowerCase();
+    const clockOut = String(item.clockOut ?? '').toLowerCase();
+    const clockInStatus = String(item.clockInStatus ?? '').toLowerCase();
+    const clockOutStatus = String(item.clockOutStatus ?? '').toLowerCase();
+    const duration = String(item.duration ?? '').toLowerCase();
+    const ao = String(item.ao ?? '').toLowerCase();
+
+    const textMatches = (
+      id.includes(filter) ||
+      name.includes(filter) ||
+      date.includes(filter) ||
+      clockIn.includes(filter) ||
+      clockOut.includes(filter) ||
+      clockInStatus.includes(filter) ||
+      clockOutStatus.includes(filter) ||
+      duration.includes(filter) ||
+      ao.includes(filter)
+    );
+
+    if (!textMatches) {
+      return false;
+    }
+
+    if (!dateFrom && !dateTo) {
+      return true;
+    }
+
+    const itemDate = item.date ? new Date(`${item.date}T00:00:00`) : null;
+    if (!itemDate || Number.isNaN(itemDate.getTime())) {
+      return false;
+    }
+
+    if (dateFrom && itemDate < dateFrom) {
+      return false;
+    }
+
+    if (dateTo && itemDate > dateTo) {
+      return false;
+    }
+
+    return true;
+  });
+
+  attendanceCurrentPage = 1;
+  renderAttendanceTable();
+}
+
+function renderAttendanceTable() {
+  const tableBody = document.querySelector('#attendanceTable tbody');
+  if (!tableBody) return;
+
+  const totalRows = filteredAttendanceRows.length;
+  if (totalRows === 0) {
+    tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No attendance records found.</td></tr>';
+    renderAttendancePagination(0);
+    return;
+  }
+
+  const totalPages = Math.ceil(totalRows / attendancePageSize);
+  if (attendanceCurrentPage > totalPages) {
+    attendanceCurrentPage = totalPages;
+  }
+
+  const startIndex = (attendanceCurrentPage - 1) * attendancePageSize;
+  const endIndex = startIndex + attendancePageSize;
+  const pageRows = filteredAttendanceRows.slice(startIndex, endIndex);
+
+  tableBody.innerHTML = '';
+  pageRows.forEach(item => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.id ?? ''}</td>
+      <td>${item.name ?? ''}</td>
+      <td>${item.date ?? ''}</td>
+      <td>${item.clockIn ?? ''}</td>
+      <td>${item.clockOut ?? ''}</td>
+      <td>${item.clockInStatus ?? ''}</td>
+      <td>${item.clockOutStatus ?? ''}</td>
+      <td>${item.duration ?? ''}</td>
+      <td>${item.ao ?? ''}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+
+  renderAttendancePagination(totalPages);
+}
+
+function renderAttendancePagination(totalPages) {
+  const paginationContainer = document.getElementById('attendancePagination');
+  if (!paginationContainer) return;
+
+  if (totalPages <= 1) {
+    const shownRows = filteredAttendanceRows.length;
+    paginationContainer.innerHTML = `<small class="text-muted">Showing ${shownRows} of ${attendanceRows.length} records</small>`;
+    return;
+  }
+
+  const pageSequence = getCompactPageSequence(totalPages, attendanceCurrentPage);
+  let pageButtons = '';
+  pageSequence.forEach(item => {
+    if (typeof item === 'number') {
+      pageButtons += `
+        <button
+          type="button"
+          class="btn btn-sm ${item === attendanceCurrentPage ? 'btn-primary' : 'btn-outline-primary'}"
+          onclick="goToAttendancePage(${item})"
+        >${item}</button>
+      `;
+      return;
+    }
+
+    pageButtons += '<span class="px-1 align-self-center text-muted">...</span>';
+  });
+
+  const startIndex = (attendanceCurrentPage - 1) * attendancePageSize + 1;
+  const endIndex = Math.min(attendanceCurrentPage * attendancePageSize, filteredAttendanceRows.length);
+
+  paginationContainer.innerHTML = `
+    <small class="text-muted">Showing ${startIndex}-${endIndex} of ${filteredAttendanceRows.length} records</small>
+    <div class="d-flex gap-1 flex-wrap justify-content-end">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        onclick="goToAttendancePage(${attendanceCurrentPage - 1})"
+        ${attendanceCurrentPage === 1 ? 'disabled' : ''}
+      >Previous</button>
+      ${pageButtons}
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        onclick="goToAttendancePage(${attendanceCurrentPage + 1})"
+        ${attendanceCurrentPage === totalPages ? 'disabled' : ''}
+      >Next</button>
+    </div>
+  `;
+}
+
+function goToAttendancePage(page) {
+  const totalPages = Math.max(1, Math.ceil(filteredAttendanceRows.length / attendancePageSize));
+  const targetPage = Math.min(Math.max(page, 1), totalPages);
+  if (targetPage === attendanceCurrentPage) return;
+  attendanceCurrentPage = targetPage;
+  renderAttendanceTable();
+}
+
+async function loadAttendance() {
+  const tableBody = document.querySelector('#attendanceTable tbody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Loading attendance...</td></tr>';
+
+  try {
+    const response = await fetch('attendance_api.php');
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load attendance.');
+    }
+
+    const rows = result.data || [];
+    if (rows.length === 0) {
+      attendanceRows = [];
+      filteredAttendanceRows = [];
+      attendanceCurrentPage = 1;
+      tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No attendance records found.</td></tr>';
+      renderAttendancePagination(0);
+      return;
+    }
+
+    attendanceRows = rows.map(item => ({
+      id: item.Emp_id,
+      name: item.employee_name,
+      date: item.Date,
+      clockIn: item.Clock_in,
+      clockOut: item.Clock_out,
+      clockInStatus: item.Clockin_status,
+      clockOutStatus: item.Clockout_status,
+      duration: item.Duration,
+      ao: item.AO
+    }));
+    filteredAttendanceRows = [...attendanceRows];
+    attendanceCurrentPage = 1;
+    renderAttendanceTable();
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${error.message}</td></tr>`;
+    const paginationContainer = document.getElementById('attendancePagination');
+    if (paginationContainer) {
+      paginationContainer.innerHTML = '';
+    }
+  }
+}
+
+async function loadEmployeesForProcess13() {
+  const tableBody = document.querySelector('#process13Table tbody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading employees...</td></tr>';
+
+  try {
+    const response = await fetch('../Employee_management/employees_api.php');
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load employees.');
+    }
+
+    const rows = result.data || [];
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No employees found.</td></tr>';
+      paginateTable('process13Table', 'process13Pagination', true);
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    rows.forEach(emp => {
+      const monthlySalary = Number(emp.salary || 0);
+      const annualSalary = monthlySalary * 12;
+      const month13Pay = annualSalary / 12;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${emp.id}</td>
+        <td>${emp.name}</td>
+        <td>${formatCurrency(monthlySalary)}</td>
+        <td>${formatCurrency(annualSalary)}</td>
+        <td>${formatCurrency(month13Pay)}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+    paginateTable('process13Table', 'process13Pagination', true);
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('process13Table', 'process13Pagination', true);
   }
 }
 
@@ -1623,6 +2183,7 @@ async function loadEmployees() {
     populateEmployeeSelect();
     if (rows.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found.</td></tr>';
+      paginateTable('employeeSearchTable', 'employeeSearchPagination', true);
       return;
     }
 
@@ -1640,8 +2201,10 @@ async function loadEmployees() {
       `;
       tableBody.appendChild(row);
     });
+    paginateTable('employeeSearchTable', 'employeeSearchPagination', true);
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('employeeSearchTable', 'employeeSearchPagination', true);
   }
 }
 
@@ -1659,12 +2222,14 @@ function filterEmployees() {
       const position = cells[3].textContent.toLowerCase();
       const department = cells[4].textContent.toLowerCase();
       if (name.includes(filter) || email.includes(filter) || position.includes(filter) || department.includes(filter)) {
-        rows[i].style.display = '';
+        rows[i].dataset.filterVisible = '1';
       } else {
-        rows[i].style.display = 'none';
+        rows[i].dataset.filterVisible = '0';
       }
     }
   }
+
+  paginateTable('employeeSearchTable', 'employeeSearchPagination', true);
 }
 
 async function fetchEmployeeIncomeAssignments() {

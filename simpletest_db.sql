@@ -637,3 +637,21 @@ CREATE TABLE IF NOT EXISTS `Emp_Inc_Type` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 >>>>>>> 712680c4879f7f08b48c7323329a21a255457895
+
+-- --------------------------------------------------------
+
+-- Table structure for table `premiums`
+
+CREATE TABLE IF NOT EXISTS `premiums` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `employee_id` INT UNSIGNED NOT NULL,
+  `employee_name` VARCHAR(255) NOT NULL,
+  `sss` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
+  `philhealth` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
+  `pagibig` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
+  `withholding_tax` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_employee_id` (`employee_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
