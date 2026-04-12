@@ -8,9 +8,12 @@ const selectAllRows = document.getElementById('selectAllRows');
 const modalClockIn = document.getElementById('modalClockIn');
 const modalClockOut = document.getElementById('modalClockOut');
 const modalStatus = document.getElementById('modalStatus');
+const modalClockoutStatus = document.getElementById('modalClockoutStatus');
 let isNA = false;
 let tempval1 = '';
 let tempval2 = '';
+let tempval3 = '';
+let tempval4 = '';
 
 attendanceModalElement.addEventListener('hidden.bs.modal', returnProperties);
 
@@ -72,30 +75,35 @@ function openRowModal(row) {
     document.getElementById('modalClockIn').value = stringTotime24H(cells[6]) || '';
     document.getElementById('modalStatus').value = cells[7] || '';
     document.getElementById('modalClockOut').value = stringTotime24H(cells[8]) || '';
+    document.getElementById('modalClockoutStatus').value = cells[9] || '';
     const attendanceModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
     attendanceModal.show();
-    document.getElementById('editBtn').onclick = () => editContent();
+    document.getElementById('editBtn').onclick = () => editContent(row.cells[9].textContent);
     document.getElementById('closeBtn').onclick = () => returnProperties();
     document.getElementById('deleteBtn').onclick = () => deleteContent(row.cells[0].textContent);
     document.getElementById('saveBtn').onclick = () => saveInfo_toDB(row.cells[0].textContent, row.cells[6].textContent, row.cells[8].textContent);
     document.getElementById('NAbtn').onclick = () => setmodalClockinNA();
 }
 
-function editContent() {
+function editContent(hello) {
     document.getElementById('modalClockIn').readOnly = false;
     document.getElementById('modalClockOut').readOnly = false;
     document.getElementById('modalStatus').disabled = false;
+    document.getElementById('modalClockoutStatus').disabled = false;
     document.getElementById('NAbtn').disabled = false;
     document.getElementById('saveBtn').classList.remove('d-none');
     document.getElementById('deleteBtn').classList.remove('d-none');
     tempval1 = document.getElementById('modalClockIn').value;
     tempval2 = document.getElementById('modalStatus').value;
+    tempval3 = document.getElementById('modalClockOut').value;
+    tempval4 = document.getElementById('modalClockoutStatus').value;
 }
 
 function returnProperties() {
     document.getElementById('modalClockIn').readOnly = true;
     document.getElementById('modalClockOut').readOnly = true;
     document.getElementById('modalStatus').disabled = true;
+    document.getElementById('modalClockoutStatus').disabled = true;
     document.getElementById('NAbtn').disabled = true;
     document.getElementById('saveBtn').classList.add('d-none');
     document.getElementById('deleteBtn').classList.add('d-none');
@@ -137,14 +145,23 @@ selectAllRows.addEventListener('change', event => {
 function saveInfo_toDB(Attendance_ID, old_clockIn, old_clockOut) {
     const new_clockIn = document.getElementById('modalClockIn').value;
     const new_clockOut = document.getElementById('modalClockOut').value;
+    const formattedClockIn = formatTimeForDatabase(new_clockIn);
+    const formattedClockOut = formatTimeForDatabase(new_clockOut);
+    const duration = calculateDurationInMinutes(formattedClockIn, formattedClockOut);
+
+    if (!formattedClockIn || !formattedClockOut) {
+        alert('Clock In and Clock Out times are required.');
+        return;
+    }
 
     $.post('./Employee_attendance_modules/save_attendance.php',
         {
             Attendance_ID: Attendance_ID,
-            newClock_in: new_clockIn,
-            newClock_out: new_clockOut,
-            old_clockIn: old_clockIn,
-            old_clockOut: old_clockOut
+            newClock_in: formattedClockIn,
+            newClock_in_status: modalStatus.value,
+            newClock_out_status: modalClockoutStatus.value,
+            newClock_out: formattedClockOut,
+            duration: duration
         },
         function(response) {
             if (response === 'success') {
@@ -184,6 +201,69 @@ function stringTotime24H(timeStr) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
+function formatTimeForDatabase(timeValue) {
+    if (!timeValue || timeValue === 'N/A') {
+        return '';
+    }
+
+    const [hoursPart, minutesPart, secondsPart] = timeValue.split(':');
+    const hours = Number(hoursPart);
+    const minutes = Number(minutesPart);
+    const seconds = Number(secondsPart || '0');
+
+    if (Number.isNaN(hours) || Number.isNaN(minutes) || Number.isNaN(seconds)) {
+        return '';
+    }
+
+    const suffix = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 === 0 ? 12 : hours % 12;
+
+    return `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${suffix}`;
+}
+
+function calculateDurationInMinutes(clockInValue, clockOutValue) {
+    if (!clockInValue || !clockOutValue || clockInValue === 'N/A' || clockOutValue === 'N/A') {
+        return 0;
+    }
+
+    // Parse time in HH:MM:SS AM/PM format
+    const parseTime = (timeStr) => {
+        const [time, modifier] = timeStr.split(' ');
+        let [hours, minutes, seconds] = time.split(':').map(Number);
+
+        if (modifier === 'PM' && hours !== 12) {
+            hours += 12;
+        } else if (modifier === 'AM' && hours === 12) {
+            hours = 0;
+        }
+
+        return { hours, minutes, seconds };
+    };
+
+    try {
+        const clockIn = parseTime(clockInValue);
+        const clockOut = parseTime(clockOutValue);
+
+        if (Number.isNaN(clockIn.hours) || Number.isNaN(clockIn.minutes) || Number.isNaN(clockIn.seconds) ||
+            Number.isNaN(clockOut.hours) || Number.isNaN(clockOut.minutes) || Number.isNaN(clockOut.seconds)) {
+            return 0;
+        }
+
+        const inTotalSeconds = clockIn.hours * 3600 + clockIn.minutes * 60 + clockIn.seconds;
+        const outTotalSeconds = clockOut.hours * 3600 + clockOut.minutes * 60 + clockOut.seconds;
+
+        let durationSeconds = outTotalSeconds - inTotalSeconds;
+
+        if (durationSeconds < 0) {
+            durationSeconds += 24 * 3600;
+        }
+
+        return Math.floor(durationSeconds / 60);
+    } catch (e) {
+        return 0;
+    }
+}
+
 modalClockIn.addEventListener('change', () => {
     const clockInValue = modalClockIn.value;
 
@@ -191,6 +271,20 @@ modalClockIn.addEventListener('change', () => {
         modalStatus.value = 'On-time';
     } else {
         modalStatus.value = 'Late';
+    }
+});
+
+modalClockOut.addEventListener('change', () => {
+    const clockOutValue = modalClockOut.value;
+
+    if (clockOutValue > '17:00') {
+        modalClockoutStatus.value = 'Over-time';
+    } else if (clockOutValue === 'N/A') {
+        modalClockoutStatus.value = 'Absent';
+    } else if (clockOutValue < '17:00') {
+        modalClockoutStatus.value = 'Under-time';
+    } else {
+        modalClockoutStatus.value = 'Present';
     }
 });
 
@@ -202,16 +296,35 @@ modalStatus.addEventListener('change', () => {
             if (tempval2 == 'On-time') {
                 return;
             } else {
-                modalClockIn.value = '08:00';
+                modalClockIn.value = '08:00:00';
+                alert(modalClockIn.value);
             }
             break;
         case 'Late':
-            if (modalClockIn.value === 'N/A' || modalClockIn.value <= '08:00') {
-                modalClockIn.value = '08:01';
+            if (modalClockIn.value === 'N/A' || modalClockIn.value <= '08:00:00') {
+                modalClockIn.value = '08:01:00';
             }
             break;
         case 'Absent':
             modalClockIn.value = 'N/A';
+            break;
+    }
+});
+
+modalClockoutStatus.addEventListener('change', () => {
+    const modalClockoutStatusvalue = modalClockoutStatus.value;
+
+    switch (modalClockoutStatusvalue) {
+        case 'Present':
+            if (tempval4 == 'Present') {
+                return;
+            } else {
+                modalClockOut.value = '17:00:00';
+                alert(modalClockOut.value);
+            }
+            break;
+        case 'Absent':
+            modalClockOut.value = 'N/A';
             break;
     }
 });

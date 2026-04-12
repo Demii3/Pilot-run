@@ -105,7 +105,7 @@ header('Pragma: no-cache');
                                         echo "<td>" . $row['Clock_in'] . "</td>";
                                         echo "<td class='clkinStatus-col'>" . $row['Clockin_status'] . "</td>";
                                         echo "<td>" . $row['Clock_out'] . "</td>";
-                                        echo "<td>" . '---' . "</td>";
+                                        echo "<td class='clkinStatus-col'>" . $row['Clockout_status'] . "</td>";
                                         echo "<td>" . $row['Duration'] . "</td>";
                                         echo "<td class='text-center'><input type='checkbox' class='form-check-input row-select' aria-label='Select row for deletion'></td>";
                                         echo "</tr>";
@@ -128,7 +128,7 @@ header('Pragma: no-cache');
                 <div class="modal-body">
                     <form>
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-md-6 d-none">
                                 <label for="modalEmpId" class="form-label">Employee ID</label>
                                 <input id="modalEmpId" type="text" class="form-control" readonly>
                             </div>
@@ -168,11 +168,12 @@ header('Pragma: no-cache');
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="modalStatus" class="form-label">Clock-out Status</label>
-                                <select id="modalStatus" class="form-select" disabled>
-                                    <option value="Late">Late</option>
-                                    <option value="On-time">On-time</option>
+                                <label for="modalClockoutStatus" class="form-label">Clock-out Status</label>
+                                <select id="modalClockoutStatus" class="form-select" disabled>
+                                    <option value="Over-time">Overtime</option>
+                                    <option value="Under-time">Undertime</option>
                                     <option value="Absent">Absent</option>
+                                    <option value="Present">Present</option>
                                 </select>
                             </div>
                         </div>
