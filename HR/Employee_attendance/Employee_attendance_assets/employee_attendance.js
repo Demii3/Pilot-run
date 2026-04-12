@@ -458,8 +458,13 @@ modalStatus.addEventListener('change', () => {
                 return;
             } else {
                 modalClockIn.value = '08:00:00';
-                alert(modalClockIn.value);
             }
+            break;
+        case 'On-leave':
+            modalClockIn.value = '08:00:00';
+            modalClockOut.value = '17:00:00';
+            modalClockoutStatus.value = 'Present';
+            toggleOvertimeDecisionField();
             break;
         case 'Late':
             if (modalClockIn.value === 'N/A' || modalClockIn.value <= '08:00:00') {
@@ -482,7 +487,6 @@ modalClockoutStatus.addEventListener('change', () => {
                 return;
             } else {
                 modalClockOut.value = '17:00:00';
-                alert(modalClockOut.value);
             }
             break;
         case 'Absent':

@@ -164,6 +164,7 @@ header('Pragma: no-cache');
                                 <select id="modalStatus" class="form-select" disabled>
                                     <option value="Late">Late</option>
                                     <option value="On-time">On-time</option>
+                                    <option value="On-leave">On-leave</option>
                                     <option value="Absent">Absent</option>
                                 </select>
                             </div>
