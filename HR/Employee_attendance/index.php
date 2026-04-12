@@ -175,6 +175,13 @@ header('Pragma: no-cache');
                                     <option value="Absent">Absent</option>
                                     <option value="Present">Present</option>
                                 </select>
+                                <div id="overtimeDecisionWrapper" class="mt-2 d-none">
+                                    <label for="modalOvertimeDecision" class="form-label">Overtime Decision</label>
+                                    <select id="modalOvertimeDecision" class="form-select" disabled>
+                                        <option value="Allowed">Allowed</option>
+                                        <option value="Rejected">Rejected</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </form>
