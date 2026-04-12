@@ -1,12 +1,27 @@
 <?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 header('Content-Type: application/json');
 
 include '../../Modules/dbcon.php';
-include 'Emp_Inc_Type_query.php';
 
 if (!$dbc) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed.']);
     exit;
+}
+
+function getEmpIncTypeTableSql() {
+    // Return the SQL query to create the emp_inc_type table if it doesn't exist
+    return "CREATE TABLE IF NOT EXISTS emp_inc_type (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        type_of_income VARCHAR(255) NOT NULL,
+        cost DECIMAL(10, 2) NOT NULL,
+        taxable TINYINT(1) NOT NULL,
+        included_in_13month TINYINT(1) NOT NULL
+    ) ENGINE=InnoDB;";
 }
 
 mysqli_query($dbc, getEmpIncTypeTableSql());
@@ -34,7 +49,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 if ($method === 'GET') {
     if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $id = intval($_GET['id']);
-        $stmt = mysqli_prepare($dbc, "SELECT id, type_of_income, cost, taxable, included_in_13month FROM Emp_Inc_Type WHERE id = ?");
+        $stmt = mysqli_prepare($dbc, "SELECT id, type_of_income, cost, taxable, included_in_13month FROM emp_inc_type WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'i', $id);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
@@ -47,6 +62,7 @@ if ($method === 'GET') {
     $result = mysqli_query($dbc, $query);
 
     if (!$result) {
+        error_log('Database query failed: ' . mysqli_error($dbc));
         echo json_encode(['success' => false, 'message' => 'Database query failed: ' . mysqli_error($dbc)]);
         exit;
     }
@@ -77,17 +93,19 @@ if ($method === 'POST') {
     }
 
     if ($id) {
-        $stmt = mysqli_prepare($dbc, "UPDATE Emp_Inc_Type SET type_of_income = ?, cost = ?, taxable = ?, included_in_13month = ? WHERE id = ?");
+        $stmt = mysqli_prepare($dbc, "UPDATE emp_inc_type SET type_of_income = ?, cost = ?, taxable = ?, included_in_13month = ? WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'sdiii', $typeOfIncome, $cost, $taxable, $includedIn13, $id);
         if (!mysqli_stmt_execute($stmt)) {
+            error_log('Update failed: ' . mysqli_error($dbc));
             respond(false, null, 'Update failed: ' . mysqli_error($dbc));
         }
         respond(true, ['id' => $id, 'type_of_income' => $typeOfIncome, 'cost' => $cost, 'taxable' => $taxable, 'included_in_13month' => $includedIn13], 'Income type updated.');
     }
 
-    $stmt = mysqli_prepare($dbc, "INSERT INTO Emp_Inc_Type (type_of_income, cost, taxable, included_in_13month) VALUES (?, ?, ?, ?)");
+    $stmt = mysqli_prepare($dbc, "INSERT INTO emp_inc_type (type_of_income, cost, taxable, included_in_13month) VALUES (?, ?, ?, ?)");
     mysqli_stmt_bind_param($stmt, 'sdii', $typeOfIncome, $cost, $taxable, $includedIn13);
     if (!mysqli_stmt_execute($stmt)) {
+        error_log('Insert failed: ' . mysqli_error($dbc));
         respond(false, null, 'Insert failed: ' . mysqli_error($dbc));
     }
 
@@ -102,9 +120,10 @@ if ($method === 'DELETE') {
     }
 
     $id = intval($input['id']);
-    $stmt = mysqli_prepare($dbc, "DELETE FROM Emp_Inc_Type WHERE id = ?");
+    $stmt = mysqli_prepare($dbc, "DELETE FROM emp_inc_type WHERE id = ?");
     mysqli_stmt_bind_param($stmt, 'i', $id);
     if (!mysqli_stmt_execute($stmt)) {
+        error_log('Delete failed: ' . mysqli_error($dbc));
         respond(false, null, 'Delete failed: ' . mysqli_error($dbc));
     }
     respond(true, null, 'Income type deleted.');
