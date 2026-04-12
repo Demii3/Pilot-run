@@ -29,8 +29,11 @@
         $_SESSION['Clock-in'] = $_POST['clockin_time'];
         $_SESSION['date'] = $_POST['date'];
         $_SESSION['selectedLocation'] = $_POST['location'];
+        $_SESSION['selectedCoordinates'] = $_POST['coordinates'];
         $_SESSION['Clockin-status'] = $_POST['clockin_status'];
         $_SESSION['Attendance_id'] = mysqli_fetch_array($result3)['last_id'];
+        $_SESSION['attendance_active'] = true;
+        unset($_SESSION['Clockout-status']);
     } else {
         $msg .= "Error recording attendance: " . mysqli_error($dbc);
     };

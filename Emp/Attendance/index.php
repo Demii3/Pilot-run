@@ -5,9 +5,9 @@
         exit();
 
     }
-
-    echo ($_SESSION['locations'][0]);
-
+    echo '<pre>';
+    print_r($_SESSION);
+    echo '</pre>';
     header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
     header('Cache-Control: no-store, no-cache, must-revalidate');
     header('Cache-Control: post-check=0, pre-check=0', FALSE);
@@ -65,6 +65,15 @@
     </div>
 
     <script>
+        const sessionState = <?php echo json_encode([
+            'attendanceActive' => !empty($_SESSION['attendance_active']),
+            'selectedLocation' => $_SESSION['selectedLocation'] ?? '',
+            'selectedCoordinates' => $_SESSION['selectedCoordinates'] ?? '',
+            'clockInTime' => $_SESSION['Clock-in'] ?? '',
+            'attendanceId' => isset($_SESSION['Attendance_id']) ? (int) $_SESSION['Attendance_id'] : 0,
+            'clockOutStatus' => $_SESSION['Clockout-status'] ?? ''
+        ]); ?>;
+
         // map initialization
         let map = L.map('map').setView([0, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -84,29 +93,67 @@
         };
 
         const selectLocation = document.getElementById('locationSelect');
-        selectLocation.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const coordinates = selectedOption.getAttribute('data-coordinates');
-            if (selectedOption.value === "0"){
-                document.getElementById('tapButton').disabled = true;
-                document.getElementById('tapButton').textContent = 'Disabled';
+        const tapButton = document.getElementById('tapButton');
 
-            } else {
-                document.getElementById('tapButton').disabled = false;
-                document.getElementById('tapButton').textContent = 'Tap in';
-                document.getElementById('tapButton').onclick = () => ClockinClick(selectedOption.value, coordinates);
+        function applyIdleState(selectedOption) {
+            const option = selectedOption || selectLocation.options[selectLocation.selectedIndex];
+            const locationName = option ? option.value : "0";
+            const coordinates = option ? option.getAttribute('data-coordinates') || '' : '';
+
+            if (locationName === "0") {
+                tapButton.disabled = true;
+                tapButton.textContent = 'Disabled';
+                tapButton.classList.add('disabled-state');
+                tapButton.classList.remove('tapped-out');
+                tapButton.onclick = null;
+                return;
             }
+
+            tapButton.disabled = false;
+            tapButton.textContent = 'Tap in';
+            tapButton.classList.remove('disabled-state');
+            tapButton.classList.remove('tapped-out');
+            tapButton.onclick = () => ClockinClick(locationName, coordinates);
+        }
+
+        function applyActiveState(locationName, coordinates) {
+            tapButton.disabled = false;
+            tapButton.textContent = 'Tap out';
+            tapButton.classList.remove('disabled-state');
+            tapButton.classList.add('tapped-out');
+            tapButton.onclick = () => ClockoutClick(locationName, coordinates);
+            selectLocation.disabled = true;
+        }
+
+        function hydrateFromSession() {
+            if (sessionState.selectedLocation) {
+                selectLocation.value = sessionState.selectedLocation;
+            }
+
+            const selectedOption = selectLocation.options[selectLocation.selectedIndex];
+            const selectedCoordinates = selectedOption ? (selectedOption.getAttribute('data-coordinates') || '') : '';
+            const locationName = selectLocation.value;
+
+            if (sessionState.attendanceActive && locationName !== "0") {
+                applyActiveState(locationName, sessionState.selectedCoordinates || selectedCoordinates);
+            } else {
+                selectLocation.disabled = false;
+                applyIdleState(selectedOption);
+            }
+        }
+
+        selectLocation.addEventListener('change', function() {
+            applyIdleState(this.options[this.selectedIndex]);
         });
+
+        hydrateFromSession();
 
         function ClockinClick(locationName, coordinates) {
             const Time = new Date();
             const dateStr = formatDateToYYYYMMDD(Time.toDateString());
             const TimeString = Time.toLocaleTimeString();
             const ClockinStatus = checkClockinStatus(TimeString.split(' '));
-            document.getElementById('tapButton').textContent = 'Tap out';
-            document.getElementById('tapButton').classList.add('tapped-out');
-            document.getElementById('tapButton').onclick = () => ClockoutClick(locationName, coordinates);
-            document.getElementById('locationSelect').disabled = true;
+            applyActiveState(locationName, coordinates);
             $.post('./Attendance_modules/save_clockin.php', {
                 emp_id: <?php echo $_SESSION['id']; ?>,
                 date: dateStr,
@@ -123,15 +170,16 @@
             const Time = new Date();
             const TimeString = Time.toLocaleTimeString();
             const ClockoutStatus = checkClockoutStatus(TimeString.split(' '));
-            document.getElementById('tapButton').textContent = 'Tap in';
-            document.getElementById('tapButton').classList.remove('tapped-out');
-            document.getElementById('tapButton').onclick = () => ClockinClick(locationName, coordinates);
-            document.getElementById('locationSelect').disabled = false;
+            const Attendance_id = sessionState.attendanceId || <?php echo isset($_SESSION['Attendance_id']) ? $_SESSION['Attendance_id'] : 0; ?>;
+            const clockInTime = sessionState.clockInTime || "<?php echo isset($_SESSION['Clock-in']) ? $_SESSION['Clock-in'] : '00:00:00 AM'; ?>";
+            const duration = subtractTime(TimeString.split(' '), clockInTime.split(' '));
+            selectLocation.disabled = false;
+            applyIdleState(selectLocation.options[selectLocation.selectedIndex]);
             $.post('./Attendance_modules/save_clockout.php', {
-                Attendance_id: <?php echo $_SESSION['Attendance_id']; ?>,
+                Attendance_id: Attendance_id,
                 clockout_time: TimeString,
                 clockout_status: ClockoutStatus,
-                duration: subtractTime(TimeString.split(' '), "<?php echo $_SESSION['Clock-in']; ?>".split(' ')),
+                duration: duration,
             }, function(response) {
                 alert(response);
             });

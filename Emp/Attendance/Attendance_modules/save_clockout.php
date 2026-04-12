@@ -17,9 +17,14 @@
 
     if($result1 && $result2) {
         $msg .= $_POST['duration'] . " minutes worked. Attendance recorded successfully.";
+        $_SESSION['Clockout-status'] = $_POST['clockout_status'];
+        $_SESSION['attendance_active'] = false;
+        unset($_SESSION['Clock-in']);
+        unset($_SESSION['selectedLocation']);
+        unset($_SESSION['selectedCoordinates']);
+        unset($_SESSION['Attendance_id']);
     } else {
         $msg .= "Error recording attendance: " . mysqli_error($dbc);
     }
-    $_SESSION['Clockout-status'] = $_POST['clockout_status'];
     echo $msg;
 ?>
