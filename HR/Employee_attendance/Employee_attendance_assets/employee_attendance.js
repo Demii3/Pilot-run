@@ -88,6 +88,7 @@ function openRowModal(row) {
 }
 
 function editContent(hello) {
+    document.getElementById('modalDate').readOnly = false;
     document.getElementById('modalClockIn').readOnly = false;
     document.getElementById('modalClockOut').readOnly = false;
     document.getElementById('modalStatus').disabled = false;
@@ -105,6 +106,7 @@ function editContent(hello) {
 }
 
 function returnProperties() {
+    document.getElementById('modalDate').readOnly = true;
     document.getElementById('modalClockIn').readOnly = true;
     document.getElementById('modalClockOut').readOnly = true;
     document.getElementById('modalStatus').disabled = true;
@@ -149,12 +151,14 @@ selectAllRows.addEventListener('change', event => {
 });
 
 function saveInfo_toDB(Attendance_ID, old_clockIn, old_clockOut) {
+    const new_date = document.getElementById('modalDate').value;
     const new_clockIn = document.getElementById('modalClockIn').value;
     const new_clockOut = document.getElementById('modalClockOut').value;
     let formattedClockIn = formatTimeForDatabase(new_clockIn);
     let formattedClockOut = formatTimeForDatabase(new_clockOut);
     let clockInStatusToSave = modalStatus.value;
     let clockOutStatusToSave = modalClockoutStatus.value;
+    let aoToSave = 0;
 
     const lunchAdjusted = applyLunchBreakRules(formattedClockIn, formattedClockOut);
     formattedClockIn = lunchAdjusted.clockIn;
@@ -168,21 +172,24 @@ function saveInfo_toDB(Attendance_ID, old_clockIn, old_clockOut) {
 
     if (clockOutStatusToSave === 'Over-time') {
         clockOutStatusToSave = `Over-time (${modalOvertimeDecision.value})`;
+        aoToSave = modalOvertimeDecision.value === 'Allowed' ? 1 : 0;
     }
 
-    if (!formattedClockIn || !formattedClockOut) {
-        alert('Clock In and Clock Out times are required.');
+    if (!new_date || !formattedClockIn || !formattedClockOut) {
+        alert('Date, Clock In, and Clock Out are required.');
         return;
     }
 
     $.post('./Employee_attendance_modules/save_attendance.php',
         {
             Attendance_ID: Attendance_ID,
+            newDate: new_date,
             newClock_in: formattedClockIn,
             newClock_in_status: clockInStatusToSave,
             newClock_out_status: clockOutStatusToSave,
             newClock_out: formattedClockOut,
-            duration: duration
+            duration: duration,
+            AO: aoToSave
         },
         function(response) {
             if (response === 'success') {
