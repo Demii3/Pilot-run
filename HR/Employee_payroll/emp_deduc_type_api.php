@@ -2,11 +2,21 @@
 header('Content-Type: application/json');
 
 include '../../Modules/dbcon.php';
-include 'Emp_Deduc_Type_query.php';
+
 
 if (!$dbc) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed.']);
     exit;
+}
+
+function getEmpDeducTypeTableSql() {
+    // Return the SQL query to create the emp_deduc_type table if it doesn't exist
+    return "CREATE TABLE IF NOT EXISTS emp_deduc_type (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        type_of_deduction VARCHAR(255) NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
+        recurring TINYINT(1) NOT NULL
+    ) ENGINE=InnoDB;";
 }
 
 mysqli_query($dbc, getEmpDeducTypeTableSql());
