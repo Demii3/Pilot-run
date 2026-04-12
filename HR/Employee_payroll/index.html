@@ -504,6 +504,7 @@
                   <th>SSS</th>
                   <th>PagIBIG</th>
                   <th>Philhealth</th>
+                  <th>Withholding Tax</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -523,16 +524,13 @@
       </div>`;
   }
 
-  else if (section === "reports") {
+  else if (section === "employee_salary") {
     content.innerHTML = `
       <div class="card">
-        <h2>Reports</h2>
-        <ul>
-          <li>Payslip</li>
-          <li>Payroll Listing</li>
-          <li>13th Month Listing</li>
-          <li>Contributions (Tax, SSS, PhilHealth, Pag-IBIG)</li>
-        </ul>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>Employee Salary</h2>
+            <button class="btn btn-secondary" onclick="openEmployeeSalaryForm()">+ Add Salary</button>
+        </div>
       </div>`;
   }
 
@@ -549,6 +547,19 @@
       <div class="card">
         <h2>Year-End Tax</h2>
         <p>Process annual tax adjustments and summaries.</p>
+      </div>`;
+  }
+
+  else if (section === "reports") {
+    content.innerHTML = `
+      <div class="card">
+        <h2>Reports</h2>
+        <ul>
+          <li>Payslip</li>
+          <li>Payroll Listing</li>
+          <li>13th Month Listing</li>
+          <li>Contributions (Tax, SSS, PhilHealth, Pag-IBIG)</li>
+        </ul>
       </div>`;
   }
 }
@@ -612,6 +623,29 @@ function computePhilhealthContribution(salaryValue) {
   }
 
   return 1375;
+}
+
+function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, pagibigValue = 0, nonTaxableValue = 0) {
+  const salary = Number(String(salaryValue ?? '').replace(/,/g, ''));
+  const sss = Number(sssValue) || 0;
+  const philhealth = Number(philhealthValue) || 0;
+  const pagibig = Number(pagibigValue) || 0;
+  const nonTaxable = Number(nonTaxableValue) || 0;
+
+  if (!Number.isFinite(salary) || salary < 0) {
+    return null;
+  }
+
+  // Taxable Income = Gross - Non-taxable - Mandatory Contributions.
+  const taxableIncome = Math.max(0, salary - nonTaxable - sss - philhealth - pagibig);
+
+  // Monthly BIR TRAIN tax table equivalent.
+  if (taxableIncome <= 20833) return 0;
+  if (taxableIncome <= 33333) return (taxableIncome - 20833) * 0.15;
+  if (taxableIncome <= 66667) return 1875 + (taxableIncome - 33333) * 0.20;
+  if (taxableIncome <= 166667) return 8541.8 + (taxableIncome - 66667) * 0.25;
+  if (taxableIncome <= 666667) return 33541.8 + (taxableIncome - 166667) * 0.30;
+  return 183541.8 + (taxableIncome - 666667) * 0.35;
 }
 
 function formatCurrency(value) {
@@ -793,6 +827,7 @@ async function loadIncomeTypes() {
   try {
     const response = await fetch('emp_inc_type_api.php');
     const result = await response.json();
+
     if (!result.success) {
       throw new Error(result.message || 'Failed to load income types.');
     }
@@ -805,15 +840,17 @@ async function loadIncomeTypes() {
 
     tableBody.innerHTML = '';
     rows.forEach(item => {
+      const isTaxable = Number(item.taxable) === 1;
+      const isIncludedIn13th = Number(item.included_in_13month) === 1;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item.type_of_income}</td>
         <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-        <td><input type="checkbox" disabled ${item.taxable == 1 ? 'checked' : ''}></td>
-        <td><input type="checkbox" disabled ${item.included_in_13month == 1 ? 'checked' : ''}></td>
+        <td>${isTaxable ? 'Taxable' : 'Non-Taxable'}</td>
+        <td>${isIncludedIn13th ? 'Yes' : 'No'}</td>
         <td>
-          <button type="button" class="btn btn-sm btn-warning edit-income-type">Edit</button>
-          <button type="button" class="btn btn-sm btn-danger delete-income-type">Delete</button>
+          <button class="btn btn-primary edit-income-type" data-id="${item.id}">Edit</button>
+          <button class="btn btn-danger delete-income-type" data-id="${item.id}">Delete</button>
         </td>`;
       tableBody.appendChild(row);
 
@@ -887,6 +924,22 @@ async function saveIncomeType() {
 
     hideIncomeTypeForm();
     loadIncomeTypes();
+
+    // Keep Manage Employee Income data in sync with updated income type values.
+    await loadIncomeTypesForAssignments();
+
+    // If the Manage Employee Income tab is currently visible, fully refresh it.
+    const manageEmployeeIncomeTable = document.getElementById('employeeIncomeAssignmentTable');
+    if (manageEmployeeIncomeTable) {
+      const employeeIncomeButton = Array.from(document.querySelectorAll('.sidebar button')).find(btn => btn.getAttribute('onclick') === "showContent(this,'employee_income')");
+      if (employeeIncomeButton) {
+        showContent(employeeIncomeButton, 'employee_income');
+      } else {
+        loadEmployees();
+        loadIncomeTypesForAssignments();
+        fetchEmployeeIncomeAssignments();
+      }
+    }
   } catch (error) {
     alert(error.message);
   }
@@ -1223,20 +1276,42 @@ async function loadEmployeesForPremiums() {
   const tableBody = document.querySelector('#employeePremiumSearchTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading employees...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading employees...</td></tr>';
 
   try {
-    const response = await fetch('../Employee_management/employees_api.php');
-    const result = await response.json();
+    const [employeeResponse, assignedIncomeResponse] = await Promise.all([
+      fetch('../Employee_management/employees_api.php'),
+      fetch('assigned_emp_inc_api.php')
+    ]);
+
+    const result = await employeeResponse.json();
+    const assignedIncomeResult = await assignedIncomeResponse.json();
+
     if (!result.success) {
       throw new Error(result.message || 'Unable to load employees.');
     }
+    if (!assignedIncomeResult.success) {
+      throw new Error(assignedIncomeResult.message || 'Unable to load assigned employee income data.');
+    }
+
+    const nonTaxableCostByEmployee = {};
+    (assignedIncomeResult.data || []).forEach(item => {
+      const employeeNameKey = String(item.name || '').trim().toLowerCase();
+      const isNonTaxable = Number(item.taxable) === 0;
+      const cost = Number(item.cost);
+
+      if (!employeeNameKey || !isNonTaxable || !Number.isFinite(cost)) {
+        return;
+      }
+
+      nonTaxableCostByEmployee[employeeNameKey] = (nonTaxableCostByEmployee[employeeNameKey] || 0) + cost;
+    });
 
     const rows = result.data || [];
     employeesForPremiums = rows;
 
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No employees found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found.</td></tr>';
       return;
     }
 
@@ -1246,6 +1321,8 @@ async function loadEmployeesForPremiums() {
       const sssContribution = computeSssContribution(salary);
       const pagibigContribution = computePagibigContribution(salary);
       const philhealthContribution = computePhilhealthContribution(salary);
+      const employeeNameKey = String(emp.name || '').trim().toLowerCase();
+      const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${emp.id}</td>
@@ -1254,11 +1331,12 @@ async function loadEmployeesForPremiums() {
         <td>${sssContribution === null ? '' : formatCurrency(sssContribution)}</td>
         <td>${pagibigContribution === null ? '' : formatCurrency(pagibigContribution)}</td>
         <td>${philhealthContribution === null ? '' : formatCurrency(philhealthContribution)}</td>
+        <td>${formatCurrency(computeWithholdingTax(salary, sssContribution, philhealthContribution, pagibigContribution, nonTaxableIncome))}</td>
       `;
       tableBody.appendChild(row);
     });
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
   }
 }
 
@@ -1271,13 +1349,14 @@ function filterEmployeesForPremiums() {
 
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 6) {
+    if (cells.length >= 7) {
       const name = cells[1].textContent.toLowerCase();
       const salary = cells[2].textContent.toLowerCase();
       const sss = cells[3].textContent.toLowerCase();
       const pagibig = cells[4].textContent.toLowerCase();
       const philhealth = cells[5].textContent.toLowerCase();
-      if (name.includes(filter) || salary.includes(filter) || sss.includes(filter) || pagibig.includes(filter) || philhealth.includes(filter)) {
+      const withholdingTax = cells[6].textContent.toLowerCase();
+      if (name.includes(filter) || salary.includes(filter) || sss.includes(filter) || pagibig.includes(filter) || philhealth.includes(filter) || withholdingTax.includes(filter)) {
         rows[i].style.display = '';
       } else {
         rows[i].style.display = 'none';
@@ -1438,13 +1517,15 @@ function renderEmployeeIncomeAssignments() {
 
   tableBody.innerHTML = '';
   employeeIncomeAssignments.forEach(item => {
+    const isTaxable = Number(item.taxable) === 1;
+    const isIncludedIn13th = Number(item.included13) === 1;
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${item.employeeName}</td>
       <td>${item.incomeType}</td>
       <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-      <td>${item.taxable ? 'Yes' : 'No'}</td>
-      <td>${item.included13 ? 'Yes' : 'No'}</td>
+      <td>${isTaxable ? 'Yes' : 'No'}</td>
+      <td>${isIncludedIn13th ? 'Yes' : 'No'}</td>
       <td>
         <button type="button" class="btn btn-sm btn-warning edit-employee-income">Edit</button>
         <button type="button" class="btn btn-sm btn-danger delete-employee-income">Delete</button>
@@ -1588,24 +1669,48 @@ function filterEmployees() {
 
 async function fetchEmployeeIncomeAssignments() {
   try {
-    const response = await fetch('assigned_emp_inc_api.php');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const [assignmentResponse, incomeTypeResponse] = await Promise.all([
+      fetch('assigned_emp_inc_api.php'),
+      fetch('emp_inc_type_api.php')
+    ]);
+
+    if (!assignmentResponse.ok) {
+      throw new Error(`HTTP error! status: ${assignmentResponse.status}`);
     }
-    const data = await response.json();
-    if (data.success) {
-      employeeIncomeAssignments = data.data.map(item => ({
-        id: item.id,
-        employeeName: item.name,
-        incomeType: item.type_of_income,
-        cost: item.cost,
-        taxable: item.taxable,
-        included13: item['month_13th']
-      }));
+
+    const assignmentData = await assignmentResponse.json();
+    const incomeTypeData = await incomeTypeResponse.json();
+
+    if (assignmentData.success) {
+      const incomeTypeMap = {};
+      if (incomeTypeData.success) {
+        (incomeTypeData.data || []).forEach(typeItem => {
+          const typeNameKey = String(typeItem.type_of_income || '').trim().toLowerCase();
+          if (!typeNameKey) {
+            return;
+          }
+          incomeTypeMap[typeNameKey] = typeItem;
+        });
+      }
+
+      employeeIncomeAssignments = assignmentData.data.map(item => {
+        const typeNameKey = String(item.type_of_income || '').trim().toLowerCase();
+        const latestType = incomeTypeMap[typeNameKey];
+
+        return {
+          id: item.id,
+          employeeName: item.name,
+          incomeType: item.type_of_income,
+          // Show latest cost from income types table when available.
+          cost: latestType ? latestType.cost : item.cost,
+          taxable: latestType ? latestType.taxable : item.taxable,
+          included13: latestType ? latestType.included_in_13month : item['month_13th']
+        };
+      });
       renderEmployeeIncomeAssignments();
     } else {
-      console.error('Failed to fetch assignments:', data.message);
-      alert(`Error: ${data.message}`);
+      console.error('Failed to fetch assignments:', assignmentData.message);
+      alert(`Error: ${assignmentData.message}`);
     }
   } catch (error) {
     console.error('Error fetching assignments:', error);
