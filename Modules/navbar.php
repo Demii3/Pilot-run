@@ -29,7 +29,7 @@
 
             <a href="#" class="profile-item"> Settings & Privacy </a>
             <a href="#" class="profile-item"> Help & Support </a>
-            <a href="<?php echo $imagePrefix; ?>?logout=logout" class="profile-item"> Logout </a>
+            <a href="<?php echo $imagePrefix; ?>Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
 
         </div>
 

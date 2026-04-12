@@ -9,6 +9,8 @@ const modalClockIn = document.getElementById('modalClockIn');
 const modalClockOut = document.getElementById('modalClockOut');
 const modalStatus = document.getElementById('modalStatus');
 const modalClockoutStatus = document.getElementById('modalClockoutStatus');
+const overtimeDecisionWrapper = document.getElementById('overtimeDecisionWrapper');
+const modalOvertimeDecision = document.getElementById('modalOvertimeDecision');
 let isNA = false;
 let tempval1 = '';
 let tempval2 = '';
@@ -75,7 +77,7 @@ function openRowModal(row) {
     document.getElementById('modalClockIn').value = stringTotime24H(cells[6]) || '';
     document.getElementById('modalStatus').value = cells[7] || '';
     document.getElementById('modalClockOut').value = stringTotime24H(cells[8]) || '';
-    document.getElementById('modalClockoutStatus').value = cells[9] || '';
+    setClockoutStatusAndDecision(cells[9] || '');
     const attendanceModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
     attendanceModal.show();
     document.getElementById('editBtn').onclick = () => editContent(row.cells[9].textContent);
@@ -86,10 +88,14 @@ function openRowModal(row) {
 }
 
 function editContent(hello) {
+    document.getElementById('modalDate').readOnly = false;
     document.getElementById('modalClockIn').readOnly = false;
     document.getElementById('modalClockOut').readOnly = false;
     document.getElementById('modalStatus').disabled = false;
     document.getElementById('modalClockoutStatus').disabled = false;
+    if (!overtimeDecisionWrapper.classList.contains('d-none')) {
+        modalOvertimeDecision.disabled = false;
+    }
     document.getElementById('NAbtn').disabled = false;
     document.getElementById('saveBtn').classList.remove('d-none');
     document.getElementById('deleteBtn').classList.remove('d-none');
@@ -100,10 +106,12 @@ function editContent(hello) {
 }
 
 function returnProperties() {
+    document.getElementById('modalDate').readOnly = true;
     document.getElementById('modalClockIn').readOnly = true;
     document.getElementById('modalClockOut').readOnly = true;
     document.getElementById('modalStatus').disabled = true;
     document.getElementById('modalClockoutStatus').disabled = true;
+    modalOvertimeDecision.disabled = true;
     document.getElementById('NAbtn').disabled = true;
     document.getElementById('saveBtn').classList.add('d-none');
     document.getElementById('deleteBtn').classList.add('d-none');
@@ -143,25 +151,45 @@ selectAllRows.addEventListener('change', event => {
 });
 
 function saveInfo_toDB(Attendance_ID, old_clockIn, old_clockOut) {
+    const new_date = document.getElementById('modalDate').value;
     const new_clockIn = document.getElementById('modalClockIn').value;
     const new_clockOut = document.getElementById('modalClockOut').value;
-    const formattedClockIn = formatTimeForDatabase(new_clockIn);
-    const formattedClockOut = formatTimeForDatabase(new_clockOut);
-    const duration = calculateDurationInMinutes(formattedClockIn, formattedClockOut);
+    let formattedClockIn = formatTimeForDatabase(new_clockIn);
+    let formattedClockOut = formatTimeForDatabase(new_clockOut);
+    let clockInStatusToSave = modalStatus.value;
+    let clockOutStatusToSave = modalClockoutStatus.value;
+    let aoToSave = 0;
 
-    if (!formattedClockIn || !formattedClockOut) {
-        alert('Clock In and Clock Out times are required.');
+    const lunchAdjusted = applyLunchBreakRules(formattedClockIn, formattedClockOut);
+    formattedClockIn = lunchAdjusted.clockIn;
+    formattedClockOut = lunchAdjusted.clockOut;
+    const duration = lunchAdjusted.duration;
+
+    if (formattedClockIn === 'N/A' && formattedClockOut === 'N/A') {
+        clockInStatusToSave = 'Absent';
+        clockOutStatusToSave = 'Absent';
+    }
+
+    if (clockOutStatusToSave === 'Over-time') {
+        clockOutStatusToSave = `Over-time (${modalOvertimeDecision.value})`;
+        aoToSave = modalOvertimeDecision.value === 'Allowed' ? 1 : 0;
+    }
+
+    if (!new_date || !formattedClockIn || !formattedClockOut) {
+        alert('Date, Clock In, and Clock Out are required.');
         return;
     }
 
     $.post('./Employee_attendance_modules/save_attendance.php',
         {
             Attendance_ID: Attendance_ID,
+            newDate: new_date,
             newClock_in: formattedClockIn,
-            newClock_in_status: modalStatus.value,
-            newClock_out_status: modalClockoutStatus.value,
+            newClock_in_status: clockInStatusToSave,
+            newClock_out_status: clockOutStatusToSave,
             newClock_out: formattedClockOut,
-            duration: duration
+            duration: duration,
+            AO: aoToSave
         },
         function(response) {
             if (response === 'success') {
@@ -189,8 +217,30 @@ function setmodalClockinNA() {
 }
 
 function stringTotime24H(timeStr) {
-    const [time, modifier] = timeStr.split(' ');
+    if (!timeStr || timeStr === 'N/A') {
+        return '';
+    }
+
+    const normalized = String(timeStr).trim();
+
+    // Already 24-hour format (HH:MM or HH:MM:SS)
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(normalized)) {
+        const [h, m, s = '00'] = normalized.split(':');
+        return `${h}:${m}:${s}`;
+    }
+
+    const parts = normalized.split(' ');
+    if (parts.length < 2) {
+        return '';
+    }
+
+    const [time, rawModifier] = parts;
+    const modifier = rawModifier.toUpperCase();
     let [hours, minutes, seconds] = time.split(':').map(Number);
+
+    if (Number.isNaN(hours) || Number.isNaN(minutes) || Number.isNaN(seconds)) {
+        return '';
+    }
 
     if (modifier === 'PM' && hours !== 12) {
         hours += 12;
@@ -199,6 +249,36 @@ function stringTotime24H(timeStr) {
     }
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function toggleOvertimeDecisionField() {
+    const showOvertimeDecision = modalClockoutStatus.value === 'Over-time';
+    overtimeDecisionWrapper.classList.toggle('d-none', !showOvertimeDecision);
+    modalOvertimeDecision.disabled = !showOvertimeDecision || modalClockoutStatus.disabled;
+}
+
+function setClockoutStatusAndDecision(rawStatus) {
+    const statusText = (rawStatus || '').trim();
+    const decisionMatch = statusText.match(/Over-time\s*\((Allowed|Rejected)\)/i);
+
+    if (decisionMatch) {
+        modalClockoutStatus.value = 'Over-time';
+        modalOvertimeDecision.value = decisionMatch[1].charAt(0).toUpperCase() + decisionMatch[1].slice(1).toLowerCase();
+    } else if (statusText === 'Allowed' || statusText === 'Rejected') {
+        modalClockoutStatus.value = 'Over-time';
+        modalOvertimeDecision.value = statusText;
+    } else if (statusText === 'Over-time') {
+        modalClockoutStatus.value = 'Over-time';
+        modalOvertimeDecision.value = 'Allowed';
+    } else if (statusText === 'Under-time' || statusText === 'Absent' || statusText === 'Present') {
+        modalClockoutStatus.value = statusText;
+        modalOvertimeDecision.value = 'Allowed';
+    } else {
+        modalClockoutStatus.value = 'Present';
+        modalOvertimeDecision.value = 'Allowed';
+    }
+
+    toggleOvertimeDecisionField();
 }
 
 function formatTimeForDatabase(timeValue) {
@@ -264,6 +344,92 @@ function calculateDurationInMinutes(clockInValue, clockOutValue) {
     }
 }
 
+function parseAmPmTimeToMinutes(timeValue) {
+    if (!timeValue || timeValue === 'N/A') {
+        return null;
+    }
+
+    const [timePart, modifier] = timeValue.trim().split(' ');
+    if (!timePart || !modifier) {
+        return null;
+    }
+
+    const [hoursPart, minutesPart] = timePart.split(':');
+    let hours = Number(hoursPart);
+    const minutes = Number(minutesPart);
+
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+        return null;
+    }
+
+    if (modifier === 'PM' && hours !== 12) {
+        hours += 12;
+    } else if (modifier === 'AM' && hours === 12) {
+        hours = 0;
+    }
+
+    return (hours * 60) + minutes;
+}
+
+function isWithinLunchBreak(minutesValue) {
+    const lunchStart = (11 * 60) + 59; // 11:59 AM
+    const lunchEnd = (12 * 60) + 59;   // 12:59 PM
+    return minutesValue >= lunchStart && minutesValue <= lunchEnd;
+}
+
+function applyLunchBreakRules(clockInValue, clockOutValue) {
+    let adjustedClockIn = clockInValue;
+    let adjustedClockOut = clockOutValue;
+
+    const clockInMinutes = parseAmPmTimeToMinutes(clockInValue);
+    const clockOutMinutes = parseAmPmTimeToMinutes(clockOutValue);
+
+    if (clockInMinutes === null || clockOutMinutes === null) {
+        return {
+            clockIn: adjustedClockIn,
+            clockOut: adjustedClockOut,
+            duration: calculateDurationInMinutes(adjustedClockIn, adjustedClockOut)
+        };
+    }
+
+    const lunchStart = (11 * 60) + 59;
+    const lunchEnd = (12 * 60) + 59;
+    const clockInBelowLunch = clockInMinutes < lunchStart;
+    const clockOutExceedsLunch = clockOutMinutes > lunchEnd;
+    const clockInWithinLunch = isWithinLunchBreak(clockInMinutes);
+    const clockOutWithinLunch = isWithinLunchBreak(clockOutMinutes);
+
+    if (clockInWithinLunch && clockOutWithinLunch) {
+        adjustedClockIn = 'N/A';
+        adjustedClockOut = 'N/A';
+        return {
+            clockIn: adjustedClockIn,
+            clockOut: adjustedClockOut,
+            duration: 0
+        };
+    }
+
+    if (clockInBelowLunch && clockOutWithinLunch) {
+        adjustedClockOut = '11:59:00 AM';
+    }
+
+    if (clockInWithinLunch && clockOutExceedsLunch) {
+        adjustedClockIn = '01:00:00 PM';
+    }
+
+    let duration = calculateDurationInMinutes(adjustedClockIn, adjustedClockOut);
+
+    if (clockInBelowLunch && clockOutExceedsLunch) {
+        duration = Math.max(0, duration - 60);
+    }
+
+    return {
+        clockIn: adjustedClockIn,
+        clockOut: adjustedClockOut,
+        duration: duration
+    };
+}
+
 modalClockIn.addEventListener('change', () => {
     const clockInValue = modalClockIn.value;
 
@@ -286,6 +452,8 @@ modalClockOut.addEventListener('change', () => {
     } else {
         modalClockoutStatus.value = 'Present';
     }
+
+    toggleOvertimeDecisionField();
 });
 
 modalStatus.addEventListener('change', () => {
@@ -297,8 +465,13 @@ modalStatus.addEventListener('change', () => {
                 return;
             } else {
                 modalClockIn.value = '08:00:00';
-                alert(modalClockIn.value);
             }
+            break;
+        case 'On-leave':
+            modalClockIn.value = '08:00:00';
+            modalClockOut.value = '17:00:00';
+            modalClockoutStatus.value = 'Present';
+            toggleOvertimeDecisionField();
             break;
         case 'Late':
             if (modalClockIn.value === 'N/A' || modalClockIn.value <= '08:00:00') {
@@ -313,6 +486,7 @@ modalStatus.addEventListener('change', () => {
 
 modalClockoutStatus.addEventListener('change', () => {
     const modalClockoutStatusvalue = modalClockoutStatus.value;
+    toggleOvertimeDecisionField();
 
     switch (modalClockoutStatusvalue) {
         case 'Present':
@@ -320,7 +494,6 @@ modalClockoutStatus.addEventListener('change', () => {
                 return;
             } else {
                 modalClockOut.value = '17:00:00';
-                alert(modalClockOut.value);
             }
             break;
         case 'Absent':

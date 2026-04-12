@@ -84,6 +84,7 @@ header('Pragma: no-cache');
                                 <th scope="col">Clock Out</th>
                                 <th scope="col" class="clkinStatus-col">Clockout Status</th>
                                 <th scope="col">Duration</th>
+                                <th scope="col" class="d-none">AO</th>
                                 <th scope="col" class="text-center">
                                     <input id="selectAllRows" type="checkbox" class="form-check-input" aria-label="Select all rows">
                                 </th>
@@ -105,8 +106,10 @@ header('Pragma: no-cache');
                                         echo "<td>" . $row['Clock_in'] . "</td>";
                                         echo "<td class='clkinStatus-col'>" . $row['Clockin_status'] . "</td>";
                                         echo "<td>" . $row['Clock_out'] . "</td>";
-                                        echo "<td class='clkinStatus-col'>" . $row['Clockout_status'] . "</td>";
+                                        $clockoutStatusDisplay = preg_replace('/\((Allowed|Rejected)\)/', "<small class='text-muted'>($1)</small>", $row['Clockout_status']);
+                                        echo "<td class='clkinStatus-col'>" . $clockoutStatusDisplay . "</td>";
                                         echo "<td>" . $row['Duration'] . "</td>";
+                                        echo "<td class='d-none'>" . $row['AO'] . "</td>";
                                         echo "<td class='text-center'><input type='checkbox' class='form-check-input row-select' aria-label='Select row for deletion'></td>";
                                         echo "</tr>";
                                 }
@@ -142,7 +145,7 @@ header('Pragma: no-cache');
                             </div>
                             <div class="col-md-6">
                                 <label for="modalDate" class="form-label">Date</label>
-                                <input id="modalDate" type="text" class="form-control" readonly>
+                                <input id="modalDate" type="date" class="form-control" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label for="modalLocation" class="form-label">Location</label>
@@ -164,6 +167,7 @@ header('Pragma: no-cache');
                                 <select id="modalStatus" class="form-select" disabled>
                                     <option value="Late">Late</option>
                                     <option value="On-time">On-time</option>
+                                    <option value="On-leave">On-leave</option>
                                     <option value="Absent">Absent</option>
                                 </select>
                             </div>
@@ -175,6 +179,13 @@ header('Pragma: no-cache');
                                     <option value="Absent">Absent</option>
                                     <option value="Present">Present</option>
                                 </select>
+                                <div id="overtimeDecisionWrapper" class="mt-2 d-none">
+                                    <label for="modalOvertimeDecision" class="form-label">Overtime Decision</label>
+                                    <select id="modalOvertimeDecision" class="form-select" disabled>
+                                        <option value="Allowed">Allowed</option>
+                                        <option value="Rejected">Rejected</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </form>
