@@ -11,6 +11,7 @@ const modalStatus = document.getElementById('modalStatus');
 const modalClockoutStatus = document.getElementById('modalClockoutStatus');
 const overtimeDecisionWrapper = document.getElementById('overtimeDecisionWrapper');
 const modalOvertimeDecision = document.getElementById('modalOvertimeDecision');
+const absentTimeHint = document.getElementById('absentTimeHint');
 let isNA = false;
 let tempval1 = '';
 let tempval2 = '';
@@ -85,6 +86,7 @@ function openRowModal(row) {
     document.getElementById('deleteBtn').onclick = () => deleteContent(row.cells[0].textContent);
     document.getElementById('saveBtn').onclick = () => saveInfo_toDB(row.cells[0].textContent, row.cells[6].textContent, row.cells[8].textContent);
     document.getElementById('NAbtn').onclick = () => setmodalClockinNA();
+    toggleAbsentTimeHint(modalStatus.value === 'Absent' || modalClockoutStatus.value === 'Absent');
 }
 
 function editContent(hello) {
@@ -115,6 +117,7 @@ function returnProperties() {
     document.getElementById('NAbtn').disabled = true;
     document.getElementById('saveBtn').classList.add('d-none');
     document.getElementById('deleteBtn').classList.add('d-none');
+    toggleAbsentTimeHint(false);
 }
 
 function deleteContent(Attendance_ID) {
@@ -154,20 +157,23 @@ function saveInfo_toDB(Attendance_ID, old_clockIn, old_clockOut) {
     const new_date = document.getElementById('modalDate').value;
     const new_clockIn = document.getElementById('modalClockIn').value;
     const new_clockOut = document.getElementById('modalClockOut').value;
-    let formattedClockIn = formatTimeForDatabase(new_clockIn);
-    let formattedClockOut = formatTimeForDatabase(new_clockOut);
     let clockInStatusToSave = modalStatus.value;
     let clockOutStatusToSave = modalClockoutStatus.value;
     let aoToSave = 0;
+    let formattedClockIn = formatTimeForDatabase(new_clockIn);
+    let formattedClockOut = formatTimeForDatabase(new_clockOut);
+    let duration = 0;
 
-    const lunchAdjusted = applyLunchBreakRules(formattedClockIn, formattedClockOut);
-    formattedClockIn = lunchAdjusted.clockIn;
-    formattedClockOut = lunchAdjusted.clockOut;
-    const duration = lunchAdjusted.duration;
-
-    if (formattedClockIn === 'N/A' && formattedClockOut === 'N/A') {
+    if (clockInStatusToSave === 'Absent' || clockOutStatusToSave === 'Absent') {
+        formattedClockIn = '--:--:--';
+        formattedClockOut = '--:--:--';
         clockInStatusToSave = 'Absent';
         clockOutStatusToSave = 'Absent';
+    } else {
+        const lunchAdjusted = applyLunchBreakRules(formattedClockIn, formattedClockOut);
+        formattedClockIn = lunchAdjusted.clockIn;
+        formattedClockOut = lunchAdjusted.clockOut;
+        duration = lunchAdjusted.duration;
     }
 
     if (clockOutStatusToSave === 'Over-time') {
@@ -205,19 +211,31 @@ function saveInfo_toDB(Attendance_ID, old_clockIn, old_clockOut) {
 function setmodalClockinNA() {
     if (isNA) {
         modalClockIn.value = tempval1;
+        modalClockOut.value = tempval3;
         modalStatus.value = tempval2;
+        modalClockoutStatus.value = tempval4;
         isNA = false;
         document.getElementById('NAbtn').textContent = isNA ? 'Prev. val.' : 'N/A';
+        toggleOvertimeDecisionField();
+        toggleAbsentTimeHint(modalStatus.value === 'Absent' || modalClockoutStatus.value === 'Absent');
     } else {
-        modalClockIn.value = 'N/A';
+        modalClockIn.value = '';
+        modalClockOut.value = '';
         modalStatus.value = 'Absent';
+        modalClockoutStatus.value = 'Absent';
         isNA = true;
         document.getElementById('NAbtn').textContent = isNA ? 'Prev. val.' : 'N/A';
+        toggleOvertimeDecisionField();
+        toggleAbsentTimeHint(true);
     }
 }
 
 function stringTotime24H(timeStr) {
     if (!timeStr || timeStr === 'N/A') {
+        return '';
+    }
+
+    if (timeStr === '--:--:--') {
         return '';
     }
 
@@ -255,6 +273,14 @@ function toggleOvertimeDecisionField() {
     const showOvertimeDecision = modalClockoutStatus.value === 'Over-time';
     overtimeDecisionWrapper.classList.toggle('d-none', !showOvertimeDecision);
     modalOvertimeDecision.disabled = !showOvertimeDecision || modalClockoutStatus.disabled;
+}
+
+function toggleAbsentTimeHint(showHint) {
+    if (!absentTimeHint) {
+        return;
+    }
+
+    absentTimeHint.classList.toggle('d-none', !showHint);
 }
 
 function setClockoutStatusAndDecision(rawStatus) {
@@ -433,24 +459,41 @@ function applyLunchBreakRules(clockInValue, clockOutValue) {
 modalClockIn.addEventListener('change', () => {
     const clockInValue = modalClockIn.value;
 
-    if (clockInValue <= '08:00') {
+    if (clockInValue === '') {
+        modalStatus.value = 'Absent';
+        modalClockOut.value = '';
+        modalClockoutStatus.value = 'Absent';
+        toggleOvertimeDecisionField();
+        toggleAbsentTimeHint(true);
+    } else if (clockInValue <= '08:00') {
         modalStatus.value = 'On-time';
+        toggleAbsentTimeHint(false);
     } else {
         modalStatus.value = 'Late';
+        toggleAbsentTimeHint(false);
     }
 });
 
 modalClockOut.addEventListener('change', () => {
     const clockOutValue = modalClockOut.value;
 
-    if (clockOutValue > '17:00') {
+    if (clockOutValue === '') {
+        modalStatus.value = 'Absent';
+        modalClockIn.value = '';
+        modalClockoutStatus.value = 'Absent';
+        toggleAbsentTimeHint(true);
+    } else if (clockOutValue > '17:00') {
         modalClockoutStatus.value = 'Over-time';
+        toggleAbsentTimeHint(false);
     } else if (clockOutValue === 'N/A') {
         modalClockoutStatus.value = 'Absent';
+        toggleAbsentTimeHint(true);
     } else if (clockOutValue < '17:00') {
         modalClockoutStatus.value = 'Under-time';
+        toggleAbsentTimeHint(false);
     } else {
         modalClockoutStatus.value = 'Present';
+        toggleAbsentTimeHint(false);
     }
 
     toggleOvertimeDecisionField();
@@ -462,24 +505,32 @@ modalStatus.addEventListener('change', () => {
     switch (modalStatusvalue) {
         case 'On-time':
             if (tempval2 == 'On-time') {
+                toggleAbsentTimeHint(false);
                 return;
             } else {
                 modalClockIn.value = '08:00:00';
             }
+            toggleAbsentTimeHint(false);
             break;
         case 'On-leave':
             modalClockIn.value = '08:00:00';
             modalClockOut.value = '17:00:00';
             modalClockoutStatus.value = 'Present';
             toggleOvertimeDecisionField();
+            toggleAbsentTimeHint(false);
             break;
         case 'Late':
             if (modalClockIn.value === 'N/A' || modalClockIn.value <= '08:00:00') {
                 modalClockIn.value = '08:01:00';
             }
+            toggleAbsentTimeHint(false);
             break;
         case 'Absent':
-            modalClockIn.value = 'N/A';
+            modalClockIn.value = '';
+            modalClockOut.value = '';
+            modalClockoutStatus.value = 'Absent';
+            toggleOvertimeDecisionField();
+            toggleAbsentTimeHint(true);
             break;
     }
 });
@@ -491,13 +542,18 @@ modalClockoutStatus.addEventListener('change', () => {
     switch (modalClockoutStatusvalue) {
         case 'Present':
             if (tempval4 == 'Present') {
+                toggleAbsentTimeHint(false);
                 return;
             } else {
                 modalClockOut.value = '17:00:00';
             }
+            toggleAbsentTimeHint(false);
             break;
         case 'Absent':
-            modalClockOut.value = 'N/A';
+            modalClockIn.value = '';
+            modalClockOut.value = '';
+            modalStatus.value = 'Absent';
+            toggleAbsentTimeHint(true);
             break;
     }
 });

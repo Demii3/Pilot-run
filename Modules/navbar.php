@@ -1,6 +1,6 @@
 <?php
     $imagePrefix = '../';
-    if (strpos($_SERVER['REQUEST_URI'], '/HR/Employee_manage/') !== false) {
+    if (strpos($_SERVER['REQUEST_URI'], '/HR/Employee_manage/') !== false || strpos($_SERVER['REQUEST_URI'], '/HR/Employee_attendance/') !== false) {
         $imagePrefix = '../../';
     }
 ?>
