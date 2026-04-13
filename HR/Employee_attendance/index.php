@@ -21,6 +21,7 @@ header('Pragma: no-cache');
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="../../Images/logo.jpg"/>
+    <link rel="stylesheet" href="../../Assets/home_hr.css">
     <link rel="stylesheet" href="../HR_Assets/Employee_attendance.css">
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin ="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -29,6 +30,7 @@ header('Pragma: no-cache');
 
 <body>
     <?php include './Employee_attendance_modules/background.php'; ?>
+    <?php include '../../Modules/navbar.php'; ?>
     <div class="container py-5">
         <div class="attendance-header p-4 mb-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
@@ -202,5 +204,18 @@ header('Pragma: no-cache');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./Employee_attendance_assets/employee_attendance.js"></script>
+
+    <!-- NAVBAR SCRIPTS -->
+    <?php include '../../Modules/navbar_and_welcome_card_script.php'; ?>
+
+    <script>
+        $(document).ready(function(){
+            $.get('../../Modules/check_session.php', function(data){
+                if(data == '0'){
+                    window.location = '../../';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
