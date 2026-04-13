@@ -685,6 +685,97 @@
     loadEmployeesForProcess13();
   }
 
+  else if (section === "payslip") {
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Payslip</h2>
+        </div>
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input
+                type="text"
+                id="searchPayslip"
+                class="form-control"
+                placeholder="Search by employee, salary, deduction, or net pay..."
+                onkeyup="filterPayslip()"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="payslipDateFrom" class="form-label mb-1">From</label>
+              <input
+                type="date"
+                id="payslipDateFrom"
+                class="form-control"
+                onchange="loadPayslip()"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="payslipDateTo" class="form-label mb-1">To</label>
+              <input
+                type="date"
+                id="payslipDateTo"
+                class="form-control"
+                onchange="loadPayslip()"
+              >
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover" id="payslipTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>Employee ID</th>
+                  <th>Employee</th>
+                  <th>Email</th>
+                  <th>Gross Pay Per Month</th>
+                  <th>Gross Pay Per Day</th>
+                  <th>Regular Days</th>
+                  <th>Total OT</th>
+                  <th>Legal Holiday</th>
+                  <th>Special Holiday</th>
+                  <th>Rice Subsidy</th>
+                  <th>Electricity</th>
+                  <th>SSS</th>
+                  <th>PHLTH</th>
+                  <th>PAGIBIG</th>
+                  <th>TAX</th>
+                  <th>Personal CA</th>
+                  <th>Total Ded.</th>
+                  <th>Net Pay</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="payslipPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
+
+          <div id="payslipEmailModal" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background: rgba(0, 0, 0, 0.45); z-index: 1055;">
+            <div class="d-flex align-items-center justify-content-center w-100 h-100 p-3">
+              <div class="card shadow" style="max-width: 540px; width: 100%;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Payslip Email</h5>
+                  <button type="button" class="btn-close" aria-label="Close" onclick="closePayslipEmailModal()"></button>
+                </div>
+                <div class="card-body">
+                  <p class="mb-2"><strong>Employee ID:</strong> <span id="payslipModalEmployeeId">-</span></p>
+                  <p class="mb-2"><strong>Employee:</strong> <span id="payslipModalEmployeeName">-</span></p>
+                  <p class="mb-3"><strong>Email:</strong> <span id="payslipModalEmployeeEmail">-</span></p>
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="closePayslipEmailModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="sendPayslipBreakdownInEmail()">Send payslip breakdown in email</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    loadPayslip();
+  }
+
   else if (section === "reports") {
     content.innerHTML = `
       <div class="card">
@@ -2555,6 +2646,318 @@ async function loadEmployeeSalary() {
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="10" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+  }
+}
+
+function filterPayslip() {
+  const searchInput = document.getElementById('searchPayslip');
+  const tableBody = document.querySelector('#payslipTable tbody');
+  if (!searchInput || !tableBody) return;
+
+  const filter = searchInput.value.toLowerCase();
+  const rows = tableBody.getElementsByTagName('tr');
+
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length >= 19) {
+      let matches = false;
+      for (let cellIndex = 0; cellIndex < cells.length; cellIndex++) {
+        if ((cells[cellIndex].textContent || '').toLowerCase().includes(filter)) {
+          matches = true;
+          break;
+        }
+      }
+      rows[i].dataset.filterVisible = matches ? '1' : '0';
+    }
+  }
+
+  paginateTable('payslipTable', 'payslipPagination', true);
+}
+
+let selectedPayslipEmployee = null;
+
+function openPayslipEmailModal(employee) {
+  selectedPayslipEmployee = employee || null;
+
+  const modal = document.getElementById('payslipEmailModal');
+  const idField = document.getElementById('payslipModalEmployeeId');
+  const nameField = document.getElementById('payslipModalEmployeeName');
+  const emailField = document.getElementById('payslipModalEmployeeEmail');
+
+  if (!modal || !idField || !nameField || !emailField || !selectedPayslipEmployee) {
+    return;
+  }
+
+  idField.textContent = selectedPayslipEmployee.id || '-';
+  nameField.textContent = selectedPayslipEmployee.name || '-';
+  emailField.textContent = selectedPayslipEmployee.email || '-';
+  modal.classList.remove('d-none');
+}
+
+function closePayslipEmailModal() {
+  const modal = document.getElementById('payslipEmailModal');
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.add('d-none');
+  selectedPayslipEmployee = null;
+}
+
+function sendPayslipBreakdownInEmail() {
+  if (!selectedPayslipEmployee) {
+    alert('Please select an employee first.');
+    return;
+  }
+
+  if (!selectedPayslipEmployee.email) {
+    alert('Selected employee has no email address.');
+    return;
+  }
+
+  fetch('send_payslip_email.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(selectedPayslipEmployee)
+  })
+    .then(response => response.json())
+    .then(result => {
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to send payslip email.');
+      }
+
+      alert(result.message || `Payslip breakdown sent to ${selectedPayslipEmployee.email}.`);
+      closePayslipEmailModal();
+    })
+    .catch(error => {
+      alert(`Error: ${error.message}`);
+    });
+}
+
+function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = null) {
+  const attendanceByEmployee = new Map();
+
+  (attendanceData || []).forEach(item => {
+    const employeeId = String(item.Emp_id ?? '').trim();
+    if (!employeeId) {
+      return;
+    }
+
+    if (dateFrom || dateTo) {
+      const itemDate = item.Date ? new Date(`${item.Date}T00:00:00`) : null;
+      if (!itemDate || Number.isNaN(itemDate.getTime())) {
+        return;
+      }
+
+      if (dateFrom && itemDate < dateFrom) {
+        return;
+      }
+
+      if (dateTo && itemDate > dateTo) {
+        return;
+      }
+    }
+
+    const durationMinutes = Number(item.Duration) || 0;
+    const isAO = Number(item.AO) === 1;
+    const regularMinutes = Math.max(0, Math.min(durationMinutes, 480));
+    const overtimeMinutes = durationMinutes > 480 && isAO ? (durationMinutes - 480) : 0;
+
+    const existing = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
+    existing.regularMinutes += regularMinutes;
+    existing.overtimeMinutes += overtimeMinutes;
+    attendanceByEmployee.set(employeeId, existing);
+  });
+
+  return attendanceByEmployee;
+}
+
+function buildIncomeByTypeMap(assignedIncomeData = []) {
+  const incomeByEmployee = {};
+
+  (assignedIncomeData || []).forEach(item => {
+    const employeeNameKey = String(item.name || '').trim().toLowerCase();
+    const incomeType = String(item.type_of_income || '').trim().toLowerCase();
+    const cost = Number(item.cost);
+
+    if (!employeeNameKey || !incomeType || !Number.isFinite(cost)) {
+      return;
+    }
+
+    if (!incomeByEmployee[employeeNameKey]) {
+      incomeByEmployee[employeeNameKey] = {};
+    }
+
+    incomeByEmployee[employeeNameKey][incomeType] = (incomeByEmployee[employeeNameKey][incomeType] || 0) + cost;
+  });
+
+  return incomeByEmployee;
+}
+
+function getIncomeAmountByKeyword(employeeIncomeByType = {}, keywordPattern) {
+  let total = 0;
+  Object.keys(employeeIncomeByType || {}).forEach(typeName => {
+    if (keywordPattern.test(typeName)) {
+      total += Number(employeeIncomeByType[typeName]) || 0;
+    }
+  });
+  return total;
+}
+
+function buildPersonalCaMap(assignedDeductionData = []) {
+  const personalCaByEmployee = {};
+
+  (assignedDeductionData || []).forEach(item => {
+    const employeeNameKey = String(item.name || '').trim().toLowerCase();
+    const cost = Number(item.cost);
+
+    if (!employeeNameKey || !Number.isFinite(cost)) {
+      return;
+    }
+
+    personalCaByEmployee[employeeNameKey] = (personalCaByEmployee[employeeNameKey] || 0) + cost;
+  });
+
+  return personalCaByEmployee;
+}
+
+async function loadPayslip() {
+  const tableBody = document.querySelector('#payslipTable tbody');
+  if (!tableBody) return;
+
+  const dateFromInput = document.getElementById('payslipDateFrom');
+  const dateToInput = document.getElementById('payslipDateTo');
+  const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
+  const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
+
+  tableBody.innerHTML = '<tr><td colspan="19" class="text-center">Loading payslip...</td></tr>';
+
+  try {
+    const [employeeResponse, attendanceResponse, assignedIncomeResponse, assignedDeductionResponse] = await Promise.all([
+      fetch('../Employee_management/employees_api.php'),
+      fetch('attendance_api.php'),
+      fetch('assigned_emp_inc_api.php'),
+      fetch('assigned_emp_deduc_api.php')
+    ]);
+
+    const employeeResult = await employeeResponse.json();
+    const attendanceResult = attendanceResponse.ok ? await attendanceResponse.json() : { success: false, data: [] };
+    const assignedIncomeResult = assignedIncomeResponse.ok ? await assignedIncomeResponse.json() : { success: false, data: [] };
+    const assignedDeductionResult = assignedDeductionResponse.ok ? await assignedDeductionResponse.json() : { success: false, data: [] };
+
+    if (!employeeResult.success) {
+      throw new Error(employeeResult.message || 'Unable to load employee data for payslip.');
+    }
+
+    const employees = employeeResult.data || [];
+    if (employees.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="19" class="text-center">No employees found.</td></tr>';
+      paginateTable('payslipTable', 'payslipPagination', true);
+      return;
+    }
+
+    const attendanceData = attendanceResult.success ? (attendanceResult.data || []) : [];
+    const assignedIncomeData = assignedIncomeResult.success ? (assignedIncomeResult.data || []) : [];
+    const assignedDeductionData = assignedDeductionResult.success ? (assignedDeductionResult.data || []) : [];
+
+    const attendanceByEmployee = buildAttendanceWorkMap(attendanceData, dateFrom, dateTo);
+    const incomeByType = buildIncomeByTypeMap(assignedIncomeData);
+    const nonTaxableIncomeByEmployee = buildNonTaxableIncomeMap(assignedIncomeData);
+    const personalCaByEmployee = buildPersonalCaMap(assignedDeductionData);
+
+    tableBody.innerHTML = '';
+    employees.forEach(emp => {
+      const employeeId = String(emp.id);
+      const employeeNameKey = String(emp.name || '').trim().toLowerCase();
+      const salary = Number(emp.salary || 0);
+      const grossPayPerDay = salary / 26;
+      const hourlyRate = grossPayPerDay / 8;
+
+      const work = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
+      const regularDays = work.regularMinutes / 480;
+      const totalOtPay = (work.overtimeMinutes / 60) * hourlyRate;
+
+      const employeeIncomeByType = incomeByType[employeeNameKey] || {};
+      const legalHoliday = getIncomeAmountByKeyword(employeeIncomeByType, /legal\s*holiday/i);
+      const specialHoliday = getIncomeAmountByKeyword(employeeIncomeByType, /special\s*holiday/i);
+      const riceSubsidy = getIncomeAmountByKeyword(employeeIncomeByType, /rice/i);
+      const electricity = getIncomeAmountByKeyword(employeeIncomeByType, /electric/i);
+
+      const nonTaxableIncome = nonTaxableIncomeByEmployee[employeeNameKey] || 0;
+      const {
+        sssContribution,
+        pagibigContribution,
+        philhealthContribution,
+        withholdingTax
+      } = computePremiumDeductions(salary, nonTaxableIncome);
+
+      const sss = Number(sssContribution) || 0;
+      const phlth = Number(philhealthContribution) || 0;
+      const pagibig = Number(pagibigContribution) || 0;
+      const tax = Number(withholdingTax) || 0;
+      const personalCa = Number(personalCaByEmployee[employeeNameKey]) || 0;
+      const totalDeduction = sss + phlth + pagibig + tax + personalCa;
+
+      const grossRegularPay = regularDays * grossPayPerDay;
+      const netPay = grossRegularPay + totalOtPay + legalHoliday + specialHoliday + riceSubsidy + electricity - totalDeduction;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${emp.id || ''}</td>
+        <td>${emp.name || ''}</td>
+        <td>${emp.email || ''}</td>
+        <td>${formatCurrency(salary)}</td>
+        <td>${formatCurrency(grossPayPerDay)}</td>
+        <td>${regularDays.toFixed(2)}</td>
+        <td>${formatCurrency(totalOtPay)}</td>
+        <td>${formatCurrency(legalHoliday)}</td>
+        <td>${formatCurrency(specialHoliday)}</td>
+        <td>${formatCurrency(riceSubsidy)}</td>
+        <td>${formatCurrency(electricity)}</td>
+        <td>${formatCurrency(sss)}</td>
+        <td>${formatCurrency(phlth)}</td>
+        <td>${formatCurrency(pagibig)}</td>
+        <td>${formatCurrency(tax)}</td>
+        <td>${formatCurrency(personalCa)}</td>
+        <td>${formatCurrency(totalDeduction)}</td>
+        <td>${formatCurrency(netPay)}</td>
+      `;
+
+      const actionCell = document.createElement('td');
+      const selectButton = document.createElement('button');
+      selectButton.type = 'button';
+      selectButton.className = 'btn btn-sm btn-primary';
+      selectButton.textContent = 'Select Employee';
+      selectButton.addEventListener('click', () => openPayslipEmailModal({
+        id: emp.id,
+        name: emp.name,
+        email: emp.email,
+        grossPayPerMonth: salary,
+        grossPayPerDay: grossPayPerDay,
+        regularDays: regularDays,
+        totalOt: totalOtPay,
+        legalHoliday: legalHoliday,
+        specialHoliday: specialHoliday,
+        riceSubsidy: riceSubsidy,
+        electricity: electricity,
+        sss: sss,
+        phlth: phlth,
+        pagibig: pagibig,
+        tax: tax,
+        personalCa: personalCa,
+        totalDeduction: totalDeduction,
+        netPay: netPay
+      }));
+      actionCell.appendChild(selectButton);
+      row.appendChild(actionCell);
+
+      tableBody.appendChild(row);
+    });
+
+    paginateTable('payslipTable', 'payslipPagination', true);
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('payslipTable', 'payslipPagination', true);
   }
 }
 
