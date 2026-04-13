@@ -1,4 +1,4 @@
--- phpMyAdmin SQL Dump
+﻿-- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
@@ -74,7 +74,11 @@ CREATE TABLE `deleted_geofences` (
 --
 
 CREATE TABLE `employees` (
+<<<<<<< HEAD
+  `id` int(10) UNSIGNED NOT NULL,
+=======
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+>>>>>>> 712680c4879f7f08b48c7323329a21a255457895
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `username` varchar(255) NOT NULL,
@@ -84,8 +88,12 @@ CREATE TABLE `employees` (
   `department` varchar(255) NOT NULL,
   `salary` decimal(15,2) NOT NULL DEFAULT 0.00,
   `join_date` date NOT NULL,
+<<<<<<< HEAD
+  `status` varchar(50) NOT NULL DEFAULT 'Active'
+=======
   `status` varchar(50) NOT NULL DEFAULT 'Active',
   PRIMARY KEY (`id`)
+>>>>>>> 712680c4879f7f08b48c7323329a21a255457895
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -405,6 +413,8 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+<<<<<<< HEAD
+=======
 
 -- --------------------------------------------------------
 
@@ -453,6 +463,7 @@ CREATE TABLE IF NOT EXISTS `Emp_Inc_Type` (
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+>>>>>>> 712680c4879f7f08b48c7323329a21a255457895
 
 -- --------------------------------------------------------
 

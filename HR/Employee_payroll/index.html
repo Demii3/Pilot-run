@@ -72,7 +72,6 @@
       <hr>
       <button onclick="showContent(this,'employee_salary')">Employee Salary</button>
       <button onclick="showContent(this,'process_13')">Process 13th Month</button>
-      <button onclick="showContent(this,'yearend')">Process Year-End Tax</button>
       <hr>
     </div>
 
@@ -596,14 +595,34 @@
             <h2>Employee Salary</h2>
         </div>
         <div class="card-body">
-          <div class="mb-3">
-            <input
-              type="text"
-              id="searchEmployeeSalary"
-              class="form-control"
-              placeholder="Search by ID, name, gross pay, allowance, deduction, holiday, or net pay..."
-              onkeyup="filterEmployeeSalary()"
-            >
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input
+                type="text"
+                id="searchEmployeeSalary"
+                class="form-control"
+                placeholder="Search by ID, name, gross pay, allowance, deduction, holiday, or net pay..."
+                onkeyup="filterEmployeeSalary()"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="employeeSalaryDateFrom" class="form-label mb-1">From</label>
+              <input
+                type="date"
+                id="employeeSalaryDateFrom"
+                class="form-control"
+                onchange="loadEmployeeSalary()"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="employeeSalaryDateTo" class="form-label mb-1">To</label>
+              <input
+                type="date"
+                id="employeeSalaryDateTo"
+                class="form-control"
+                onchange="loadEmployeeSalary()"
+              >
+            </div>
           </div>
           <div class="table-responsive">
             <table class="table table-hover" id="employeeSalaryTable">
@@ -613,6 +632,7 @@
                   <th>Name</th>
                   <th>Gross Pay Per Day</th>
                   <th>Hours of Work</th>
+                  <th>Bi-Salary</th>
                   <th>Total Allowance</th>
                   <th>Legal Holiday</th>
                   <th>Special Holiday</th>
@@ -663,14 +683,6 @@
         </div>
       </div>`;
     loadEmployeesForProcess13();
-  }
-
-  else if (section === "yearend") {
-    content.innerHTML = `
-      <div class="card">
-        <h2>Year-End Tax</h2>
-        <p>Process annual tax adjustments and summaries.</p>
-      </div>`;
   }
 
   else if (section === "reports") {
@@ -922,8 +934,75 @@ function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, p
   return 183541.8 + (taxableIncome - 666667) * 0.35;
 }
 
+function buildNonTaxableIncomeMap(assignedIncomeData = []) {
+  const nonTaxableCostByEmployee = {};
+
+  (assignedIncomeData || []).forEach(item => {
+    const employeeNameKey = String(item.name || '').trim().toLowerCase();
+    const isNonTaxable = Number(item.taxable) === 0;
+    const cost = Number(item.cost);
+
+    if (!employeeNameKey || !isNonTaxable || !Number.isFinite(cost)) {
+      return;
+    }
+
+    nonTaxableCostByEmployee[employeeNameKey] = (nonTaxableCostByEmployee[employeeNameKey] || 0) + cost;
+  });
+
+  return nonTaxableCostByEmployee;
+}
+
+function buildTotalIncomeMap(assignedIncomeData = []) {
+  const totalIncomeByEmployee = {};
+
+  (assignedIncomeData || []).forEach(item => {
+    const employeeNameKey = String(item.name || '').trim().toLowerCase();
+    const cost = Number(item.cost);
+
+    if (!employeeNameKey || !Number.isFinite(cost)) {
+      return;
+    }
+
+    totalIncomeByEmployee[employeeNameKey] = (totalIncomeByEmployee[employeeNameKey] || 0) + cost;
+  });
+
+  return totalIncomeByEmployee;
+}
+
+function computePremiumDeductions(salaryValue, nonTaxableIncome = 0) {
+  const sssContribution = computeSssContribution(salaryValue);
+  const pagibigContribution = computePagibigContribution(salaryValue);
+  const philhealthContribution = computePhilhealthContribution(salaryValue);
+  const withholdingTax = computeWithholdingTax(
+    salaryValue,
+    sssContribution,
+    philhealthContribution,
+    pagibigContribution,
+    nonTaxableIncome
+  );
+  const totalDeductions =
+    (Number(sssContribution) || 0) +
+    (Number(pagibigContribution) || 0) +
+    (Number(philhealthContribution) || 0) +
+    (Number(withholdingTax) || 0);
+
+  return {
+    sssContribution,
+    pagibigContribution,
+    philhealthContribution,
+    withholdingTax,
+    totalDeductions
+  };
+}
+
 function formatCurrency(value) {
   return `₱${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+}
+
+function parseMoneyInput(rawValue) {
+  const normalized = String(rawValue ?? '').replace(/[^0-9.-]/g, '');
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 async function loadDeductionTypes() {
@@ -1412,7 +1491,7 @@ function saveEmployeeDeductionAssignment() {
   const payload = {
     name: employee.name,
     type_of_deduction: deductionType.type_of_deduction,
-    cost: parseFloat(costInput.value),
+    cost: parseMoneyInput(costInput.value),
     taxable: 0,
     month_13th: 0
   };
@@ -1581,18 +1660,7 @@ async function loadEmployeesForPremiums() {
       throw new Error(assignedIncomeResult.message || 'Unable to load assigned employee income data.');
     }
 
-    const nonTaxableCostByEmployee = {};
-    (assignedIncomeResult.data || []).forEach(item => {
-      const employeeNameKey = String(item.name || '').trim().toLowerCase();
-      const isNonTaxable = Number(item.taxable) === 0;
-      const cost = Number(item.cost);
-
-      if (!employeeNameKey || !isNonTaxable || !Number.isFinite(cost)) {
-        return;
-      }
-
-      nonTaxableCostByEmployee[employeeNameKey] = (nonTaxableCostByEmployee[employeeNameKey] || 0) + cost;
-    });
+    const nonTaxableCostByEmployee = buildNonTaxableIncomeMap(assignedIncomeResult.data || []);
 
     const rows = result.data || [];
     employeesForPremiums = rows;
@@ -1607,13 +1675,15 @@ async function loadEmployeesForPremiums() {
     tableBody.innerHTML = '';
     rows.forEach(emp => {
       const salary = Number(emp.salary || 0);
-      const sssContribution = computeSssContribution(salary);
-      const pagibigContribution = computePagibigContribution(salary);
-      const philhealthContribution = computePhilhealthContribution(salary);
       const employeeNameKey = String(emp.name || '').trim().toLowerCase();
       const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
-      const withholdingTax = computeWithholdingTax(salary, sssContribution, philhealthContribution, pagibigContribution, nonTaxableIncome);
-      const totalDeductions = (Number(sssContribution) || 0) + (Number(pagibigContribution) || 0) + (Number(philhealthContribution) || 0) + (Number(withholdingTax) || 0);
+      const {
+        sssContribution,
+        pagibigContribution,
+        philhealthContribution,
+        withholdingTax,
+        totalDeductions
+      } = computePremiumDeductions(salary, nonTaxableIncome);
 
       premiumRecords.push({
         employee_id: Number(emp.id),
@@ -1799,7 +1869,7 @@ function saveEmployeeIncomeAssignment() {
   const payload = {
     name: employee.name,
     type_of_income: incomeType.type_of_income,
-    cost: parseFloat(costInput.value),
+    cost: parseMoneyInput(costInput.value),
     taxable: taxableCheckbox.checked ? 1 : 0,
     month_13th: included13Checkbox.checked ? 1 : 0
   };
@@ -2347,22 +2417,24 @@ function filterEmployeeSalary() {
 
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 9) {
+    if (cells.length >= 10) {
       const id = cells[0].textContent.toLowerCase();
       const name = cells[1].textContent.toLowerCase();
       const grossPayPerDay = cells[2].textContent.toLowerCase();
       const hoursOfWork = cells[3].textContent.toLowerCase();
-      const totalAllowance = cells[4].textContent.toLowerCase();
-      const legalHoliday = cells[5].textContent.toLowerCase();
-      const specialHoliday = cells[6].textContent.toLowerCase();
-      const totalDeduction = cells[7].textContent.toLowerCase();
-      const netPay = cells[8].textContent.toLowerCase();
+      const biSalary = cells[4].textContent.toLowerCase();
+      const totalAllowance = cells[5].textContent.toLowerCase();
+      const legalHoliday = cells[6].textContent.toLowerCase();
+      const specialHoliday = cells[7].textContent.toLowerCase();
+      const totalDeduction = cells[8].textContent.toLowerCase();
+      const netPay = cells[9].textContent.toLowerCase();
 
       if (
         id.includes(filter) ||
         name.includes(filter) ||
         grossPayPerDay.includes(filter) ||
         hoursOfWork.includes(filter) ||
+        biSalary.includes(filter) ||
         totalAllowance.includes(filter) ||
         legalHoliday.includes(filter) ||
         specialHoliday.includes(filter) ||
@@ -2383,20 +2455,67 @@ async function loadEmployeeSalary() {
   const tableBody = document.querySelector('#employeeSalaryTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Loading employees...</td></tr>';
+  const dateFromInput = document.getElementById('employeeSalaryDateFrom');
+  const dateToInput = document.getElementById('employeeSalaryDateTo');
+  const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
+  const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
+
+  tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading employees...</td></tr>';
 
   try {
-    const response = await fetch('../Employee_management/employees_api.php');
-    const result = await response.json();
-    if (!result.success) {
-      throw new Error(result.message || 'Unable to load employees.');
+    const [employeeResponse, attendanceResponse, assignedIncomeResponse] = await Promise.all([
+      fetch('../Employee_management/employees_api.php'),
+      fetch('attendance_api.php'),
+      fetch('assigned_emp_inc_api.php')
+    ]);
+
+    const employeeResult = await employeeResponse.json();
+    const attendanceResult = attendanceResponse.ok ? await attendanceResponse.json() : { success: false, data: [] };
+    const assignedIncomeResult = assignedIncomeResponse.ok ? await assignedIncomeResponse.json() : { success: false, data: [] };
+
+    if (!employeeResult.success) {
+      throw new Error(employeeResult.message || 'Unable to load employees.');
     }
 
-    const rows = result.data || [];
+    const rows = employeeResult.data || [];
     employeesForSalary = rows;
 
+    const attendanceRows = attendanceResult.success ? (attendanceResult.data || []) : [];
+    const assignedIncomeData = assignedIncomeResult.success ? (assignedIncomeResult.data || []) : [];
+    const nonTaxableCostByEmployee = buildNonTaxableIncomeMap(assignedIncomeData);
+    const totalIncomeByEmployee = buildTotalIncomeMap(assignedIncomeData);
+    const minutesByEmployee = new Map();
+
+    attendanceRows.forEach(item => {
+      const employeeId = String(item.Emp_id ?? '').trim();
+      if (!employeeId) {
+        return;
+      }
+
+      if (dateFrom || dateTo) {
+        const itemDate = item.Date ? new Date(`${item.Date}T00:00:00`) : null;
+        if (!itemDate || Number.isNaN(itemDate.getTime())) {
+          return;
+        }
+
+        if (dateFrom && itemDate < dateFrom) {
+          return;
+        }
+
+        if (dateTo && itemDate > dateTo) {
+          return;
+        }
+      }
+
+      const durationMinutes = Number(item.Duration) || 0;
+      const isAO = Number(item.AO) === 1;
+      const effectiveMinutes = durationMinutes > 480 ? (isAO ? durationMinutes : 480) : durationMinutes;
+      const existingMinutes = minutesByEmployee.get(employeeId) || 0;
+      minutesByEmployee.set(employeeId, existingMinutes + effectiveMinutes);
+    });
+
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No employees found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No employees found.</td></tr>';
       paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
       return;
     }
@@ -2404,26 +2523,37 @@ async function loadEmployeeSalary() {
     tableBody.innerHTML = '';
     rows.forEach(emp => {
       const salary = Number(emp.salary || 0);
-      const grossPayPerDay = (salary * 12) / 261;
+      const grossPayPerDay = salary / 26;
+      const totalMinutesWorked = minutesByEmployee.get(String(emp.id)) || 0;
+      const totalHoursWorked = totalMinutesWorked / 60;
+      const biSalary = grossPayPerDay * totalHoursWorked;
+      const employeeNameKey = String(emp.name || '').trim().toLowerCase();
+      const totalAllowance = (totalIncomeByEmployee[employeeNameKey] || 0) / 2;
+      const legalHoliday = 0;
+      const specialHoliday = 0;
+      const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
+      const { totalDeductions } = computePremiumDeductions(salary, nonTaxableIncome);
+      const netPay = biSalary + totalAllowance + legalHoliday + specialHoliday - totalDeductions;
 
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${emp.id}</td>
         <td>${emp.name}</td>
         <td>${formatCurrency(grossPayPerDay)}</td>
-        <td>0</td>
-        <td>0.00</td>
-        <td>0.00</td>
-        <td>0.00</td>
-        <td>0.00</td>
-        <td>${formatCurrency(grossPayPerDay)}</td>
+        <td>${totalHoursWorked.toFixed(2)} hrs</td>
+        <td>${formatCurrency(biSalary)}</td>
+        <td>${formatCurrency(totalAllowance)}</td>
+        <td>${formatCurrency(legalHoliday)}</td>
+        <td>${formatCurrency(specialHoliday)}</td>
+        <td>${formatCurrency(totalDeductions)}</td>
+        <td>${formatCurrency(netPay)}</td>
       `;
       tableBody.appendChild(row);
     });
 
     paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="10" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
   }
 }

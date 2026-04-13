@@ -17,6 +17,14 @@ function respond($success, $data = null, $message = '', $statusCode = 200) {
     exit;
 }
 
+function normalizeMoneyInput($value) {
+    if (is_string($value)) {
+        $value = preg_replace('/[^0-9.\-]/', '', $value);
+    }
+
+    return floatval($value);
+}
+
 function ensureAssignedEmpIncTable($dbc) {
     $createSql = "CREATE TABLE IF NOT EXISTS `assigned_emp_inc` (
       `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -61,7 +69,7 @@ function handlePostRequest($dbc) {
     $id = isset($input['id']) && is_numeric($input['id']) ? intval($input['id']) : null;
     $name = trim($input['name']);
     $type_of_income = trim($input['type_of_income']);
-    $cost = floatval($input['cost']);
+    $cost = normalizeMoneyInput($input['cost']);
     $taxable = ($input['taxable'] == 1 || $input['taxable'] === true || $input['taxable'] === '1') ? 1 : 0;
     $month_13th = ($input['month_13th'] == 1 || $input['month_13th'] === true || $input['month_13th'] === '1') ? 1 : 0;
 
