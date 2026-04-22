@@ -19,11 +19,13 @@ header('Pragma: no-cache');
     <title>Attendance List</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="../../Images/logo.jpg"/>
     <link rel="stylesheet" href="../../Assets/home_hr.css">
     <link rel="stylesheet" href="../HR_Assets/Employee_attendance.css">
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin ="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
 </head>
@@ -72,7 +74,7 @@ header('Pragma: no-cache');
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-hover attendance-table">
+                    <table id="attendanceTable" class="table table-hover attendance-table">
                         <thead class="table-light">
                             <tr>
                                 <th scope="col" class="d-none">Atttendance ID</th>
@@ -92,7 +94,7 @@ header('Pragma: no-cache');
                                 </th>
                             </tr>
                         </thead>
-                        <tbody id="attendanceTable">
+                        <tbody id="attendanceTableBody">
                             <?php
                                 include '../../Modules/dbcon.php';
                                 $query = "SELECT employee_attendance.*, employees.name, employees.department FROM `employee_attendance` JOIN `employees` ON employee_attendance.Emp_id = employees.id";

@@ -1,7 +1,7 @@
 const searchInput = document.getElementById('searchInput');
 const statusFilter = document.getElementById('statusFilter');
 const dateFilter = document.getElementById('dateFilter');
-const attendanceTable = document.getElementById('attendanceTable');
+const attendanceTableBody = document.getElementById('attendanceTableBody');
 const attendanceModalElement = document.getElementById('attendanceModal');
 const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
 const selectAllRows = document.getElementById('selectAllRows');
@@ -17,33 +17,55 @@ let tempval1 = '';
 let tempval2 = '';
 let tempval3 = '';
 let tempval4 = '';
+let attendanceDataTable = null;
 
-attendanceModalElement.addEventListener('hidden.bs.modal', returnProperties);
+$.fn.dataTable.ext.search.push(function(settings, data) {
+    if (settings.nTable.id !== 'attendanceTable') {
+        return true;
+    }
 
-function filterAttendance() {
     const searchValue = searchInput.value.toLowerCase();
     const statusValue = statusFilter.value;
     const dateValue = dateFilter.value;
 
-    Array.from(attendanceTable.rows).forEach(row => {
-        const cells = row.cells;
-        // Table includes hidden Attendance ID and Employee ID columns at indexes 0 and 1.
-        const nameText = cells[2] ? cells[2].textContent.toLowerCase() : '';
-        const deptText = cells[3] ? cells[3].textContent.toLowerCase() : '';
-        const dateText = cells[4] ? cells[4].textContent.trim() : '';
-        const statusText = cells[7] ? cells[7].textContent.trim() : '';
+    const nameText = (data[2] || '').toLowerCase();
+    const deptText = (data[3] || '').toLowerCase();
+    const dateText = (data[4] || '').trim();
+    const statusText = (data[7] || '').trim();
 
-        const matchesSearch = searchValue === '' || nameText.includes(searchValue) || deptText.includes(searchValue);
-        const matchesDate = dateValue === '' || dateText.includes(dateValue);
-        const matchesStatus = statusValue === 'all' || statusText === statusValue;
+    const matchesSearch = searchValue === '' || nameText.includes(searchValue) || deptText.includes(searchValue) || dateText.toLowerCase().includes(searchValue);
+    const matchesDate = dateValue === '' || dateText.includes(dateValue);
+    const matchesStatus = statusValue === 'all' || statusText === statusValue;
 
-        row.style.display = (matchesSearch && matchesDate && matchesStatus) ? '' : 'none';
-    });
+    return matchesSearch && matchesDate && matchesStatus;
+});
+
+attendanceModalElement.addEventListener('hidden.bs.modal', returnProperties);
+
+function filterAttendance() {
+    if (attendanceDataTable) {
+        attendanceDataTable.draw();
+    }
 }
 
 searchInput.addEventListener('input', filterAttendance);
 statusFilter.addEventListener('change', filterAttendance);
 dateFilter.addEventListener('change', filterAttendance);
+
+attendanceDataTable = $('#attendanceTable').DataTable({
+    dom: 'rtip',
+    pageLength: 10,
+    lengthChange: false,
+    searching: true,
+    ordering: true,
+    autoWidth: false,
+    columnDefs: [
+        { targets: [0, 1, 11, 12], orderable: false }
+    ]
+});
+
+attendanceDataTable.on('draw', updateBulkDeleteState);
+filterAttendance();
 
 function updateBulkDeleteState() {
     const selectedRows = document.querySelectorAll('.row-select:checked').length;
@@ -136,18 +158,14 @@ function deleteContent(Attendance_ID) {
 }
 
 bulkDeleteBtn.addEventListener('click', () => {
-    const selectedIds = Array.from(document.querySelectorAll('.attendance-table tbody tr'))
-        .filter(row => {
-            const checkbox = row.querySelector('.row-select');
-            return checkbox && checkbox.checked;
-        })
-        .map(row => row.cells[0].textContent.trim());
+    const selectedIds = Array.from(attendanceTableBody.querySelectorAll('.row-select:checked'))
+        .map(checkbox => checkbox.closest('tr').cells[0].textContent.trim());
 
     deleteMultipleContent(selectedIds);
 });
 
 selectAllRows.addEventListener('change', event => {
-    document.querySelectorAll('.row-select').forEach(checkbox => {
+    attendanceTableBody.querySelectorAll('.row-select').forEach(checkbox => {
         checkbox.checked = event.target.checked;
     });
     updateBulkDeleteState();
@@ -558,34 +576,37 @@ modalClockoutStatus.addEventListener('change', () => {
     }
 });
 
-document.querySelectorAll('.attendance-table tbody tr[role="button"]').forEach(row => {
-    row.addEventListener('click', () => openRowModal(row));
-
-    const checkbox = row.querySelector('.row-select');
+attendanceTableBody.addEventListener('click', event => {
+    const checkbox = event.target.closest('.row-select');
     if (checkbox) {
-        checkbox.addEventListener('click', event => {
-            event.stopPropagation();
-            updateBulkDeleteState();
-        });
-
-        checkbox.addEventListener('change', event => {
-            event.stopPropagation();
-            updateBulkDeleteState();
-        });
-
-        checkbox.addEventListener('keydown', event => {
-            event.stopPropagation();
-        });
+        updateBulkDeleteState();
+        return;
     }
 
-    // Keyboard activation for Enter and Space
-    row.addEventListener('keydown', event => {
-        if (event.target && event.target.classList.contains('row-select')) {
-            return;
-        }
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            openRowModal(row);
-        }
-    });
+    const row = event.target.closest('tr[role="button"]');
+    if (row) {
+        openRowModal(row);
+    }
+});
+
+attendanceTableBody.addEventListener('change', event => {
+    if (event.target.classList.contains('row-select')) {
+        updateBulkDeleteState();
+    }
+});
+
+attendanceTableBody.addEventListener('keydown', event => {
+    if (event.target && event.target.classList.contains('row-select')) {
+        return;
+    }
+
+    const row = event.target.closest('tr[role="button"]');
+    if (!row) {
+        return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openRowModal(row);
+    }
 });
