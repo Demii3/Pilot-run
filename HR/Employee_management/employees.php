@@ -5,51 +5,13 @@
       <button class="btn btn-info me-2" onclick="document.getElementById('importFile').click()">Import from Excel</button>
       <input type="file" id="importFile" accept=".csv,.xlsx,.xls" style="display: none;" onchange="importFromExcel(this)">
       <button class="btn btn-success me-2" onclick="exportToExcel()">Export to Excel</button>
-      <button class="btn btn-primary" onclick="openAddForm()">+ Add Employee</button>
+      <button class="btn btn-primary add-employee-btn">+ Add Employee</button>
     </div>
   </div>
 
   <div class="card-body">
-    <div class="mb-3">
-      <input 
-        type="text" 
-        id="searchInput" 
-        class="form-control" 
-        placeholder="Search by name, email, position, department, or status..."
-        onkeyup="searchEmployees()"
-      >
-    </div>
-
     <div class="table-responsive">
       <table class="table table-hover" id="employeeTable">
-        <thead class="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Username</th>
-            <th>Password</th>
-            <th>Position</th>
-            <th>Department</th>
-            <th>Salary</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    <div class="pagination-container">
-      <button class="btn btn-secondary btn-sm" onclick="goToFirstPage()">First</button>
-      <button class="btn btn-secondary btn-sm" onclick="previousPage()">Previous</button>
-      <span class="page-info">Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
-      <button class="btn btn-secondary btn-sm" onclick="nextPage()">Next</button>
-      <button class="btn btn-secondary btn-sm" onclick="goToLastPage()">Last</button>
     </div>
   </div>
 </div>

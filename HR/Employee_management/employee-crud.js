@@ -1,10 +1,6 @@
 ﻿const API_URL = './employees_api.php';
 let employeesData = [];
-let currentPage = 1;
-const itemsPerPage = 5;
-let totalPages = 1;
-let isSearchActive = false;
-let searchResults = [];
+let employeeTable;
 
 function showNotification(message, type = 'info') {
   const existingNotifications = document.querySelectorAll('.notification');
@@ -119,68 +115,71 @@ async function fetchEmployees() {
   return employeesData;
 }
 
-function displayPage(dataToDisplay) {
-  const tableBody = document.querySelector('#employeeTable tbody');
-  tableBody.innerHTML = '';
+async function displayEmployees() {
+  const tableElement = document.querySelector('#employeeTable');
+  if (!tableElement) return;
 
-  if (dataToDisplay.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No employees found</td></tr>';
-    updatePaginationInfo(0);
+  try {
+    await fetchEmployees();
+  } catch (error) {
+    showNotification(error.message, 'error');
     return;
   }
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const pageData = dataToDisplay.slice(startIndex, endIndex);
+  // Prepare data
+  const tableData = employeesData.map(emp => ({
+    id: emp.id,
+    name: emp.name,
+    email: emp.email,
+    username: emp.username || '',
+    password: emp.password || '',
+    position: emp.position,
+    department: emp.department,
+    salary: emp.salary,
+    type: emp.type || '',
+    status: emp.status || 'Inactive'
+  }));
 
-  pageData.forEach(emp => {
+  // Populate table manually
+  const tableBody = document.querySelector('#employeeTable tbody');
+  tableBody.innerHTML = '';
+
+  if (tableData.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="11" class="text-center">No employees found</td></tr>';
+    return;
+  }
+
+  tableData.forEach(emp => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${emp.id}</td>
       <td>${emp.name}</td>
       <td>${emp.email}</td>
-      <td>${emp.username || ''}</td>
-      <td>${emp.password || ''}</td>
+      <td>${emp.username}</td>
+      <td>${emp.password}</td>
       <td>${emp.position}</td>
       <td>${emp.department}</td>
       <td>₱${parseFloat(emp.salary).toLocaleString()}</td>
-      <td>${emp.type || ''}</td>
-      <td>${emp.status || 'Inactive'}</td>
+      <td>${emp.type}</td>
+      <td>${emp.status}</td>
       <td>
-        <button class="btn btn-sm btn-warning" onclick="editEmployee(${emp.id})">Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${emp.id})">Delete</button>
+        <button class="btn btn-sm btn-warning edit-btn" data-id="${emp.id}">Edit</button>
+        <button class="btn btn-sm btn-danger delete-btn" data-id="${emp.id}">Delete</button>
       </td>
     `;
     tableBody.appendChild(row);
   });
 
-  updatePaginationInfo(dataToDisplay.length);
-}
+  // Add event listeners for action buttons
+  $('#employeeTable').on('click', '.edit-btn', function() {
+    const id = $(this).data('id');
+    editEmployee(id);
+  });
 
-function updatePaginationInfo(totalRecords) {
-  const currentPageElement = document.getElementById('currentPage');
-  const totalPagesElement = document.getElementById('totalPages');
-
-  if (currentPageElement) currentPageElement.textContent = currentPage;
-  if (totalPagesElement) totalPagesElement.textContent = totalPages || 1;
-}
-
-async function displayEmployees() {
-  const tableBody = document.querySelector('#employeeTable tbody');
-  if (!tableBody) return;
-
-  try {
-    await fetchEmployees();
-  } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Unable to load employees</td></tr>';
-    showNotification(error.message, 'error');
-    return;
-  }
-
-  isSearchActive = false;
-  currentPage = 1;
-  totalPages = Math.ceil(employeesData.length / itemsPerPage);
-  displayPage(employeesData);
+  $('#employeeTable').on('click', '.delete-btn', function() {
+    const id = $(this).data('id');
+    deleteEmployee(id);
+  });
 }
 
 function openAddForm() {
@@ -340,33 +339,6 @@ function saveEmployee() {
     });
 }
 
-function searchEmployees() {
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-  if (!searchTerm) {
-    isSearchActive = false;
-    currentPage = 1;
-    totalPages = Math.ceil(employeesData.length / itemsPerPage);
-    displayPage(employeesData);
-    return;
-  }
-
-  searchResults = employeesData.filter(emp =>
-    emp.name.toLowerCase().includes(searchTerm) ||
-    emp.email.toLowerCase().includes(searchTerm) ||
-    (emp.username || '').toLowerCase().includes(searchTerm) ||
-    emp.position.toLowerCase().includes(searchTerm) ||
-    emp.department.toLowerCase().includes(searchTerm) ||
-    (emp.type || '').toLowerCase().includes(searchTerm) ||
-    (emp.status || 'Inactive').toLowerCase().includes(searchTerm)
-  );
-
-  isSearchActive = true;
-  currentPage = 1;
-  totalPages = Math.ceil(searchResults.length / itemsPerPage);
-  displayPage(searchResults);
-}
-
 function exportToExcel() {
   const employees = employeesData;
   if (employees.length === 0) {
@@ -404,6 +376,42 @@ function exportToExcel() {
   URL.revokeObjectURL(url);
   showNotification('Employee data exported successfully!', 'success');
 }
+  const employees = employeesData;
+  if (employees.length === 0) {
+    showNotification('No employee data to export', 'error');
+    return;
+  }
+
+  const headers = ['ID', 'Name', 'Email', 'Username', 'Password', 'Type', 'Position', 'Department', 'Salary', 'Join Date', 'Status'];
+  const csvContent = [
+    headers.join(','),
+    ...employees.map(emp => [
+      emp.id,
+      `"${emp.name}"`,
+      emp.email,
+      `"${emp.username || ''}"`,
+      `"${emp.password || ''}"`,
+      emp.type || '',
+      `"${emp.position}"`,
+      `"${emp.department}"`,
+      emp.salary,
+      emp.join_date || emp.joinDate,
+      emp.status || 'Inactive'
+    ].join(','))
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+
+  link.setAttribute('href', url);
+  link.setAttribute('download', `employees_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showNotification('Employee data exported successfully!', 'success');
+
 
 function parseCSVLine(line) {
   const result = [];
@@ -506,34 +514,6 @@ async function importFromExcel(input) {
   };
 
   reader.readAsText(file);
-}
-
-function nextPage() {
-  if (currentPage < totalPages) {
-    currentPage++;
-    const dataToDisplay = isSearchActive ? searchResults : employeesData;
-    displayPage(dataToDisplay);
-  }
-}
-
-function previousPage() {
-  if (currentPage > 1) {
-    currentPage--;
-    const dataToDisplay = isSearchActive ? searchResults : employeesData;
-    displayPage(dataToDisplay);
-  }
-}
-
-function goToFirstPage() {
-  currentPage = 1;
-  const dataToDisplay = isSearchActive ? searchResults : employeesData;
-  displayPage(dataToDisplay);
-}
-
-function goToLastPage() {
-  currentPage = totalPages;
-  const dataToDisplay = isSearchActive ? searchResults : employeesData;
-  displayPage(dataToDisplay);
 }
 
 window.onclick = function(event) {
