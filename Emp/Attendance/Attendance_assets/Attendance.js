@@ -55,7 +55,7 @@ function checkClockinStatus(timeStr) {
 };
 
 function checkClockoutStatus(timeStr) {
-    let [h1, m1, s1] = timeStr[0].split(':').map(Number);
+    let [h1, m1] = timeStr[0].split(':').map(Number);
     if(h1 === 12 && timeStr[1] === 'AM') { 
         h1 = 0; // Convert 12 AM to 0 hours for easier comparison{
     };
