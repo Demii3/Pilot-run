@@ -4,6 +4,7 @@ $(document).ready(function() {
         autoWidth: false,
         layout: {
             topStart: null,
+            topEnd: null,
             bottomStart: 'pageLength',
             bottomEnd: ['info', 'paging']
         },
@@ -21,17 +22,24 @@ $(document).ready(function() {
     });
 
     makeColumnsResizable('#attendanceTable');
-    searchAttendance('', attendanceTable);
+    searchAttendance('', '', attendanceTable);
 
     let searchDebounceTimer;
 
     $('#searchInput').on('keyup', function() {
         const searchTerm = $(this).val();
+        const searchDate = $('#searchDate').val();
 
         clearTimeout(searchDebounceTimer);
         searchDebounceTimer = setTimeout(function() {
-            searchAttendance(searchTerm, attendanceTable);
+            searchAttendance(searchTerm, searchDate, attendanceTable);
         }, 300);
+    });
+
+    $('#searchDate').on('change', function() {
+        const searchTerm = $('#searchInput').val();
+        const searchDate = $(this).val();
+        searchAttendance(searchTerm, searchDate, attendanceTable);
     });
 
     $('#attendanceTable tbody').on('click', 'tr', function () {
@@ -132,15 +140,18 @@ function toggleMenu() {
     document.getElementById("profileMenu").classList.toggle("active");
 }
 
-function searchAttendance(searchTerm, table) {
+function searchAttendance(searchTerm, searchDate, table) {
     $.ajax({
         url: './Modules/search_attendance.php',
         method: 'POST',
-        data: { search: searchTerm },
+        data: {
+            search: searchTerm,
+            searchDate: searchDate
+        },
         dataType: 'json',
         success: function(response) {
             table.clear().draw();
-
+                console.log(response);
             if (response.data && response.data.length > 0) {
                 response.data.forEach(function(row) {
                     table.row.add([
@@ -261,7 +272,7 @@ function convert24HourTo12Hour(time24h) {
         hours = 12;
     }
 
-    return hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0') + ' ' + modifier;
+    return hours.toString() + ':' + minutes.toString().padStart(2, '0') + ' ' + modifier;
 };
 
 function configAttendance(attendance_id, searchTerm, table, action) {
@@ -299,7 +310,7 @@ function configAttendance(attendance_id, searchTerm, table, action) {
                 const message = response && response.msg ? response.msg : 'Request completed.';
                 alert(message);
                 document.getElementById('attendanceModal').querySelector('.btn-close').click();
-                searchAttendance(searchTerm, table);
+                searchAttendance(searchTerm, $('#searchDate').val(), table);
             },
             error: function() {
                 console.error('Request failed');

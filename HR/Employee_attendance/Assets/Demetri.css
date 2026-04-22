@@ -352,7 +352,7 @@ h2 {
   background-color: #28a745 !important;
   color: white !important;
   display: block;
-  margin: -12px;
+  margin: 0;
   padding: 12px 10px !important;
   box-sizing: border-box;
   border-radius: 4px !important;
@@ -364,7 +364,7 @@ h2 {
   background-color: #ffc107 !important;
   color: #333 !important;
   display: block;
-  margin: -12px;
+  margin: 0;
   padding: 12px 10px !important;
   box-sizing: border-box;
   border-radius: 4px !important;
@@ -376,7 +376,7 @@ h2 {
   background-color: #dc3545 !important;
   color: white !important;
   display: block;
-  margin: -12px;
+  margin: 0;
   padding: 12px 10px !important;
   box-sizing: border-box;
   border-radius: 4px !important;
@@ -388,7 +388,7 @@ h2 {
   background-color: #0056b3 !important;
   color: white !important;
   display: block;
-  margin: -12px;
+  margin: 0;
   padding: 12px 10px !important;
   box-sizing: border-box;
   border-radius: 4px !important;
@@ -401,7 +401,7 @@ h2 {
   background-color: #28a745 !important;
   color: white !important;
   display: block;
-  margin: -12px;
+  margin: 0;
   padding: 12px 10px !important;
   box-sizing: border-box;
   border-radius: 4px !important;
@@ -413,7 +413,7 @@ h2 {
   background-color: #ffc107 !important;
   color: #333 !important;
   display: block;
-  margin: -12px;
+  margin: 0;
   padding: 12px 10px !important;
   box-sizing: border-box;
   border-radius: 4px !important;
@@ -425,7 +425,7 @@ h2 {
   background-color: #155724 !important;
   color: white !important;
   display: block;
-  margin: -12px;
+  margin: 0;
   padding: 12px 10px !important;
   box-sizing: border-box;
   border-radius: 4px !important;
@@ -437,7 +437,7 @@ h2 {
   background-color: #fd7e14 !important;
   color: white !important;
   display: block;
-  margin: -12px;
+  margin: 0;
   padding: 12px 10px !important;
   box-sizing: border-box;
   border-radius: 4px !important;

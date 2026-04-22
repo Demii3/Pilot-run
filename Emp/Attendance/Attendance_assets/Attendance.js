@@ -432,7 +432,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedCoordinates = selectedOption.getAttribute('data-coordinates') || '';
         const currentTime = new Date();
         const dateString = formatDateToYYYYMMDD(currentTime.toDateString());
-        const clockinTime = currentTime.toLocaleTimeString();
+        const clockinTime = currentTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
         const clockinStatus = checkClockinStatus(clockinTime.split(' '));
         const userId = tapButton.dataset.userId || '';
 
@@ -484,7 +488,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const selectedLocation = selectedOption.value;
         const currentTime = new Date();
-        const clockoutTime = currentTime.toLocaleTimeString();
+        const clockoutTime = currentTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
         const clockoutStatus = checkClockoutStatus(clockoutTime.split(' '));
         const clockInTime = tapButton.dataset.clockInTime || '';
         const duration = clockInTime ? subtractTime(clockoutTime.split(' '), clockInTime.split(' ')) : 0;

@@ -4,17 +4,24 @@ header('Content-Type: application/json');
 include 'dbcon.php';
 
 $searchTerm = isset($_POST['search']) ? mysqli_real_escape_string($dbc, $_POST['search']) : '';
+$searchDate = isset($_POST['searchDate']) ? mysqli_real_escape_string($dbc, $_POST['searchDate']) : '';
 
 $sql = "SELECT employee_attendance.*, employees.name, employees.department 
         FROM employee_attendance 
         LEFT JOIN employees 
         ON employee_attendance.Emp_id = employees.id
-        WHERE employees.name LIKE '%$searchTerm%'
-        OR employees.department LIKE '%$searchTerm%'
-        OR employee_attendance.Date LIKE '%$searchTerm%'
-        OR employee_attendance.Location LIKE '%$searchTerm%'
-        ORDER BY employee_attendance.Attendance_id DESC
-        LIMIT 100";
+        WHERE (
+            employees.name LIKE '%$searchTerm%'
+            OR employees.department LIKE '%$searchTerm%'
+            OR employee_attendance.Location LIKE '%$searchTerm%'
+        )";
+
+if ($searchDate !== '') {
+    $sql .= " AND employee_attendance.Date = '$searchDate'";
+}
+
+$sql .= " ORDER BY employee_attendance.Attendance_id DESC
+          LIMIT 100";
 
 $result = mysqli_query($dbc, $sql);
 $data = array();
@@ -38,7 +45,7 @@ if ($result && mysqli_num_rows($result) > 0) {
         $outStatusClass = '';
         if ($outStatus == 'present') {
             $outStatusClass = 'status-present';
-        } elseif ($outStatus == 'undertime') {
+        } elseif ($outStatus == 'under-time') {
             $outStatusClass = 'status-undertime';
         } elseif ($outStatus == 'absent') {
             $outStatusClass = 'status-absent';

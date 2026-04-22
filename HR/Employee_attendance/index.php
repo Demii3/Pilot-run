@@ -65,8 +65,13 @@
     <div class="card">
       <h2>Attendance List</h2>
       
-      <div class="mb-3">
-        <input type="text" id="searchInput" class="form-control" placeholder="Search by name, department, date, location...">
+      <div class="row g-2 mb-3">
+        <div class="col-md-8">
+          <input type="text" id="searchInput" class="form-control" placeholder="Search by name, department, location...">
+        </div>
+        <div class="col-md-4">
+          <input type="date" id="searchDate" class="form-control" aria-label="Search by date">
+        </div>
       </div>
 
       <div class="table-responsive">
