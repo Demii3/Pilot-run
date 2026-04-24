@@ -109,7 +109,7 @@
         <h5 class="modal-title" id="attendanceModalLabel">Attendance Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" id="modalBody1">
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label">Name</label>
@@ -133,7 +133,12 @@
           </div>
           <div class="col-md-6">
             <label class="form-label">Clock In Status</label>
-            <input id="modalClockInStatus" type="text" class="form-control" readonly>
+            <select id="modalClockInStatus" class="form-select" disabled>
+              <option value="On-time">On-time</option>
+              <option value="Late">Late</option>
+              <option value="On-leave" disabled>On-leave</option>
+              <option value="Absent" disabled>Absent</option>
+            </select>
           </div>
           <div class="col-md-6">
             <label class="form-label">Clock Out</label>
@@ -141,17 +146,77 @@
           </div>
           <div class="col-md-6">
             <label class="form-label">Clock Out Status</label>
-            <input id="modalClockOutStatus" type="text" class="form-control" readonly>
+            <select id="modalClockOutStatus" class="form-select" disabled>
+              <option value="Under-time">Under-time</option>
+              <option value="Present">Present</option>
+              <option value="Over-time" disabled>Over-time</option>
+              <option value="Absent" disabled>Absent</option>
+              <option value="On-leave" disabled>On-leave</option>
+            </select>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="allowOvertime" disabled>
+              <label class="form-check-label" for="allowOvertime">Allow Over-time</label>
+            </div>
           </div>
           <div class="col-md-6">
             <button id="editButton" class="btn btn-warning" onclick = "editAttendance()">Edit</button>
             <button id="saveButton" class="btn btn-success d-none">Save</button>
             <button id="deleteButton" class="btn btn-danger d-none">Delete</button>
+            <button id="moreButton" class="btn btn-warning d-none" onclick="moreAttendance()">More</button>
           </div>
           <div class="col-md-6">
-            <button id="absentButton" class="btn btn-danger d-none">Absent</button>
-            <button id="onLeaveButton" class="btn btn-info d-none">On Leave</button>
-<!--             <button id="saveButton" class="btn btn-success d-none">Save</button> -->
+            <button id="absentButton" class="btn btn-danger d-none" onclick="setAttendanceStatus('Absent')">Absent</button>
+            <button id="onLeaveButton" class="btn btn-info d-none" onclick="setAttendanceStatus('On-Leave')">On Leave</button>
+          </div>
+        </div>
+      </div>
+
+    <!-- modal separate -->
+
+      <div class="modal-body d-none" id="modalBody2">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Name</label>
+            <input id="modalName" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Department</label>
+            <input id="modalDepartment" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Date</label>
+            <input id="modalDate" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Location</label>
+            <input id="modalLocation" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Clock In</label>
+            <input id="modalClockIn" type="time" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Clock In Status</label>
+            <select id="modalClockInStatus" class="form-select" disabled>
+              <option value="On-time">On-time</option>
+              <option value="Late">Late</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Clock Out</label>
+            <input id="modalClockOut" type="time" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Clock Out Status</label>
+            <select id="modalClockOutStatus" class="form-select" disabled>
+              <option value="Under-time">Under-time</option>
+              <option value="Present">Present</option>
+              <option value="Over-time" disabled>Over-time</option>
+            </select>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="allowOvertime2">
+              <label class="form-check-label" for="allowOvertime2">Allow Over-time</label>
+            </div>
           </div>
         </div>
       </div>
