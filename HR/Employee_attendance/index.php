@@ -7,6 +7,7 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.dataTables.css" />
   <script src="https://code.jquery.com/jquery-4.0.0.js" integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
   <script src="https://cdn.datatables.net/2.3.7/js/dataTables.js"></script>
@@ -65,11 +66,16 @@
     <div class="card">
       <h2>Attendance List</h2>
       
-      <div class="row g-2 mb-3">
-        <div class="col-md-8">
+      <div class="row g-2 mb-3 align-items-center">
+        <div class="col-auto">
+          <button type="button" class="settings-modal-trigger" data-bs-toggle="modal" data-bs-target="#opstionsModal" onclick="event.stopPropagation();" aria-label="Open options modal">
+            <i class="bi bi-gear-fill"></i>
+          </button>
+        </div>
+        <div class="col">
           <input type="text" id="searchInput" class="form-control" placeholder="Search by name, department, location...">
         </div>
-        <div class="col-md-4">
+        <div class="col-auto">
           <input type="date" id="searchDate" class="form-control" aria-label="Search by date">
         </div>
       </div>
@@ -80,7 +86,9 @@
               <tr>
                   <th class="hide-me">Attendance ID</th>
                   <th class="hide-me">Employee ID</th>
-                  <th>Name</th>
+                  <th>
+                    <span>Name</span>
+                  </th>
                   <th>Department</th>
                   <th>Date</th>
                   <th>Location</th>
@@ -183,42 +191,41 @@
             <label class="form-label">Department</label>
             <input id="modalDepartment" type="text" class="form-control" readonly>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Date</label>
-            <input id="modalDate" type="text" class="form-control" readonly>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Location</label>
-            <input id="modalLocation" type="text" class="form-control" readonly>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Clock In</label>
-            <input id="modalClockIn" type="time" class="form-control" readonly>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Clock In Status</label>
-            <select id="modalClockInStatus" class="form-select" disabled>
-              <option value="On-time">On-time</option>
-              <option value="Late">Late</option>
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Clock Out</label>
-            <input id="modalClockOut" type="time" class="form-control" readonly>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Clock Out Status</label>
-            <select id="modalClockOutStatus" class="form-select" disabled>
-              <option value="Under-time">Under-time</option>
-              <option value="Present">Present</option>
-              <option value="Over-time" disabled>Over-time</option>
-            </select>
-            <div class="form-check mt-2">
-              <input class="form-check-input" type="checkbox" id="allowOvertime2">
-              <label class="form-check-label" for="allowOvertime2">Allow Over-time</label>
-            </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="opstionsModal" tabindex="-1" aria-labelledby="opstionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="opstionsModalLabel">Options</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="opstionsModalBody">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="optionShowDepartment">Show Department Column</label>
+            <select id="optionShowDepartment" class="form-select">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="optionShowLocation">Show Location Column</label>
+            <select id="optionShowLocation" class="form-select">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
       </div>
     </div>
   </div>

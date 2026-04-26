@@ -341,8 +341,8 @@ function convert12HourTo24Hour(time12h) {
 };
 
 function convert24HourTo12Hour(time24h) {
-    if (!time24h || time24h === '--:--') {
-        return time24h;
+    if (!time24h || time24h === '--:-- --') {
+        return '--:-- --';
     };
 
     const [time] = time24h.split(' ');
