@@ -1,4 +1,19 @@
 $(document).ready(function() {
+    const target_columns = function () {
+        return $.ajax({
+            url: '../Modules/HR_settings.php',
+            method: 'POST',
+            dataType: 'json'
+        }).then(function (settings) {
+            const columns = [];
+            columns.push(0);
+            if (Number(settings.hide_location_column) === 1) {
+                columns.push(5); // Location column index in your table
+            }
+            return columns;
+        });
+    };
+
     const attendanceTable = $('#attendanceTable').DataTable({
         order: [[0, 'desc']],
         autoWidth: false,
@@ -10,7 +25,7 @@ $(document).ready(function() {
         },
         columnDefs: [
             {
-                targets: [0, 1],
+                targets: target_columns,
                 visible: false,
                 searchable: false
             },
@@ -203,7 +218,6 @@ function searchAttendance(searchTerm, searchDate, table) {
         dataType: 'json',
         success: function(response) {
             table.clear().draw();
-                console.log(response);
             if (response.data && response.data.length > 0) {
                 response.data.forEach(function(row) {
                     table.row.add([
@@ -460,3 +474,7 @@ function allowOvertimeToggle(value) {
     }
 };
 
+function saveOptions() {
+    alert('Options saved successfully!');
+    window.location.reload();
+};

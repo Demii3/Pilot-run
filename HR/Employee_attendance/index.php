@@ -207,25 +207,19 @@
       </div>
       <div class="modal-body" id="opstionsModalBody">
         <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label" for="optionShowDepartment">Show Department Column</label>
-            <select id="optionShowDepartment" class="form-select">
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
+          <div class="col-md-5">
+            <input class="form-check-input" type="checkbox" id="overideAll">
+            <label class="form-check-label" for="allowOvertime">Override All Preset Functions?</label>
           </div>
-          <div class="col-md-6">
-            <label class="form-label" for="optionShowLocation">Show Location Column</label>
-            <select id="optionShowLocation" class="form-select">
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
+          <div class="col-md-4">
+            <input class="form-check-input" type="checkbox" id="hideLocations">
+            <label class="form-check-label" for="allowOvertime">Hide Locations</label>
           </div>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-primary" onclick='saveOptions()'>Save changes</button>
       </div>
     </div>
   </div>
