@@ -1,0 +1,468 @@
+body {
+    margin: 0;
+    padding-top: 60px;
+    font-family: 'Poppins', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Background */
+.bg-container {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+}
+
+.bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+}
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+/* NAVBAR */
+.custom-navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 10px 20px;
+
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+
+    box-shadow: 0 10px 40px rgba(94, 93, 93, 0.5);
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* LEFT */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* LOGO */
+.logo-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.logo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* COMPANY NAME */
+.company-name {
+    color: white;
+    font-weight: 600;
+    font-size: 15px;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* RIGHT */
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* AVATAR */
+.avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 100%;
+    overflow: hidden;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* DROPDOWN MENU */
+.dropdown-menu {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+
+    width: 280px;
+    padding: 10px;
+
+    background: rgba(49, 49, 49, 0.95);
+    backdrop-filter: blur(10px);
+
+    border-radius: 12px;
+    color: white;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+    display: none;
+}
+
+/* SHOW MENU */
+.dropdown-menu.active {
+    display: block;
+}
+
+/* PROFILE HEADER */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.profile-header:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.profile-header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+/* ITEMS */
+.profile-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: white;
+}
+
+.profile-item:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* DIVIDER */
+.dropdown-menu hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin: 8px 0;
+}
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+/* Employee */
+.employee-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  padding: 20px;
+
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+
+  height: calc(100vh - 60px);          
+  overflow-y: auto;      
+
+  box-sizing: border-box; 
+
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+
+  color: white;
+}
+
+.sidebar h2 {
+  margin-bottom: 20px;
+  margin-top: 0;
+}
+
+/* Buttons */
+.sidebar button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: 0.3s;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar button:hover {
+  background: #34495e;
+}
+
+/* Active button */
+.sidebar button.active {
+  background: #34495e;
+}
+
+/* Content Area */
+.content {
+  flex: 1;
+  padding: 40px;
+
+  height: 100%;
+  overflow-y: auto;  
+
+  box-sizing: border-box;
+
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+
+  color: white;
+}
+
+/* Card style */
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  color: #333;
+}
+
+/* Headings */
+h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+/* Sidebar scrollbar */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+}
+
+/* Content scrollbar */
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.4);
+  border-radius: 10px;
+}
+
+/* Table */
+.table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 0px;
+}
+
+.table {
+  margin: 0;
+  color: #333;
+}
+
+.table thead.table-dark {
+  background-color: #2c3e50;
+}
+
+.table thead th {
+  padding: 12px;
+  border: none;
+  position: relative;
+  border-right: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.settings-modal-trigger {
+  display: block;
+  width: 28px;
+  height: 28px;
+  margin: 0 auto 6px;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.settings-modal-trigger:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.settings-modal-trigger img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.table thead th:first-child {
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+#attendanceTable th:nth-child(4),
+#attendanceTable td:nth-child(4) {
+  width: 140px;
+  max-width: 140px;
+}
+
+#attendanceTable .col-resizer {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.table tbody tr:hover > *:not(.status-ontime):not(.status-late):not(.status-absent):not(.status-onleave):not(.status-present):not(.status-undertime):not(.status-overtime-allowed):not(.status-overtime-rejected) {
+  background-color: #7fb3ff !important;
+  color: #111 !important;
+}
+
+.hide-me {
+  display: none;
+}
+
+/* Status Colors */
+.status-ontime {
+  background-color: #28a745 !important;
+  color: white !important;
+  display: block;
+  margin: 0;
+  padding: 12px 10px !important;
+  box-sizing: border-box;
+  border-radius: 4px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+.status-late {
+  background-color: #ffc107 !important;
+  color: #333 !important;
+  display: block;
+  margin: 0;
+  padding: 12px 10px !important;
+  box-sizing: border-box;
+  border-radius: 4px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+.status-absent {
+  background-color: #dc3545 !important;
+  color: white !important;
+  display: block;
+  margin: 0;
+  padding: 12px 10px !important;
+  box-sizing: border-box;
+  border-radius: 4px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+.status-onleave {
+  background-color: #0056b3 !important;
+  color: white !important;
+  display: block;
+  margin: 0;
+  padding: 12px 10px !important;
+  box-sizing: border-box;
+  border-radius: 4px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+/* Clock Out Status Colors */
+.status-present {
+  background-color: #28a745 !important;
+  color: white !important;
+  display: block;
+  margin: 0;
+  padding: 12px 10px !important;
+  box-sizing: border-box;
+  border-radius: 4px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+.status-undertime {
+  background-color: #ffc107 !important;
+  color: #333 !important;
+  display: block;
+  margin: 0;
+  padding: 12px 10px !important;
+  box-sizing: border-box;
+  border-radius: 4px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+.status-overtime-allowed {
+  background-color: #155724 !important;
+  color: white !important;
+  display: block;
+  margin: 0;
+  padding: 12px 10px !important;
+  box-sizing: border-box;
+  border-radius: 4px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+.status-overtime-rejected {
+  background-color: #fd7e14 !important;
+  color: white !important;
+  display: block;
+  margin: 0;
+  padding: 12px 10px !important;
+  box-sizing: border-box;
+  border-radius: 4px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}

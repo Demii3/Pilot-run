@@ -1,221 +1,235 @@
-﻿<?php
-session_start();
-if (!isset($_SESSION['login']) || $_SESSION['type'] != "HR") {
-    header("Location: ../");
-    exit();
-}
-
-header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
-header('Cache-Control: no-store, no-cache, must-revalidate');
-header('Cache-Control: post-check=0, pre-check=0', FALSE);
-header('Pragma: no-cache');
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance List</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance List</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="../../Images/logo.jpg"/>
-    <link rel="stylesheet" href="../../Assets/home_hr.css">
-    <link rel="stylesheet" href="../HR_Assets/Employee_attendance.css">
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin ="anonymous"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.dataTables.css" />
+  <script src="https://code.jquery.com/jquery-4.0.0.js" integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
+  <script src="https://cdn.datatables.net/2.3.7/js/dataTables.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+  <link href="./Assets/Demetri.css" rel="stylesheet">
+  <script src="./Assets/Demetri.js"></script>
 </head>
 
 <body>
-    <?php include './Employee_attendance_modules/background.php'; ?>
-    <?php include '../../Modules/navbar.php'; ?>
-    <div class="container py-5">
-        <div class="attendance-header p-4 mb-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <div>
-                    <h1 class="h3 mb-2" id = 'attendance-list'>Attendance List</h1>
-                    <p class="text-muted mb-0">Track daily employee attendance and review status at a glance.</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="../" class="btn btn-outline-secondary">Back to HR Dashboard</a>
-                    <a href="./" class="btn btn-primary">Refresh</a>
-                </div>
-            </div>
-        </div>
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <label for="searchInput" class="form-label">Search employee</label>
-                        <input id="searchInput" type="text" class="form-control" placeholder="Search by ID, name, or date">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="statusFilter" class="form-label">Status filter</label>
-                        <select id="statusFilter" class="form-select">
-                            <option value="all">All statuses</option>
-                            <option value="Present">Present</option>
-                            <option value="Absent">Absent</option>
-                            <option value="Late">Late</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="dateFilter" class="form-label">Date filter</label>
-                        <input id="dateFilter" type="date" class="form-control" value="2026-04-07">
-                    </div>
-                </div>
+<!-- Navigation Bar -->
+<nav class="custom-navbar">
 
-                <div class="d-flex justify-content-end mb-3">
-                    <button id="bulkDeleteBtn" type="button" class="btn btn-danger" disabled>Delete Selected</button>
-                </div>
+  <div class="nav-left">
+    <a class="logo-circle" href="../" aria-label="Go to Home">
+      <img src="./Images/logo.jpg" alt="Logo">
+    </a>
+    <span class="company-name">Chengshi <br>Construction Corp</span>
+  </div>
 
-                <div class="table-responsive">
-                    <table class="table table-hover attendance-table">
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="d-none">Atttendance ID</th>
-                                <th scope="col" class="d-none">Employee ID</th>
-                                <th scope="col">Name</th>
-                                <th scope="col" class="department-col">Department</th>
-                                <th scope="col">Date</th>
-                                <th scope="col">Location</th>
-                                <th scope="col">Clock In </th>
-                                <th scope="col" class="clkinStatus-col">Clockin Status</th>
-                                <th scope="col">Clock Out</th>
-                                <th scope="col" class="clkinStatus-col">Clockout Status</th>
-                                <th scope="col">Duration</th>
-                                <th scope="col" class="d-none">AO</th>
-                                <th scope="col" class="text-center">
-                                    <input id="selectAllRows" type="checkbox" class="form-check-input" aria-label="Select all rows">
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="attendanceTable">
-                            <?php
-                                include '../../Modules/dbcon.php';
-                                $query = "SELECT employee_attendance.*, employees.name, employees.department FROM `employee_attendance` JOIN `employees` ON employee_attendance.Emp_id = employees.id";
-                                $result = mysqli_query($dbc, $query);
-                                while ($row = mysqli_fetch_array($result)) {
-                                        echo "<tr role='button' tabindex='0'>";
-                                        echo "<td class='d-none'>" . $row['Attendance_id'] . "</td>";
-                                        echo "<td class='d-none'>" . $row['Emp_id'] . "</td>";
-                                        echo "<td>" . $row['name'] . "</td>";
-                                        echo "<td class='department-col'>" . $row['department'] . "</td>";
-                                        echo "<td>" . $row['Date'] . "</td>";
-                                        echo "<td>" . $row['Location'] . "</td>";
-                                        echo "<td>" . $row['Clock_in'] . "</td>";
-                                        echo "<td class='clkinStatus-col'>" . $row['Clockin_status'] . "</td>";
-                                        echo "<td>" . $row['Clock_out'] . "</td>";
-                                        $clockoutStatusDisplay = preg_replace('/\((Allowed|Rejected)\)/', "<small class='text-muted'>($1)</small>", $row['Clockout_status']);
-                                        echo "<td class='clkinStatus-col'>" . $clockoutStatusDisplay . "</td>";
-                                        echo "<td>" . $row['Duration'] . "</td>";
-                                        echo "<td class='d-none'>" . $row['AO'] . "</td>";
-                                        echo "<td class='text-center'><input type='checkbox' class='form-check-input row-select' aria-label='Select row for deletion'></td>";
-                                        echo "</tr>";
-                                }
-                            ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+  <div class="nav-right">
+    <button class="avatar" onclick="toggleMenu()">
+      <img src="./Images/profilepic.jpg" alt="User">
+    </button>
+
+    <div id="profileMenu" class="dropdown-menu">
+
+      <div class="profile-header">
+        <img src="./Images/profilepic.jpg" alt="User">
+        <span>User</span>
+      </div>
+
+      <a href="#" class="profile-item"> Settings & Privacy </a>
+      <a href="#" class="profile-item"> Help & Support </a>
+      <a href="#" class="profile-item"> Logout </a>
+
     </div>
 
-    <div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="attendanceModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="attendanceModalLabel">Attendance details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form>
-                        <div class="row g-3">
-                            <div class="col-md-6 d-none">
-                                <label for="modalEmpId" class="form-label">Employee ID</label>
-                                <input id="modalEmpId" type="text" class="form-control" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="modalName" class="form-label">Name</label>
-                                <input id="modalName" type="text" class="form-control" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="modalDepartment" class="form-label">Department</label>
-                                <input id="modalDepartment" type="text" class="form-control" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="modalDate" class="form-label">Date</label>
-                                <input id="modalDate" type="date" class="form-control" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="modalLocation" class="form-label">Location</label>
-                                <input id="modalLocation" type="text" class="form-control" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="modalClockIn" class="form-label">Clock In</label>
-                                <div class="input-group">
-                                    <input id="modalClockIn" type="time" class="form-control" readonly>
-                                    <button type="button" id="NAbtn" class="btn btn-outline-secondary btn-sm" disabled>N/A</button>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="modalClockOut" class="form-label">Clock Out</label>
-                                <input id="modalClockOut" type="time" class="form-control" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="modalStatus" class="form-label">Clock-in Status</label>
-                                <select id="modalStatus" class="form-select" disabled>
-                                    <option value="Late">Late</option>
-                                    <option value="On-time">On-time</option>
-                                    <option value="On-leave">On-leave</option>
-                                    <option value="Absent">Absent</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="modalClockoutStatus" class="form-label">Clock-out Status</label>
-                                <select id="modalClockoutStatus" class="form-select" disabled>
-                                    <option value="Over-time">Overtime</option>
-                                    <option value="Under-time">Undertime</option>
-                                    <option value="Absent">Absent</option>
-                                    <option value="Present">Present</option>
-                                </select>
-                                <div id="overtimeDecisionWrapper" class="mt-2 d-none">
-                                    <label for="modalOvertimeDecision" class="form-label">Overtime Decision</label>
-                                    <select id="modalOvertimeDecision" class="form-select" disabled>
-                                        <option value="Allowed">Allowed</option>
-                                        <option value="Rejected">Rejected</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" id="editBtn" class="btn btn-warning">Edit</button>
-                    <button type="button" id="saveBtn" class="btn btn-success d-none" data-bs-dismiss="modal">Save</button>
-                    <button type="button" id="deleteBtn" class="btn btn-danger d-none">Delete</button>
-                    <button type="button" id="closeBtn" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
+  </div>
+</nav>
+
+
+<div class="employee-container">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>Attendance</h2>
+
+    <button class="active" href="./">View Attendance</button>
+
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="content-area">
+    <div class="card">
+      <h2>Attendance List</h2>
+      
+      <div class="row g-2 mb-3 align-items-center">
+        <div class="col-auto">
+          <button type="button" class="settings-modal-trigger" data-bs-toggle="modal" data-bs-target="#opstionsModal" onclick="event.stopPropagation();" aria-label="Open options modal">
+            <i class="bi bi-gear-fill"></i>
+          </button>
         </div>
+        <div class="col">
+          <input type="text" id="searchInput" class="form-control" placeholder="Search by name, department, location...">
+        </div>
+        <div class="col-auto">
+          <input type="date" id="searchDate" class="form-control" aria-label="Search by date">
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table id="attendanceTable" class="table table-hover">
+          <thead class="table-dark">
+              <tr>
+                  <th class="hide-me">Attendance ID</th>
+                  <th class="hide-me">Employee ID</th>
+                  <th>
+                    <span>Name</span>
+                  </th>
+                  <th>Department</th>
+                  <th>Date</th>
+                  <th>Location</th>
+                  <th>Clock In</th>
+                  <th>Clock In Status</th>
+                  <th>Clock Out</th>
+                  <th>Clock Out Status</th>
+                  <th>Duration</th>
+                  <th>AO</th>
+              </tr>
+          </thead>
+          <tbody>
+              <!-- DATA FROM DATABASE IS DISPLAYED HERE -->
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./Employee_attendance_assets/employee_attendance.js"></script>
+</div>
 
-    <!-- NAVBAR SCRIPTS -->
-    <?php include '../../Modules/navbar_and_welcome_card_script.php'; ?>
+<div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="attendanceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="attendanceModalLabel">Attendance Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalBody1">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Name</label>
+            <input id="modalName" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Department</label>
+            <input id="modalDepartment" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Date</label>
+            <input id="modalDate" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Location</label>
+            <input id="modalLocation" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Clock In</label>
+            <input id="modalClockIn" type="time" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Clock In Status</label>
+            <select id="modalClockInStatus" class="form-select" disabled>
+              <option value="On-time">On-time</option>
+              <option value="Late">Late</option>
+              <option value="On-leave" disabled>On-leave</option>
+              <option value="Absent" disabled>Absent</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Clock Out</label>
+            <input id="modalClockOut" type="time" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Clock Out Status</label>
+            <select id="modalClockOutStatus" class="form-select" disabled>
+              <option value="Under-time">Under-time</option>
+              <option value="Present">Present</option>
+              <option value="Over-time" disabled>Over-time</option>
+              <option value="Absent" disabled>Absent</option>
+              <option value="On-leave" disabled>On-leave</option>
+            </select>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="allowOvertime" disabled>
+              <label class="form-check-label" for="allowOvertime">Allow Over-time</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <button id="editButton" class="btn btn-warning" onclick = "editAttendance()">Edit</button>
+            <button id="saveButton" class="btn btn-success d-none">Save</button>
+            <button id="deleteButton" class="btn btn-danger d-none">Delete</button>
+            <button id="moreButton" class="btn btn-warning d-none" onclick="moreAttendance()">More</button>
+          </div>
+          <div class="col-md-6">
+            <button id="absentButton" class="btn btn-danger d-none" onclick="setAttendanceStatus('Absent')">Absent</button>
+            <button id="onLeaveButton" class="btn btn-info d-none" onclick="setAttendanceStatus('On-Leave')">On Leave</button>
+          </div>
+        </div>
+      </div>
 
-    <script>
-        $(document).ready(function(){
-            $.get('../../Modules/check_session.php', function(data){
-                if(data == '0'){
-                    window.location = '../../';
-                }
-            });
-        });
-    </script>
+    <!-- modal separate -->
+
+      <div class="modal-body d-none" id="modalBody2">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Name</label>
+            <input id="modalName" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Department</label>
+            <input id="modalDepartment" type="text" class="form-control" readonly>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="opstionsModal" tabindex="-1" aria-labelledby="opstionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="opstionsModalLabel">Options</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="opstionsModalBody">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <input class="form-check-input" type="checkbox" id="overideAll">
+            <label class="form-check-label" for="allowOvertime">Override All Preset Functions?</label>
+          </div>
+          <div class="col-md-4">
+            <input class="form-check-input" type="checkbox" id="hideLocations">
+            <label class="form-check-label" for="allowOvertime">Hide Locations</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick='saveOptions()'>Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Background -->
+<div class="bg-container">
+    <img src="./Images/bgimg.jpg" class="bg-image">
+    <div class="overlay"></div>
+</div>
+
 </body>
 </html>
