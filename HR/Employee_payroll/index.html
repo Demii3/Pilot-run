@@ -172,14 +172,11 @@
         <div class="card-body">
           <form id="deductionTypeForm" class="mb-4" style="display: none;">
             <input type="hidden" id="deductionTypeId">
+            <input type="hidden" id="deductionTypeCost" value="0">
             <div class="row g-3 mb-3">
               <div class="col-md-4">
                 <label for="deductionTypeName" class="form-label">Type of Deduction</label>
                 <input type="text" id="deductionTypeName" class="form-control" required>
-              </div>
-              <div class="col-md-3">
-                <label for="deductionTypeCost" class="form-label">Cost</label>
-                <input type="number" id="deductionTypeCost" class="form-control" step="0.01" required>
               </div>
             </div>
             <div class="d-flex gap-2">
@@ -226,22 +223,19 @@
           <div class="card-body">
             <form id="incomeTypeForm" class="mb-4" style="display: none;">
               <input type="hidden" id="incomeTypeId">
+              <input type="hidden" id="incomeTypeCost" value="0">
               <div class="row g-3 mb-3">
                 <div class="col-md-4">
                   <label for="incomeTypeName" class="form-label">Type of Income</label>
                   <input type="text" id="incomeTypeName" class="form-control" required>
                 </div>
-                <div class="col-md-3">
-                  <label for="incomeTypeCost" class="form-label">Cost</label>
-                  <input type="number" id="incomeTypeCost" class="form-control" step="0.01" required>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-3 d-flex align-items-end">
                   <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="incomeTypeTaxable" checked>
                     <label class="form-check-label" for="incomeTypeTaxable">Taxable</label>
                   </div>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-3 d-flex align-items-end">
                   <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="incomeType13th" checked>
                     <label class="form-check-label" for="incomeType13th">13th Month</label>
@@ -259,7 +253,7 @@
                 type="text" 
                 id="searchIncomeTypes" 
                 class="form-control" 
-                placeholder="Search by income type or cost..."
+                placeholder="Search by income type..."
                 onkeyup="filterIncomeTypes()"
               >
             </div>
@@ -269,7 +263,6 @@
                 <thead class="table-dark">
                   <tr>
                     <th>Type of Income</th>
-                    <th>Cost</th>
                     <th>Taxable / Non-Taxable</th>
                     <th>Included in 13th Month</th>
                     <th>Actions</th>
@@ -1165,12 +1158,12 @@ function hideDeductionTypeForm() {
 async function saveDeductionType() {
   const id = document.getElementById('deductionTypeId').value;
   const typeOfDeduction = document.getElementById('deductionTypeName').value.trim();
-  const cost = document.getElementById('deductionTypeCost').value;
+  const cost = document.getElementById('deductionTypeCost').value || '0';
   const taxable = 1;
   const includedIn13 = 1;
 
-  if (!typeOfDeduction || cost === '') {
-    alert('Please fill in both deduction type and cost.');
+  if (!typeOfDeduction) {
+    alert('Please fill in the deduction type.');
     return;
   }
 
@@ -1215,7 +1208,7 @@ async function editDeductionType(id) {
     const item = result.data;
     document.getElementById('deductionTypeId').value = item.id;
     document.getElementById('deductionTypeName').value = item.type_of_deduction;
-    document.getElementById('deductionTypeCost').value = parseFloat(item.cost).toFixed(2);
+    document.getElementById('deductionTypeCost').value = parseFloat(item.cost || 0).toFixed(2);
     openDeductionTypeForm(false);
   } catch (error) {
     alert(error.message);
@@ -1283,7 +1276,7 @@ async function loadIncomeTypes() {
 
     const rows = result.data || [];
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No income types found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No income types found.</td></tr>';
       paginateTable('incomeTypeTable', 'incomeTypePagination', true);
       return;
     }
@@ -1295,7 +1288,6 @@ async function loadIncomeTypes() {
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item.type_of_income}</td>
-        <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
         <td>${isTaxable ? 'Taxable' : 'Non-Taxable'}</td>
         <td>${isIncludedIn13th ? 'Yes' : 'No'}</td>
         <td>
@@ -1315,7 +1307,7 @@ async function loadIncomeTypes() {
     });
     paginateTable('incomeTypeTable', 'incomeTypePagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('incomeTypeTable', 'incomeTypePagination', true);
   }
 }
@@ -1342,12 +1334,12 @@ function hideIncomeTypeForm() {
 async function saveIncomeType() {
   const id = document.getElementById('incomeTypeId').value;
   const typeOfIncome = document.getElementById('incomeTypeName').value.trim();
-  const cost = document.getElementById('incomeTypeCost').value;
+  const cost = document.getElementById('incomeTypeCost').value || '0';
   const taxable = document.getElementById('incomeTypeTaxable').checked ? 1 : 0;
   const includedIn13 = document.getElementById('incomeType13th').checked ? 1 : 0;
 
-  if (!typeOfIncome || cost === '') {
-    alert('Please fill in both income type and cost.');
+  if (!typeOfIncome) {
+    alert('Please fill in the income type.');
     return;
   }
 
@@ -1408,7 +1400,7 @@ async function editIncomeType(id) {
     const item = result.data;
     document.getElementById('incomeTypeId').value = item.id;
     document.getElementById('incomeTypeName').value = item.type_of_income;
-    document.getElementById('incomeTypeCost').value = parseFloat(item.cost).toFixed(2);
+    document.getElementById('incomeTypeCost').value = parseFloat(item.cost || 0).toFixed(2);
     document.getElementById('incomeTypeTaxable').checked = item.taxable == 1;
     document.getElementById('incomeType13th').checked = item.included_in_13month == 1;
     openIncomeTypeForm(false);
@@ -2078,10 +2070,9 @@ function filterIncomeTypes() {
 
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 2) {
+    if (cells.length >= 1) {
       const incomeType = cells[0].textContent.toLowerCase();
-      const cost = cells[1].textContent.toLowerCase();
-      if (incomeType.includes(filter) || cost.includes(filter)) {
+      if (incomeType.includes(filter)) {
         rows[i].dataset.filterVisible = '1';
       } else {
         rows[i].dataset.filterVisible = '0';

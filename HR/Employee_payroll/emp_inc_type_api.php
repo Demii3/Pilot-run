@@ -18,7 +18,7 @@ function getEmpIncTypeTableSql() {
     return "CREATE TABLE IF NOT EXISTS emp_inc_type (
         id INT AUTO_INCREMENT PRIMARY KEY,
         type_of_income VARCHAR(255) NOT NULL,
-        cost DECIMAL(10, 2) NOT NULL,
+        cost DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
         taxable TINYINT(1) NOT NULL,
         included_in_13month TINYINT(1) NOT NULL
     ) ENGINE=InnoDB;";
@@ -84,11 +84,11 @@ if ($method === 'POST') {
 
     $id = isset($input['id']) && is_numeric($input['id']) ? intval($input['id']) : null;
     $typeOfIncome = trim($input['type_of_income'] ?? '');
-    $cost = isset($input['cost']) ? floatval($input['cost']) : null;
+    $cost = isset($input['cost']) && $input['cost'] !== '' ? floatval($input['cost']) : 0.0;
     $taxable = isset($input['taxable']) && ($input['taxable'] == 1 || $input['taxable'] === true || $input['taxable'] === '1') ? 1 : 0;
     $includedIn13 = isset($input['included_in_13month']) && ($input['included_in_13month'] == 1 || $input['included_in_13month'] === true || $input['included_in_13month'] === '1') ? 1 : 0;
 
-    if ($typeOfIncome === '' || $cost === null) {
+    if ($typeOfIncome === '') {
         respond(false, null, 'Missing required fields.');
     }
 
