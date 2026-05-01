@@ -1,87 +1,124 @@
 $(document).ready(function() {
-    const target_columns = function () {
+    function target_columns() {
         return $.ajax({
-            url: '../Modules/HR_settings.php',
+            url: './Modules/HR_settings.php',
             method: 'POST',
+            data: {purpose: 'get_settings'},
             dataType: 'json'
-        }).then(function (settings) {
+        }).then(function(response) {
+            let count = 0;
             const columns = [];
-            columns.push(0);
-            if (Number(settings.hide_location_column) === 1) {
-                columns.push(5); // Location column index in your table
-            }
+            for (const key in response.settings) {
+                if (key != 'id') {
+                    switch(key) {
+                        case 'Manual_mode':
+                            if (response.settings[key] == 1) {
+                                columns.push(-1);
+                            };
+                            break;
+                        default:
+                            if (response.settings[key] == 1) {
+                                console.log('Adding column index to hide:', key, 'at value', count);
+                                columns.push(count);
+                            };
+                            count++;
+                            break;
+                    }
+                } else {
+                    continue;
+                }
+            };
+            console.log('Columns to hide:', columns);
             return columns;
+        }, function(error) {
+            console.error('Failed to fetch settings:', error);
+            return [];
         });
     };
 
-    const attendanceTable = $('#attendanceTable').DataTable({
-        order: [[0, 'desc']],
-        autoWidth: false,
-        layout: {
-            topStart: null,
-            topEnd: null,
-            bottomStart: 'pageLength',
-            bottomEnd: ['info', 'paging']
-        },
-        columnDefs: [
-            {
-                targets: target_columns,
-                visible: false,
-                searchable: false
+    
+    
+    target_columns().then(function(columnsToHide) {
+        const attendanceTable = $('#attendanceTable').DataTable({
+            order: [[0, 'desc']],
+            autoWidth: false,
+            layout: {
+                topStart: null,
+                topEnd: null,
+                bottomStart: 'pageLength',
+                bottomEnd: ['info', 'paging']
             },
-            {
-                targets: 3,
-                width: '100px'
-            }
-        ]
-    });
+            columnDefs: [
+                {
+                    targets: removeNegativeNumbers(columnsToHide),
+                    visible: false,
+                    searchable: false
+                },
+                {
+                    targets: [7, 9],
+                    width: '200px'
+                },
+                {
+                    targets: 10,
+                    width: '80px'
+                }
+            ]
+        });
+        makeColumnsResizable('#attendanceTable');
+        searchAttendance('', '', attendanceTable);
 
-    makeColumnsResizable('#attendanceTable');
-    searchAttendance('', '', attendanceTable);
+        let searchDebounceTimer;
 
-    let searchDebounceTimer;
+        $('#searchInput').on('keyup', function() {
+            const searchTerm = $(this).val();
+            const searchDate = $('#searchDate').val();
 
-    $('#searchInput').on('keyup', function() {
-        const searchTerm = $(this).val();
-        const searchDate = $('#searchDate').val();
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function() {
+                searchAttendance(searchTerm, searchDate, attendanceTable);
+            }, 300);
+        });
 
-        clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(function() {
+        $('#searchDate').on('change', function() {
+            const searchTerm = $('#searchInput').val();
+            const searchDate = $(this).val();
             searchAttendance(searchTerm, searchDate, attendanceTable);
-        }, 300);
-    });
-
-    $('#searchDate').on('change', function() {
-        const searchTerm = $('#searchInput').val();
-        const searchDate = $(this).val();
-        searchAttendance(searchTerm, searchDate, attendanceTable);
-    });
-
-    $('#attendanceTable tbody').on('click', 'tr', function () {
-        const rowData = attendanceTable.row(this).data();
-
-        if (!rowData) {
-            return;
-        }
-
-        $('#deleteButton').off('click').on('click', function() {
-            configAttendance(rowData[0], $('#searchInput').val(), attendanceTable, 'delete');
         });
-        $('#saveButton').off('click').on('click', function() {
-            configAttendance(rowData[0], $('#searchInput').val(), attendanceTable, 'update');
-        });
-        $('#modalName').val(rowData[2]);
-        $('#modalDepartment').val(rowData[3]);
-        $('#modalDate').val(rowData[4]);
-        $('#modalLocation').val(rowData[5]);
-        $('#modalClockIn').val(convert12HourTo24Hour(rowData[6]));
-        $('#modalClockInStatus').val($('<div>').html(rowData[7]).text());
-        $('#modalClockOut').val(convert12HourTo24Hour(rowData[8]));
-        $('#modalClockOutStatus').val($('<div>').html(rowData[9]).text());
-        $('#allowOvertime').prop('checked', rowData[11] == 1);
-        allowOvertimeToggle(rowData[11] == 1);
 
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('attendanceModal')).show();
+        $('#attendanceTable tbody').on('click', 'tr', function () {
+            const rowData = attendanceTable.row(this).data();
+
+            if (!rowData) {
+                return;
+            }
+
+            $('#deleteButton').off('click').on('click', function() {
+                configAttendance(rowData[0], $('#searchInput').val(), attendanceTable, 'delete');
+            });
+            $('#saveButton').off('click').on('click', function() {
+                configAttendance(rowData[0], $('#searchInput').val(), attendanceTable, 'update');
+            });
+            $('#modalName').val(rowData[2]);
+            $('#modalDepartment').val(rowData[3]);
+            $('#modalDate').val(rowData[4]);
+            $('#modalLocation').val(rowData[5]);
+            $('#modalClockIn').val(convert12HourTo24Hour(rowData[6]));
+            $('#modalClockInStatus').val($('<div>').html(rowData[7]).text());
+            $('#modalClockOut').val(convert12HourTo24Hour(rowData[8]));
+            $('#modalClockOutStatus').val($('<div>').html(rowData[9]).text());
+            $('#allowOvertime').prop('checked', rowData[11] == 1);
+            allowOvertimeToggle(rowData[11] == 1);
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('attendanceModal')).show();
+        });
+
+        $('#optionsModal').on('show.bs.modal', function () {
+            $('#overideAll').prop('checked', columnsToHide.includes(-1) ? true: false);
+            $('#hideDepartment').prop('checked', columnsToHide.includes(3) ? true : false);
+            $('#hideLocations').prop('checked', columnsToHide.includes(5) ? true : false);
+            $('#hideDuration').prop('checked', columnsToHide.includes(10) ? true : false);
+        });
+   
     });
 
     $('#attendanceModal').on('hidden.bs.modal', function () {
@@ -201,6 +238,14 @@ function applyColumnWidth(table, columnIndex, width) {
         cell.style.minWidth = width + 'px';
         cell.style.maxWidth = width + 'px';
     });
+}
+
+function removeNegativeNumbers(array) {
+    if (!Array.isArray(array)) {
+        return [];
+    }
+
+    return array.filter((value) => value >= 0);
 }
 
 function toggleMenu() {
@@ -475,6 +520,20 @@ function allowOvertimeToggle(value) {
 };
 
 function saveOptions() {
-    alert('Options saved successfully!');
-    window.location.reload();
+    $.ajax({
+        url: './Modules/HR_settings.php',
+        method: 'POST',
+        data: {
+                purpose: 'save_settings',
+                override: $('#overideAll').is(':checked') ? 1 : 0,
+                hideDepartment: $('#hideDepartment').is(':checked') ? 1 : 0,
+                hideLocations: $('#hideLocations').is(':checked') ? 1 : 0,
+                hideDuration: $('#hideDuration').is(':checked') ? 1 : 0
+              },        
+        dataType: 'json',
+        success: function(response) {
+            const message = response && response.msg ? response.msg : 'Options saved successfully.';
+            alert(message);
+            window.location.reload();
+        }});
 };

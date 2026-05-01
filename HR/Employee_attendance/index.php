@@ -68,7 +68,7 @@
       
       <div class="row g-2 mb-3 align-items-center">
         <div class="col-auto">
-          <button type="button" class="settings-modal-trigger" data-bs-toggle="modal" data-bs-target="#opstionsModal" onclick="event.stopPropagation();" aria-label="Open options modal">
+          <button type="button" class="settings-modal-trigger" data-bs-toggle="modal" data-bs-target="#optionsModal" onclick="event.stopPropagation();" aria-label="Open options modal">
             <i class="bi bi-gear-fill"></i>
           </button>
         </div>
@@ -84,11 +84,9 @@
         <table id="attendanceTable" class="table table-hover">
           <thead class="table-dark">
               <tr>
-                  <th class="hide-me">Attendance ID</th>
-                  <th class="hide-me">Employee ID</th>
-                  <th>
-                    <span>Name</span>
-                  </th>
+                  <th>Attendance ID</th>
+                  <th>Employee ID</th>
+                  <th>Name</th>
                   <th>Department</th>
                   <th>Date</th>
                   <th>Location</th>
@@ -198,22 +196,44 @@
   </div>
 </div>
 
-<div class="modal fade" id="opstionsModal" tabindex="-1" aria-labelledby="opstionsModalLabel" aria-hidden="true">
+<div class="modal fade" id="optionsModal" tabindex="-1" aria-labelledby="optionsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="opstionsModalLabel">Options</h5>
+        <h5 class="modal-title" id="optionsModalLabel">Options</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" id="opstionsModalBody">
+      <div class="modal-body" id="optionsModalBody">
         <div class="row g-3">
-          <div class="col-md-5">
-            <input class="form-check-input" type="checkbox" id="overideAll">
-            <label class="form-check-label" for="allowOvertime">Override All Preset Functions?</label>
+          <div class="col-md-12">
+            <div class="d-flex align-items-center gap-2">
+              <input class="form-check-input" type="checkbox" id="overideAll">
+              <label class="form-check-label mb-0" for="overideAll">Override All Preset Functions</label>
+              <span class="help-badge" tabindex="0" aria-label="Help about Override All Preset Functions">
+                ?
+                <span class="help-badge-tooltip" style="text-align: center;">This will disable all the preset functions employed by the developers
+                  <hr> i.e selecting On-time in clock-in status will not automatically set the time value to 8:00 AM
+                </span>
+              </span>
+            </div>
           </div>
-          <div class="col-md-4">
+
+          <div class="col-md-12">
+            <span><hr></span>
+            <span><h5>Display</h5></span>
+          </div>
+
+          <div class="col-md-3">
+            <input class="form-check-input" type="checkbox" id="hideDepartment">
+            <label class="form-check-label" for="hideDepartment">Department</label>
+          </div>
+          <div class="col-md-2">
             <input class="form-check-input" type="checkbox" id="hideLocations">
-            <label class="form-check-label" for="allowOvertime">Hide Locations</label>
+            <label class="form-check-label" for="hideLocations">Location</label>
+          </div>
+          <div class="col-md-2">
+            <input class="form-check-input" type="checkbox" id="hideDuration">
+            <label class="form-check-label" for="hideDuration">Duration</label>
           </div>
         </div>
       </div>
