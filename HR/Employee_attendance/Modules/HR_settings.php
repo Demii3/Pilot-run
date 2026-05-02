@@ -1,5 +1,6 @@
 <?php
     include './dbcon.php';
+    /** @var mysqli $dbc */
     if ($_POST['purpose'] == 'get_settings') {
         $settings = array();
         $sql = "SELECT * FROM hr_attendance_settings WHERE id = 1";

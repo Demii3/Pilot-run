@@ -508,3 +508,47 @@ h2 {
   text-align: center !important;
   font-weight: 600 !important;
 }
+
+/* Toggle Switch */
+.toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-input {
+  display: none;
+}
+
+.toggle-label {
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  background-color: #ccc;
+  border-radius: 12px;
+  position: relative;
+  transition: background-color 0.3s ease;
+  margin: 0;
+  cursor: pointer;
+}
+
+.toggle-label::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: left 0.3s ease;
+}
+
+.toggle-input:checked + .toggle-label {
+  background-color: #28a745;
+}
+
+.toggle-input:checked + .toggle-label::after {
+  left: 22px;
+}

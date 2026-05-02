@@ -35,8 +35,6 @@ $(document).ready(function() {
             return [];
         });
     };
-
-    
     
     target_columns().then(function(columnsToHide) {
         const attendanceTable = $('#attendanceTable').DataTable({
@@ -107,7 +105,10 @@ $(document).ready(function() {
             $('#modalClockOut').val(convert12HourTo24Hour(rowData[8]));
             $('#modalClockOutStatus').val($('<div>').html(rowData[9]).text());
             $('#allowOvertime').prop('checked', rowData[11] == 1);
-            allowOvertimeToggle(rowData[11] == 1);
+            $('#Manual-modify').prop('checked', columnsToHide.includes(-1) ? true: false);
+            manualMode();
+
+            /* allowOvertimeToggle(rowData[11] == 1); */
 
             bootstrap.Modal.getOrCreateInstance(document.getElementById('attendanceModal')).show();
         });
@@ -132,6 +133,10 @@ $(document).ready(function() {
     });
 
     $('#modalClockIn').on('change', function() {
+        if ($('#Manual-modify').is(':checked')) {
+            return;
+        };
+
         const clockInTime = $(this).val();
         if (convertTimetoMin(clockInTime) <= convertTimetoMin('8:00 AM')) {
             $('#modalClockInStatus').val('On-time');
@@ -142,6 +147,10 @@ $(document).ready(function() {
     });
 
     $('#modalClockOut').on('change', function() {
+        if ($('#Manual-modify').is(':checked')) {
+            return;
+        };
+
         const clockOutTime = $(this).val();
         if (convertTimetoMin(clockOutTime) < convertTimetoMin('5:00 PM')) {
             $('#modalClockOutStatus').val('Under-time');
@@ -150,11 +159,20 @@ $(document).ready(function() {
             $('#modalClockOutStatus').val('Over-time');
         } else {
             $('#modalClockOutStatus').val('Present');
+
         }
     });
 
     $('#modalClockInStatus').on('change', function() {
         const clockInStatus = $(this).val();
+
+        if ($('#Manual-modify').is(':checked')) {
+            if (clockInStatus === 'Absent') {
+                $('#modalClockIn').val('--:--');
+            };
+            return;
+        };
+
         if (clockInStatus === 'On-time') {
             $('#modalClockIn').val('08:00');
         } 
@@ -165,6 +183,14 @@ $(document).ready(function() {
 
     $('#modalClockOutStatus').on('change', function() {
         const clockOutStatus = $(this).val();
+
+        if ($('#Manual-modify').is(':checked')) {
+            if (clockOutStatus === 'Absent') {
+                $('#modalClockOut').val('--:--');
+            };
+            return;
+        };
+
         if (clockOutStatus === 'Present') {
             $('#modalClockOut').val('17:00');
         } 
@@ -176,6 +202,12 @@ $(document).ready(function() {
     $('#allowOvertime').on('change', function() {
         const allowOvertime = $(this).is(':checked');
         allowOvertimeToggle(allowOvertime);
+    });
+
+    $('#Manual-modify').on('change', function() {
+        const manualModify = $(this).is(':checked');
+        manualMode(manualModify);
+        // Handle manual modify toggle logic here
     });
 });
 
@@ -372,13 +404,14 @@ function editAttendance() {
 
 function moreAttendance() {
     const morebtn = document.getElementById('moreButton');
-    const modalBody2 = document.getElementById('modalBody2');
+    const additionalSettings = document.getElementById('additionalSettings');
     if (morebtn.innerText === 'More') {
         morebtn.innerText = 'Less';
-        modalBody2.classList.remove('d-none');
+        additionalSettings.classList.remove('d-none');
     } else {
         morebtn.innerText = 'More';
-        modalBody2.classList.add('d-none');
+        manualMode();
+        additionalSettings.classList.add('d-none');
     }
 };
 
@@ -439,6 +472,13 @@ function configAttendance(attendance_id, searchTerm, table, action) {
     if (!confirm('Are you sure you want to ' + message)) {
         return;
     } else {
+            
+        if (document.getElementById('Manual-modify').checked == true) {
+            if (!confirm('You have enabled Manual Modify. Make sure these changes are correct before proceeding. Unentended changes may cause issues with attendance records. Do you want to proceed?')) {
+            return;
+            };
+        };
+
         let url = '';
         let data = {
             id: attendance_id
@@ -517,6 +557,38 @@ function allowOvertimeToggle(value) {
     } else {
         document.getElementById('modalClockOutStatus').querySelector('option[value="Over-time"]').disabled = true;
     }
+};
+
+function manualMode() {
+    const value = document.getElementById('Manual-modify').checked;
+
+    const allowOvertimeInput = document.getElementById('allowOvertimeContainer');
+    const statusButtons = document.getElementById('statusButtons');
+
+    const onleaveOptionIn = document.getElementById('modalClockInStatus').querySelector('option[value="On-leave"]');
+    const absentOptionIn = document.getElementById('modalClockInStatus').querySelector('option[value="Absent"]');
+
+    const overTimeOption = document.getElementById('modalClockOutStatus').querySelector('option[value="Over-time"]');
+    const onleaveOptionOut = document.getElementById('modalClockOutStatus').querySelector('option[value="On-leave"]');
+    const absentOptionOut = document.getElementById('modalClockOutStatus').querySelector('option[value="Absent"]');
+    if (value) {
+        allowOvertimeInput.classList.add('d-none');
+        statusButtons.classList.add('d-none');
+        onleaveOptionIn.disabled = false;
+        absentOptionIn.disabled = false;
+        overTimeOption.disabled = false;
+        onleaveOptionOut.disabled = false;
+        absentOptionOut.disabled = false;
+
+    } else {
+        allowOvertimeInput.classList.remove('d-none');
+        statusButtons.classList.remove('d-none');
+        onleaveOptionIn.disabled = true;
+        absentOptionIn.disabled = true;
+        overTimeOption.disabled = true;
+        onleaveOptionOut.disabled = true;
+        absentOptionOut.disabled = true;
+    };
 };
 
 function saveOptions() {
