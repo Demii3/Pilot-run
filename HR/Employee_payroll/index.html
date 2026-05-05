@@ -172,7 +172,6 @@
         <div class="card-body">
           <form id="deductionTypeForm" class="mb-4" style="display: none;">
             <input type="hidden" id="deductionTypeId">
-            <input type="hidden" id="deductionTypeCost" value="0">
             <div class="row g-3 mb-3">
               <div class="col-md-4">
                 <label for="deductionTypeName" class="form-label">Type of Deduction</label>
@@ -190,7 +189,7 @@
               type="text" 
               id="searchDeductionTypes" 
               class="form-control" 
-              placeholder="Search by deduction type or cost..."
+              placeholder="Search by deduction type..."
               onkeyup="filterDeductionTypes()"
             >
           </div>
@@ -200,7 +199,6 @@
               <thead class="table-dark">
                 <tr>
                   <th>Type of Deduction</th>
-                  <th>Cost</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -311,7 +309,7 @@
               </div>
               <div class="col-md-2">
                 <label for="selectedDeductionCost" class="form-label">Cost</label>
-                <input type="text" id="selectedDeductionCost" class="form-control" disabled>
+                <input type="number" id="selectedDeductionCost" class="form-control" min="0" step="0.01" placeholder="0.00" required>
               </div>
             </div>
             <div class="mt-3 d-flex gap-2">
@@ -396,7 +394,7 @@
               </div>
               <div class="col-md-2">
                 <label for="selectedIncomeCost" class="form-label">Cost</label>
-                <input type="text" id="selectedIncomeCost" class="form-control" disabled>
+                <input type="number" id="selectedIncomeCost" class="form-control" min="0" step="0.01" placeholder="0.00" required>
               </div>
               <div class="col-md-1 d-flex align-items-center">
                 <div class="form-check mt-3">
@@ -1093,7 +1091,7 @@ async function loadDeductionTypes() {
   const tableBody = document.querySelector('#deductionTypeTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
 
   try {
     const response = await fetch('emp_deduc_type_api.php');
@@ -1104,7 +1102,7 @@ async function loadDeductionTypes() {
 
     const rows = result.data || [];
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No deduction types found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="2" class="text-center">No deduction types found.</td></tr>';
       paginateTable('deductionTypeTable', 'deductionTypePagination', true);
       return;
     }
@@ -1114,7 +1112,6 @@ async function loadDeductionTypes() {
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item.type_of_deduction}</td>
-        <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
         <td>
           <button type="button" class="btn btn-sm btn-warning edit-deduction-type">Edit</button>
           <button type="button" class="btn btn-sm btn-danger delete-deduction-type">Delete</button>
@@ -1132,7 +1129,7 @@ async function loadDeductionTypes() {
     });
     paginateTable('deductionTypeTable', 'deductionTypePagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('deductionTypeTable', 'deductionTypePagination', true);
   }
 }
@@ -1145,7 +1142,6 @@ function openDeductionTypeForm(reset = true) {
   if (reset) {
     document.getElementById('deductionTypeId').value = '';
     document.getElementById('deductionTypeName').value = '';
-    document.getElementById('deductionTypeCost').value = '';
   }
 }
 
@@ -1158,7 +1154,6 @@ function hideDeductionTypeForm() {
 async function saveDeductionType() {
   const id = document.getElementById('deductionTypeId').value;
   const typeOfDeduction = document.getElementById('deductionTypeName').value.trim();
-  const cost = document.getElementById('deductionTypeCost').value || '0';
   const taxable = 1;
   const includedIn13 = 1;
 
@@ -1169,7 +1164,6 @@ async function saveDeductionType() {
 
   const payload = {
     type_of_deduction: typeOfDeduction,
-    cost: parseFloat(cost),
     taxable,
     included_in_13month: includedIn13
   };
@@ -1208,7 +1202,6 @@ async function editDeductionType(id) {
     const item = result.data;
     document.getElementById('deductionTypeId').value = item.id;
     document.getElementById('deductionTypeName').value = item.type_of_deduction;
-    document.getElementById('deductionTypeCost').value = parseFloat(item.cost || 0).toFixed(2);
     openDeductionTypeForm(false);
   } catch (error) {
     alert(error.message);
@@ -1246,10 +1239,9 @@ function filterDeductionTypes() {
 
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 2) {
+    if (cells.length >= 1) {
       const deductionType = cells[0].textContent.toLowerCase();
-      const cost = cells[1].textContent.toLowerCase();
-      if (deductionType.includes(filter) || cost.includes(filter)) {
+      if (deductionType.includes(filter)) {
         rows[i].dataset.filterVisible = '1';
       } else {
         rows[i].dataset.filterVisible = '0';
@@ -1505,8 +1497,7 @@ async function loadDeductionTypesForAssignments() {
     deductionTypesForAssignments.forEach(item => {
       const option = document.createElement('option');
       option.value = item.id;
-      option.textContent = `${item.type_of_deduction} - ₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-      option.dataset.cost = item.cost;
+      option.textContent = item.type_of_deduction;
       option.dataset.taxable = item.taxable;
       option.dataset.includedIn13 = item.included_in_13month;
       select.appendChild(option);
@@ -1546,10 +1537,7 @@ function updateSelectedDeductionDetails() {
   const selectedOption = select.options[select.selectedIndex];
   if (!selectedOption || !selectedOption.value) {
     costInput.value = '';
-    return;
   }
-
-  costInput.value = parseFloat(selectedOption.dataset.cost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 function saveEmployeeDeductionAssignment() {
@@ -1571,10 +1559,21 @@ function saveEmployeeDeductionAssignment() {
     return;
   }
 
+  if (!costInput || String(costInput.value).trim() === '') {
+    alert('Please enter a deduction cost.');
+    return;
+  }
+
+  const parsedCost = parseMoneyInput(costInput.value);
+  if (!Number.isFinite(parsedCost) || parsedCost < 0) {
+    alert('Please enter a valid deduction cost.');
+    return;
+  }
+
   const payload = {
     name: employee.name,
     type_of_deduction: deductionType.type_of_deduction,
-    cost: parseMoneyInput(costInput.value),
+    cost: parsedCost,
     taxable: 0,
     month_13th: 0
   };
@@ -1653,7 +1652,7 @@ function editEmployeeDeductionAssignment(id) {
 
   document.getElementById('deductionEmployeeSelect').value = employee ? String(employee.id) : '';
   document.getElementById('deductionTypeSelect').value = deductionType ? String(deductionType.id) : '';
-  document.getElementById('selectedDeductionCost').value = parseFloat(assignment.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  document.getElementById('selectedDeductionCost').value = Number(parseFloat(assignment.cost || 0).toFixed(2));
 }
 
 async function deleteEmployeeDeductionAssignment(id) {
@@ -1922,7 +1921,7 @@ function updateSelectedIncomeDetails() {
     return;
   }
 
-  costInput.value = parseFloat(selectedOption.dataset.cost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  costInput.value = Number(parseFloat(selectedOption.dataset.cost || 0).toFixed(2));
   taxableCheckbox.checked = selectedOption.dataset.taxable === '1';
   included13Checkbox.checked = selectedOption.dataset.includedIn13 === '1';
 }
@@ -1948,11 +1947,22 @@ function saveEmployeeIncomeAssignment() {
     return;
   }
 
+  if (!costInput || String(costInput.value).trim() === '') {
+    alert('Please enter an income cost.');
+    return;
+  }
+
+  const parsedCost = parseMoneyInput(costInput.value);
+  if (!Number.isFinite(parsedCost) || parsedCost < 0) {
+    alert('Please enter a valid income cost.');
+    return;
+  }
+
   // Push values into the assigned_emp_inc table using the assigned_emp_inc_api
   const payload = {
     name: employee.name,
     type_of_income: incomeType.type_of_income,
-    cost: parseMoneyInput(costInput.value),
+    cost: parsedCost,
     taxable: taxableCheckbox.checked ? 1 : 0,
     month_13th: included13Checkbox.checked ? 1 : 0
   };
@@ -2036,7 +2046,7 @@ function editEmployeeIncomeAssignment(id) {
 
   document.getElementById('incomeEmployeeSelect').value = employee ? String(employee.id) : '';
   document.getElementById('incomeTypeSelect').value = incomeType ? String(incomeType.id) : '';
-  document.getElementById('selectedIncomeCost').value = parseFloat(assignment.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  document.getElementById('selectedIncomeCost').value = Number(parseFloat(assignment.cost || 0).toFixed(2));
   document.getElementById('selectedIncomeTaxable').checked = assignment.taxable == 1;
   document.getElementById('selectedIncome13th').checked = assignment.included13 == 1;
 }
