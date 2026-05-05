@@ -9,12 +9,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.dataTables.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.2/css/buttons.dataTables.css" />
   <script src="https://code.jquery.com/jquery-4.0.0.js" integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
   <script src="https://cdn.datatables.net/2.3.7/js/dataTables.js"></script>
+  <script src="https://cdn.datatables.net/buttons/3.2.2/js/dataTables.buttons.js"></script>
+  <script src="https://cdn.datatables.net/buttons/3.2.2/js/buttons.colVis.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/3.2.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/3.2.2/js/buttons.print.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <link href="./Assets/Demetri.css" rel="stylesheet">
   <script src="./Assets/Demetri.js"></script>
+  <script src="./Assets/Time_functions.js"></script>
+  <script src="./Assets/Database_communication.js"></script>
+  <script src="./Assets/Onclick_functions.js"></script>
 </head>
 
 <body>
@@ -70,6 +79,11 @@
         <div class="col-auto">
           <button type="button" class="settings-modal-trigger" data-bs-toggle="modal" data-bs-target="#optionsModal" onclick="event.stopPropagation();" aria-label="Open options modal">
             <i class="bi bi-gear-fill"></i>
+          </button>
+        </div>
+        <div class="col-auto">
+          <button type="button" class="settings-modal-trigger" data-bs-toggle="modal" data-bs-target="#createAttendanceModal" onclick="event.stopPropagation();" aria-label="Open create attendance modal">
+            <i class="bi bi-plus-circle-fill"></i>
           </button>
         </div>
         <div class="col">
@@ -185,7 +199,7 @@
               <span class="help-badge" tabindex="0" aria-label="Help about Override All Preset Functions">
                 ?
                 <span class="help-badge-tooltip" style="text-align: center;">
-                  This is automatically enabled if Override All Preset Functions is enabled in the options menu. <hr>
+                  This is automatically enabled if "Override All Preset Functions" is enabled in the options menu. <hr>
                   This allows you to modify the current attendance record manually without any preset functions. <hr>
                 </span>
               </span>
@@ -217,18 +231,130 @@
   </div>
 </div>
 
+<!-- Create Attendance Modal (editable inputs) -->
+<div class="modal fade" id="createAttendanceModal" tabindex="-1" aria-labelledby="createAttendanceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createAttendanceModalLabel">Create Attendance</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+
+          <div class="col-md-12">
+            <div class="employee-search-wrapper">
+              <input type="text" id="searchEmployeeInput" class="form-control" placeholder="Search employee by" aria-autocomplete="list" aria-controls="employeeSuggestionDropdown" aria-expanded="false">
+
+              <!-- Container of employees from database (overlay, doesn't affect layout) -->
+              <div id="employeeSuggestionDropdown" class="employee-suggestion-dropdown d-none" role="listbox" aria-label="Employee suggestions">#</div>
+            </div>
+            <span><hr></span>
+          </div>
+
+          <div class="col-md-6 d-none">
+            <label class="form-label">Id</label>
+            <input id="newModalId" type="text" class="form-control">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Name</label>
+            <input id="newModalName" type="text" class="form-control" readonly>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Department</label>
+            <input id="newModalDepartment" type="text" class="form-control" readonly>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Date</label>
+            <input id="newModalDate" type="date" class="form-control">
+          </div>
+
+          <div class="col-md-6">
+            <div class="employee-search-wrapper">
+              <label class="form-label">Location</label>
+              <input type="text" id="newModalLocation" class="form-control" placeholder="Search location" aria-autocomplete="list" aria-controls="locationSuggestionDropdown" aria-expanded="false">
+
+              <!-- Container of employees location from database (overlay, doesn't affect layout) -->
+              <div id="locationSuggestionDropdown" class="employee-suggestion-dropdown d-none" role="listbox" aria-label="Location suggestions">#</div>
+            </div>
+          </div>
+          <!-- <div class="col-md-6">
+            <label class="form-label">Location</label>
+            <input id="newModalLocation" type="text" class="form-control">
+          </div> -->
+
+          <div class="col-md-6">
+            <label class="form-label">Clock In</label>
+            <input id="newModalClockIn" type="time" class="form-control">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Clock In Status</label>
+            <select id="newModalClockInStatus" class="form-select">
+              <option value="On-time">On-time</option>
+              <option value="Late">Late</option>
+              <option value="On-leave">On-leave</option>
+              <option value="Absent">Absent</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Clock Out</label>
+            <input id="newModalClockOut" type="time" class="form-control">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Clock Out Status</label>
+            <select id="newModalClockOutStatus" class="form-select">
+              <option value="Under-time">Under-time</option>
+              <option value="Present">Present</option>
+              <option value="Over-time">Over-time</option>
+              <option value="On-leave">On-leave</option>
+              <option value="Absent">Absent</option>
+            </select>
+            <div class="form-check mt-2" id="newAllowOvertimeContainer">
+              <input class="form-check-input" type="checkbox" id="newAllowOvertime">
+              <label class="form-check-label" for="newAllowOvertime">Allow Over-time</label>
+            </div>
+          </div>
+
+          <div class="modal-footer col-md-12 row g-3 justify-content-between">
+            <div class= "col-md-6 d-flex justify-content-start gap-2">
+              <button type="button" id="clearCreateAttendanceButton" class="btn btn-danger">Clear</button>
+            </div>
+            <div class= "col-md-5 d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button id="newSaveButton" class="btn btn-primary">Save</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="optionsModal" tabindex="-1" aria-labelledby="optionsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
+
       <div class="modal-header">
         <h5 class="modal-title" id="optionsModalLabel">Options</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+
       <div class="modal-body" id="optionsModalBody">
         <div class="row g-3">
+
           <div class="col-md-12">
             <div class="d-flex align-items-center gap-2">
-              <input class="form-check-input" type="checkbox" id="overideAll">
+              <div class="toggle-switch">
+                <input type="checkbox" id="overideAll" class="toggle-input">
+                <label for="overideAll" class="toggle-label"></label>
+              </div>
               <label class="form-check-label mb-0" for="overideAll">Override All Preset Functions</label>
               <span class="help-badge" tabindex="0" aria-label="Help about Override All Preset Functions">
                 ?
@@ -244,24 +370,38 @@
             <span><h5>Display</h5></span>
           </div>
 
-          <div class="col-md-3">
-            <input class="form-check-input" type="checkbox" id="hideDepartment">
+          <div class="col-md-3 d-flex align-items-center gap-3 mt-3">
+            <div class="toggle-switch">
+              <input type="checkbox" id="hideDepartment" class="toggle-input">
+              <label for="hideDepartment" class="toggle-label"></label>
+            </div>
             <label class="form-check-label" for="hideDepartment">Department</label>
           </div>
-          <div class="col-md-2">
-            <input class="form-check-input" type="checkbox" id="hideLocations">
-            <label class="form-check-label" for="hideLocations">Location</label>
+
+          <div class="col-md-3 d-flex align-items-center gap-3 mt-3">
+            <div class="toggle-switch">
+              <input type="checkbox" id="hideLocations" class="toggle-input">
+              <label for="hideLocations" class="toggle-label"></label>
+            </div>
+            <label class="form-check-label" for="hideLocations">Locations</label>
           </div>
-          <div class="col-md-2">
-            <input class="form-check-input" type="checkbox" id="hideDuration">
+
+          <div class="col-md-3 d-flex align-items-center gap-3 mt-3">
+            <div class="toggle-switch">
+              <input type="checkbox" id="hideDuration" class="toggle-input">
+              <label for="hideDuration" class="toggle-label"></label>
+            </div>
             <label class="form-check-label" for="hideDuration">Duration</label>
           </div>
+
         </div>
       </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" onclick='saveOptions()'>Save changes</button>
       </div>
+
     </div>
   </div>
 </div>

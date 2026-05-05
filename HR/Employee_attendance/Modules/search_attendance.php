@@ -2,6 +2,7 @@
 header('Content-Type: application/json');
 
 include 'dbcon.php';
+/** @var mysqli $dbc */
 
 $searchTerm = isset($_POST['search']) ? mysqli_real_escape_string($dbc, $_POST['search']) : '';
 $searchDate = isset($_POST['searchDate']) ? mysqli_real_escape_string($dbc, $_POST['searchDate']) : '';

@@ -552,3 +552,59 @@ h2 {
 .toggle-input:checked + .toggle-label::after {
   left: 22px;
 }
+
+.employee-search-wrapper {
+  position: relative;
+}
+
+.employee-suggestion-dropdown {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  width: 100%;
+  z-index: 1055;
+  border: 1px solid rgba(13, 110, 253, 0.2);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.employee-suggestion-item, .employeeLocation-suggestion-item {
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  color: #1f2937;
+  text-align: left;
+  font-size: 14px;
+}
+
+.employee-suggestion-item:hover,
+.employee-suggestion-item:focus,
+.employeeLocation-suggestion-item:hover,
+.employeeLocation-suggestion-item:focus {
+  background: #e9f2ff;
+  outline: none;
+}
+
+.employee-suggestion-empty {
+  padding: 10px 14px;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+#createAttendanceModal input[readonly].readonly-empty {
+  background-color: #e9ecef;
+  color: #6c757d;
+}
+
+/* DataTables Toolbar - Display buttons, search, info, and paging inline */
+.dt-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+};

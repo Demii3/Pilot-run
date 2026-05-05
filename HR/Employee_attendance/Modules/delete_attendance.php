@@ -2,6 +2,7 @@
     header('Content-Type: application/json');
 
     include './dbcon.php';
+    /** @var mysqli $dbc */
 
     if (!isset($_POST['data']) || !is_array($_POST['data']) || !isset($_POST['data']['id'])) {
         echo json_encode(['msg' => 'Invalid request payload.']);
