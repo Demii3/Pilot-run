@@ -7,9 +7,12 @@
 
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.dataTables.min.css">
 
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.datatables.net/2.3.7/js/dataTables.min.js"></script>
 
   <!-- CSS -->
   <link rel="stylesheet" href="payslip_module.css">
@@ -68,8 +71,17 @@
       <button onclick="showContent(this,'employee_deductions')">Manage Employee Deductions</button>
       <button onclick="showContent(this,'attendance')">Attendance</button> 
       <hr>
-      <button onclick="showContent(this,'premiums')">Premiums</button>
-      <hr>
+      <button class="dropdown-btn" onclick="showContent(this,'premiums')">Premiums
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-container">
+        <hr>
+        <button onclick="showContent(this,'tax_table')">Tax Table</button>
+        <button onclick="showContent(this,'sss_table')">SSS table</button>
+        <button onclick="showContent(this,'philhealth_table')">PhilHealth table</button>
+        <button onclick="showContent(this,'pagibig_table')">Pag-IBIG table</button>
+        <hr>
+      </div>
       <button onclick="showContent(this,'employee_salary')">Employee Salary</button>
       <button onclick="showContent(this,'process_13')">Process 13th Month</button>
       <hr>
@@ -541,33 +553,51 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <div>
-            <h2>Employee Premiums</h2>
-            <span class="text-muted">Search employees stored in simpletest_db</span>
+            <h2>Premium Summary</h2>
+            <span class="text-muted">Employee ID, name, and mandatory deductions</span>
           </div>
         </div>
         <div class="card-body">
-          <div class="mb-3">
-            <input
-              type="text"
-              id="searchPremiumEmployees"
-              class="form-control"
-              placeholder="Search by name, email, position, or department..."
-              onkeyup="filterEmployeesForPremiums()"
-            >
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input
+                type="text"
+                id="searchPremiumEmployees"
+                class="form-control"
+                placeholder="Search by employee ID, name, or deduction..."
+                onkeyup="filterEmployeesForPremiums()"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="premiumDateFrom" class="form-label mb-1">From</label>
+              <input
+                type="date"
+                id="premiumDateFrom"
+                class="form-control"
+                onchange="filterEmployeesForPremiums()"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="premiumDateTo" class="form-label mb-1">To</label>
+              <input
+                type="date"
+                id="premiumDateTo"
+                class="form-control"
+                onchange="filterEmployeesForPremiums()"
+              >
+            </div>
           </div>
 
           <div class="table-responsive">
             <table class="table table-hover" id="employeePremiumSearchTable">
               <thead class="table-dark">
                 <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Salary</th>
-                  <th>SSS</th>
-                  <th>PagIBIG</th>
-                  <th>Philhealth</th>
+                  <th>Employee ID</th>
+                  <th>Employee Name</th>
+                  <th>SSS Deduction</th>
+                  <th>PhilHealth Deduction</th>
+                  <th>Pag-IBIG Deduction</th>
                   <th>Withholding Tax</th>
-                  <th>Total Deductions</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -577,6 +607,325 @@
         </div>
       </div>`;
     loadEmployeesForPremiums();
+  }
+
+  else if (section === "tax_table") {
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Withholding Tax Table</h2>
+          <div class="d-flex gap-2 flex-wrap justify-content-end">
+            <button class="btn btn-outline-primary btn-sm" onclick="taxManager.copyPreviousYearData()">Import Previous Year</button>
+            <button class="btn btn-success btn-sm" onclick="taxManager.openNewForm()">+ Add Record</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label for="taxYearSelect" class="form-label">Year</label>
+              <select id="taxYearSelect" class="form-select" onchange="toggleTableData('taxTable', 'taxYearSelect')">
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+              </select>
+            </div>
+          </div>
+          <form id="taxTableForm" style="display: none;" class="mb-4">
+            <input type="hidden" id="taxFormId">
+            <div class="row g-3 mb-3">
+              <div class="col-md-2">
+                <label for="taxYear" class="form-label">Year</label>
+                <input type="number" id="taxYear" class="form-control" value="2026" required>
+              </div>
+              <div class="col-md-2">
+                <label for="taxIncomeFrom" class="form-label">Income From</label>
+                <input type="number" id="taxIncomeFrom" class="form-control" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <label for="taxIncomeTo" class="form-label">Income To</label>
+                <input type="number" id="taxIncomeTo" class="form-control" step="0.01">
+              </div>
+              <div class="col-md-2">
+                <label for="taxRate" class="form-label">Tax Rate (%)</label>
+                <input type="number" id="taxRate" class="form-control" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <label for="taxBaseAmount" class="form-label">Base Amount</label>
+                <input type="number" id="taxBaseAmount" class="form-control" step="0.01" value="0">
+              </div>
+              <div class="col-md-2">
+                <label for="taxDescription" class="form-label">Description</label>
+                <input type="text" id="taxDescription" class="form-control">
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-primary" onclick="taxManager.saveRecord()">Save</button>
+              <button type="button" class="btn btn-secondary" onclick="taxManager.hideForm()">Cancel</button>
+            </div>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-hover" id="taxTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>Description</th>
+                  <th>Tax Rate</th>
+                  <th>Base Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+    taxManager.loadTableData(2026);
+  }
+
+  else if (section === "sss_table") {
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>SSS Contribution Table</h2>
+          <div class="d-flex gap-2 flex-wrap justify-content-end">
+            <button class="btn btn-outline-primary btn-sm" onclick="sssManager.copyPreviousYearData()">Import Previous Year</button>
+            <button class="btn btn-success btn-sm" onclick="sssManager.openNewForm()">+ Add Record</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label for="sssYearSelect" class="form-label">Year</label>
+              <select id="sssYearSelect" class="form-select" onchange="toggleTableData('sssTable', 'sssYearSelect')">
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+              </select>
+            </div>
+          </div>
+          <form id="sssTableForm" style="display: none;" class="mb-4">
+            <input type="hidden" id="sssFormId">
+            <div class="row g-3 mb-3">
+              <div class="col-md-2">
+                <label for="sssYear" class="form-label">Year</label>
+                <input type="number" id="sssYear" class="form-control" value="2026" required>
+              </div>
+              <div class="col-md-3">
+                <label for="sssSalaryFrom" class="form-label">Salary From</label>
+                <input type="number" id="sssSalaryFrom" class="form-control" step="0.01" required>
+              </div>
+              <div class="col-md-3">
+                <label for="sssSalaryTo" class="form-label">Salary To</label>
+                <input type="number" id="sssSalaryTo" class="form-control" step="0.01">
+              </div>
+              <div class="col-md-2">
+                <label for="sssContribution" class="form-label">Monthly Contribution</label>
+                <input type="number" id="sssContribution" class="form-control" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <label for="sssDescription" class="form-label">Description</label>
+                <input type="text" id="sssDescription" class="form-control">
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-primary" onclick="sssManager.saveRecord()">Save</button>
+              <button type="button" class="btn btn-secondary" onclick="sssManager.hideForm()">Cancel</button>
+            </div>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-hover" id="sssTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>Description</th>
+                  <th>Monthly Contribution</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+    sssManager.loadTableData(2026);
+  }
+
+  else if (section === "philhealth_table") {
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>PhilHealth Contribution Table</h2>
+          <div class="d-flex gap-2 flex-wrap justify-content-end">
+            <button class="btn btn-outline-primary btn-sm" onclick="philhealthManager.copyPreviousYearData()">Import Previous Year</button>
+            <button class="btn btn-success btn-sm" onclick="philhealthManager.openNewForm()">+ Add Record</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label for="philhealthYearSelect" class="form-label">Year</label>
+              <select id="philhealthYearSelect" class="form-select" onchange="toggleTableData('philhealthTable', 'philhealthYearSelect')">
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+              </select>
+            </div>
+          </div>
+          <form id="philhealthTableForm" style="display: none;" class="mb-4">
+            <input type="hidden" id="philhealthFormId">
+            <div class="row g-3 mb-3">
+              <div class="col-md-2">
+                <label for="philhealthYear" class="form-label">Year</label>
+                <input type="number" id="philhealthYear" class="form-control" value="2026" required>
+              </div>
+              <div class="col-md-2">
+                <label for="philhealthSalaryFrom" class="form-label">Salary From</label>
+                <input type="number" id="philhealthSalaryFrom" class="form-control" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <label for="philhealthSalaryTo" class="form-label">Salary To</label>
+                <input type="number" id="philhealthSalaryTo" class="form-control" step="0.01">
+              </div>
+              <div class="col-md-1">
+                <label for="philhealthRate" class="form-label">Rate</label>
+                <input type="number" id="philhealthRate" class="form-control" step="0.0001" required>
+              </div>
+              <div class="col-md-1">
+                <label for="philhealthMaximum" class="form-label">Maximum</label>
+                <input type="number" id="philhealthMaximum" class="form-control" step="0.01" required>
+              </div>
+              <div class="col-md-1">
+                <label for="philhealthFixed" class="form-label">Fixed</label>
+                <input type="number" id="philhealthFixed" class="form-control" step="0.01">
+              </div>
+              <div class="col-md-3">
+                <label for="philhealthDescription" class="form-label">Description</label>
+                <input type="text" id="philhealthDescription" class="form-control">
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-primary" onclick="philhealthManager.saveRecord()">Save</button>
+              <button type="button" class="btn btn-secondary" onclick="philhealthManager.hideForm()">Cancel</button>
+            </div>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-hover" id="philhealthTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>Description</th>
+                  <th>Rate / Fixed Amount</th>
+                  <th>Maximum</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+    philhealthManager.loadTableData(2026);
+  }
+
+  else if (section === "pagibig_table") {
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Pag-IBIG Contribution Table</h2>
+          <div class="d-flex gap-2 flex-wrap justify-content-end">
+            <button class="btn btn-outline-primary btn-sm" onclick="pagibigManager.copyPreviousYearData()">Import Previous Year</button>
+            <button class="btn btn-success btn-sm" onclick="pagibigManager.openNewForm()">+ Add Record</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label for="pagibigYearSelect" class="form-label">Year</label>
+              <select id="pagibigYearSelect" class="form-select" onchange="toggleTableData('pagibigTable', 'pagibigYearSelect')">
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+              </select>
+            </div>
+          </div>
+          <form id="pagibigTableForm" style="display: none;" class="mb-4">
+            <input type="hidden" id="pagibigFormId">
+            <div class="row g-3 mb-3">
+              <div class="col-md-2">
+                <label for="pagibigYear" class="form-label">Year</label>
+                <input type="number" id="pagibigYear" class="form-control" value="2026" required>
+              </div>
+              <div class="col-md-2">
+                <label for="pagibigSalaryFrom" class="form-label">Salary From</label>
+                <input type="number" id="pagibigSalaryFrom" class="form-control" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <label for="pagibigSalaryTo" class="form-label">Salary To</label>
+                <input type="number" id="pagibigSalaryTo" class="form-control" step="0.01">
+              </div>
+              <div class="col-md-2">
+                <label for="pagibigRate" class="form-label">Rate</label>
+                <input type="number" id="pagibigRate" class="form-control" step="0.0001" required>
+              </div>
+              <div class="col-md-2">
+                <label for="pagibigMaximum" class="form-label">Maximum</label>
+                <input type="number" id="pagibigMaximum" class="form-control" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <label for="pagibigDescription" class="form-label">Description</label>
+                <input type="text" id="pagibigDescription" class="form-control">
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-primary" onclick="pagibigManager.saveRecord()">Save</button>
+              <button type="button" class="btn btn-secondary" onclick="pagibigManager.hideForm()">Cancel</button>
+            </div>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-hover" id="pagibigTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>Description</th>
+                  <th>Rate</th>
+                  <th>Maximum</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+    pagibigManager.loadTableData(2026);
   }
 
   else if (section === "employee_salary") {
@@ -681,6 +1030,7 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h2>Payslip</h2>
+          <button class="btn btn-success" onclick="openBulkEmailModal()">Email Employee</button>
         </div>
         <div class="card-body">
           <div class="row g-2 mb-3">
@@ -735,7 +1085,6 @@
                   <th>Personal CA</th>
                   <th>Total Ded.</th>
                   <th>Net Pay</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -762,6 +1111,39 @@
               </div>
             </div>
           </div>
+
+          <div id="bulkEmailModal" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background: rgba(0, 0, 0, 0.45); z-index: 1055;">
+            <div class="d-flex align-items-center justify-content-center w-100 h-100 p-3">
+              <div class="card shadow" style="max-width: 900px; width: 100%; max-height: 90vh; display: flex; flex-direction: column;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Email Payslip to Employees</h5>
+                  <button type="button" class="btn-close" aria-label="Close" onclick="closeBulkEmailModal()"></button>
+                </div>
+                <div class="card-body" style="flex: 1; overflow-y: auto;">
+                  <div class="mb-3 d-flex gap-2">
+                    <input
+                      type="text"
+                      id="bulkEmailSearchInput"
+                      class="form-control"
+                      placeholder="Search employees by name or email..."
+                      onkeyup="filterBulkEmailEmployees()"
+                    >
+                    <button type="button" class="btn btn-info" onclick="selectAllBulkEmailEmployees()">Select All</button>
+                  </div>
+                  <div id="bulkEmailEmployeeList" style="overflow-y: auto;">
+                    <!-- Employee table will be populated here -->
+                  </div>
+                </div>
+                <div class="card-footer d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-outline-secondary" onclick="closeBulkEmailModal()">Cancel</button>
+                  <button type="button" class="btn btn-success" onclick="sendBulkPayslipEmails()">Send Payslips</button>
+                </div>
+              </div>
+            </div>
+          </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>`;
     loadPayslip();
@@ -781,9 +1163,6 @@
   }
 }
 
-
-
-
 let employeesForIncome = [];
 let incomeTypesForAssignments = [];
 let employeeIncomeAssignments = [];
@@ -798,6 +1177,77 @@ let attendanceCurrentPage = 1;
 const attendancePageSize = 10;
 const tablePageSize = 10;
 const tablePaginationState = {};
+const payrollDataTableInstances = {};
+let bulkEmailEmployees = [];
+let allPayslipEmployees = [];
+let selectedBulkEmailEmployees = new Set();
+
+function getPayrollDataTable(tableId) {
+  return payrollDataTableInstances[tableId] || null;
+}
+
+function searchPayrollDataTable(tableId, filter) {
+  const tableInstance = getPayrollDataTable(tableId);
+  if (!tableInstance) {
+    return;
+  }
+
+  tableInstance.search(filter || '').draw();
+}
+
+function destroyPayrollDataTable(tableId) {
+  const existingTable = payrollDataTableInstances[tableId];
+  if (existingTable) {
+    existingTable.destroy();
+    payrollDataTableInstances[tableId] = null;
+  }
+}
+
+function initializePayrollDataTable(tableId, paginationId) {
+  const tableElement = document.getElementById(tableId);
+  if (!tableElement || typeof DataTable === 'undefined') {
+    return null;
+  }
+
+  const tableBody = tableElement.querySelector('tbody');
+  if (!tableBody) {
+    return null;
+  }
+
+  const rows = Array.from(tableBody.querySelectorAll('tr'));
+  const hasMessageRow = rows.length === 1 && rows[0].querySelector('td[colspan]');
+
+  destroyPayrollDataTable(tableId);
+
+  if (rows.length === 0 || hasMessageRow) {
+    const paginationContainer = paginationId ? document.getElementById(paginationId) : null;
+    if (paginationContainer) {
+      paginationContainer.style.display = 'none';
+    }
+    return null;
+  }
+
+  const instance = new DataTable(tableElement, {
+    paging: true,
+    pageLength: tablePageSize,
+    lengthChange: false,
+    searching: true,
+    info: true,
+    ordering: true,
+    dom: 'rt<"d-flex justify-content-between align-items-center mt-3"lip>',
+    destroy: true,
+    autoWidth: false
+  });
+
+  payrollDataTableInstances[tableId] = instance;
+
+  const paginationContainer = paginationId ? document.getElementById(paginationId) : null;
+  if (paginationContainer) {
+    paginationContainer.style.display = 'none';
+  }
+
+  return instance;
+}
 
 function getCompactPageSequence(totalPages, currentPage) {
   if (totalPages <= 7) {
@@ -824,118 +1274,94 @@ function getCompactPageSequence(totalPages, currentPage) {
   return pages;
 }
 
-function applyTableRowVisibility(row) {
-  const filterVisible = row.dataset.filterVisible !== '0';
-  const pageVisible = row.dataset.pageVisible !== '0';
-  row.style.display = filterVisible && pageVisible ? '' : 'none';
+function paginateTable(tableId, paginationId, resetPage = false) {
+  const tableInstance = getPayrollDataTable(tableId);
+  if (tableInstance) {
+    tableInstance.draw(false);
+    const paginationContainer = document.getElementById(paginationId);
+    if (paginationContainer) {
+      paginationContainer.style.display = 'none';
+    }
+    return;
+  }
+
+  initializePayrollDataTable(tableId, paginationId);
 }
 
-function paginateTable(tableId, paginationId, resetPage = false) {
-  const tableBody = document.querySelector(`#${tableId} tbody`);
-  const paginationContainer = document.getElementById(paginationId);
-  if (!tableBody || !paginationContainer) return;
+if (typeof DataTable !== 'undefined') {
+  DataTable.ext.search.push((settings, data, dataIndex) => {
+    const tableId = settings?.nTable?.id;
 
-  const rows = Array.from(tableBody.getElementsByTagName('tr'));
-  if (rows.length === 0) {
-    paginationContainer.innerHTML = '';
-    return;
-  }
+    if (tableId === 'attendanceTable') {
+      const searchTerm = (document.getElementById('searchAttendance')?.value || '').toLowerCase();
+      const dateFromInput = document.getElementById('attendanceDateFrom');
+      const dateToInput = document.getElementById('attendanceDateTo');
+      const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
+      const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
 
-  if (rows.length === 1) {
-    const firstRowCells = rows[0].getElementsByTagName('td');
-    const singleMessageRow = firstRowCells.length === 1 && firstRowCells[0].hasAttribute('colspan');
-    if (singleMessageRow) {
-      paginationContainer.innerHTML = '';
-      return;
-    }
-  }
+      const rowText = data.join(' ').toLowerCase();
+      const textMatches = !searchTerm || rowText.includes(searchTerm);
+      if (!textMatches) {
+        return false;
+      }
 
-  rows.forEach(row => {
-    if (!row.dataset.filterVisible) {
-      row.dataset.filterVisible = '1';
-    }
-    row.dataset.pageVisible = '1';
-    applyTableRowVisibility(row);
-  });
+      if (!dateFrom && !dateTo) {
+        return true;
+      }
 
-  const visibleRows = rows.filter(row => row.dataset.filterVisible !== '0');
-  if (visibleRows.length === 0) {
-    paginationContainer.innerHTML = '<small class="text-muted">Showing 0 of 0 records</small>';
-    rows.forEach(row => {
-      row.dataset.pageVisible = '0';
-      applyTableRowVisibility(row);
-    });
-    return;
-  }
+      const rowDate = data[2] ? new Date(`${data[2]}T00:00:00`) : null;
+      if (!rowDate || Number.isNaN(rowDate.getTime())) {
+        return false;
+      }
 
-  const totalPages = Math.ceil(visibleRows.length / tablePageSize);
-  let currentPage = tablePaginationState[tableId] || 1;
-  if (resetPage) {
-    currentPage = 1;
-  }
-  if (currentPage > totalPages) {
-    currentPage = totalPages;
-  }
-  if (currentPage < 1) {
-    currentPage = 1;
-  }
-  tablePaginationState[tableId] = currentPage;
+      if (dateFrom && rowDate < dateFrom) {
+        return false;
+      }
 
-  const startIndex = (currentPage - 1) * tablePageSize;
-  const endIndex = startIndex + tablePageSize;
-  visibleRows.forEach((row, index) => {
-    row.dataset.pageVisible = index >= startIndex && index < endIndex ? '1' : '0';
-    applyTableRowVisibility(row);
-  });
+      if (dateTo && rowDate > dateTo) {
+        return false;
+      }
 
-  const filteredOutRows = rows.filter(row => row.dataset.filterVisible === '0');
-  filteredOutRows.forEach(row => {
-    row.dataset.pageVisible = '1';
-    applyTableRowVisibility(row);
-  });
-
-  if (totalPages <= 1) {
-    paginationContainer.innerHTML = `<small class="text-muted">Showing ${visibleRows.length} of ${visibleRows.length} records</small>`;
-    return;
-  }
-
-  const pageSequence = getCompactPageSequence(totalPages, currentPage);
-  let pageButtons = '';
-  pageSequence.forEach(item => {
-    if (typeof item === 'number') {
-      pageButtons += `
-        <button
-          type="button"
-          class="btn btn-sm ${item === currentPage ? 'btn-primary' : 'btn-outline-primary'}"
-          onclick="goToTablePage('${tableId}', '${paginationId}', ${item})"
-        >${item}</button>
-      `;
-      return;
+      return true;
     }
 
-    pageButtons += '<span class="px-1 align-self-center text-muted">...</span>';
-  });
+    if (tableId === 'employeePremiumSearchTable') {
+      const searchTerm = (document.getElementById('searchPremiumEmployees')?.value || '').toLowerCase();
+      const dateFromInput = document.getElementById('premiumDateFrom');
+      const dateToInput = document.getElementById('premiumDateTo');
+      const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
+      const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
 
-  const showingStart = startIndex + 1;
-  const showingEnd = Math.min(endIndex, visibleRows.length);
-  paginationContainer.innerHTML = `
-    <small class="text-muted">Showing ${showingStart}-${showingEnd} of ${visibleRows.length} records</small>
-    <div class="d-flex gap-1 flex-wrap justify-content-end">
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-secondary"
-        onclick="goToTablePage('${tableId}', '${paginationId}', ${currentPage - 1})"
-        ${currentPage === 1 ? 'disabled' : ''}
-      >Previous</button>
-      ${pageButtons}
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-secondary"
-        onclick="goToTablePage('${tableId}', '${paginationId}', ${currentPage + 1})"
-        ${currentPage === totalPages ? 'disabled' : ''}
-      >Next</button>
-    </div>
-  `;
+      const rowText = data.join(' ').toLowerCase();
+      const textMatches = !searchTerm || rowText.includes(searchTerm);
+      if (!textMatches) {
+        return false;
+      }
+
+      if (!dateFrom && !dateTo) {
+        return true;
+      }
+
+      const rowNode = settings?.aoData?.[dataIndex]?.nTr;
+      const joinDateText = rowNode?.dataset?.joinDate || '';
+      const joinDate = joinDateText ? new Date(`${joinDateText}T00:00:00`) : null;
+      if (!joinDate || Number.isNaN(joinDate.getTime())) {
+        return false;
+      }
+
+      if (dateFrom && joinDate < dateFrom) {
+        return false;
+      }
+
+      if (dateTo && joinDate > dateTo) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return true;
+  });
 }
 
 function goToTablePage(tableId, paginationId, page) {
@@ -1231,25 +1657,8 @@ async function deleteDeductionType(id) {
 
 function filterDeductionTypes() {
   const searchInput = document.getElementById('searchDeductionTypes');
-  const tableBody = document.querySelector('#deductionTypeTable tbody');
-  if (!searchInput || !tableBody) return;
-
-  const filter = searchInput.value.toLowerCase();
-  const rows = tableBody.getElementsByTagName('tr');
-
-  for (let i = 0; i < rows.length; i++) {
-    const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 1) {
-      const deductionType = cells[0].textContent.toLowerCase();
-      if (deductionType.includes(filter)) {
-        rows[i].dataset.filterVisible = '1';
-      } else {
-        rows[i].dataset.filterVisible = '0';
-      }
-    }
-  }
-
-  paginateTable('deductionTypeTable', 'deductionTypePagination', true);
+  if (!searchInput) return;
+  searchPayrollDataTable('deductionTypeTable', searchInput.value);
 }
 
 async function loadIncomeTypes() {
@@ -1724,7 +2133,7 @@ async function loadEmployeesForPremiums() {
   const tableBody = document.querySelector('#employeePremiumSearchTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="8" class="text-center">Loading employees...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading employees...</td></tr>';
 
   try {
     const [employeeResponse, assignedIncomeResponse] = await Promise.all([
@@ -1748,7 +2157,7 @@ async function loadEmployeesForPremiums() {
     employeesForPremiums = rows;
 
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No employees found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No employees found.</td></tr>';
       paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
       return;
     }
@@ -1770,6 +2179,7 @@ async function loadEmployeesForPremiums() {
       premiumRecords.push({
         employee_id: Number(emp.id),
         employee_name: emp.name,
+        salary,
         sss: sssContribution === null ? 0 : sssContribution,
         philhealth: philhealthContribution === null ? 0 : philhealthContribution,
         pagibig: pagibigContribution === null ? 0 : pagibigContribution,
@@ -1778,15 +2188,14 @@ async function loadEmployeesForPremiums() {
       });
 
       const row = document.createElement('tr');
+      row.dataset.joinDate = emp.join_date || '';
       row.innerHTML = `
         <td>${emp.id}</td>
         <td>${emp.name}</td>
-        <td>${formatCurrency(salary)}</td>
         <td>${sssContribution === null ? '' : formatCurrency(sssContribution)}</td>
-        <td>${pagibigContribution === null ? '' : formatCurrency(pagibigContribution)}</td>
         <td>${philhealthContribution === null ? '' : formatCurrency(philhealthContribution)}</td>
+        <td>${pagibigContribution === null ? '' : formatCurrency(pagibigContribution)}</td>
         <td>${formatCurrency(withholdingTax)}</td>
-        <td>${formatCurrency(totalDeductions)}</td>
       `;
       tableBody.appendChild(row);
     });
@@ -1803,33 +2212,37 @@ async function loadEmployeesForPremiums() {
     }
     paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
   }
 }
 
 function filterEmployeesForPremiums() {
   const searchInput = document.getElementById('searchPremiumEmployees');
+  const dateFromInput = document.getElementById('premiumDateFrom');
+  const dateToInput = document.getElementById('premiumDateTo');
   const filter = (searchInput?.value || '').toLowerCase();
   const tableBody = document.querySelector('#employeePremiumSearchTable tbody');
   if (!tableBody) return;
   const rows = tableBody.getElementsByTagName('tr');
+  const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
+  const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
 
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 8) {
+    if (cells.length >= 6) {
       const name = cells[1].textContent.toLowerCase();
-      const salary = cells[2].textContent.toLowerCase();
-      const sss = cells[3].textContent.toLowerCase();
+      const sss = cells[2].textContent.toLowerCase();
+      const philhealth = cells[3].textContent.toLowerCase();
       const pagibig = cells[4].textContent.toLowerCase();
-      const philhealth = cells[5].textContent.toLowerCase();
-      const withholdingTax = cells[6].textContent.toLowerCase();
-      const totalDeductions = cells[7].textContent.toLowerCase();
-      if (name.includes(filter) || salary.includes(filter) || sss.includes(filter) || pagibig.includes(filter) || philhealth.includes(filter) || withholdingTax.includes(filter) || totalDeductions.includes(filter)) {
-        rows[i].dataset.filterVisible = '1';
-      } else {
-        rows[i].dataset.filterVisible = '0';
-      }
+      const withholdingTax = cells[5].textContent.toLowerCase();
+      const textMatches = name.includes(filter) || sss.includes(filter) || philhealth.includes(filter) || pagibig.includes(filter) || withholdingTax.includes(filter);
+
+      const joinDateText = rows[i].dataset.joinDate || '';
+      const joinDate = joinDateText ? new Date(`${joinDateText}T00:00:00`) : null;
+      const dateMatches = (!dateFrom && !dateTo) || (joinDate && !Number.isNaN(joinDate.getTime()) && (!dateFrom || joinDate >= dateFrom) && (!dateTo || joinDate <= dateTo));
+
+      rows[i].dataset.filterVisible = textMatches && dateMatches ? '1' : '0';
     }
   }
 
@@ -1838,27 +2251,8 @@ function filterEmployeesForPremiums() {
 
 function filterEmployeesForDeductions() {
   const searchInput = document.getElementById('searchDeductions');
-  const filter = (searchInput?.value || '').toLowerCase();
-  const tableBody = document.querySelector('#employeeDeductionSearchTable tbody');
-  if (!tableBody) return;
-  const rows = tableBody.getElementsByTagName('tr');
-
-  for (let i = 0; i < rows.length; i++) {
-    const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 5) {
-      const name = cells[1].textContent.toLowerCase();
-      const email = cells[2].textContent.toLowerCase();
-      const position = cells[3].textContent.toLowerCase();
-      const department = cells[4].textContent.toLowerCase();
-      if (name.includes(filter) || email.includes(filter) || position.includes(filter) || department.includes(filter)) {
-        rows[i].dataset.filterVisible = '1';
-      } else {
-        rows[i].dataset.filterVisible = '0';
-      }
-    }
-  }
-
-  paginateTable('employeeDeductionSearchTable', 'employeeDeductionSearchPagination', true);
+  if (!searchInput) return;
+  searchPayrollDataTable('employeeDeductionSearchTable', searchInput.value);
 }
 
 async function fetchEmployeeDeductionAssignments() {
@@ -2074,51 +2468,14 @@ async function deleteEmployeeIncomeAssignment(id) {
 
 function filterIncomeTypes() {
   const searchInput = document.getElementById('searchIncomeTypes');
-  const filter = searchInput.value.toLowerCase();
-  const tableBody = document.querySelector('#incomeTypeTable tbody');
-  const rows = tableBody.getElementsByTagName('tr');
-
-  for (let i = 0; i < rows.length; i++) {
-    const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 1) {
-      const incomeType = cells[0].textContent.toLowerCase();
-      if (incomeType.includes(filter)) {
-        rows[i].dataset.filterVisible = '1';
-      } else {
-        rows[i].dataset.filterVisible = '0';
-      }
-    }
-  }
-
-  paginateTable('incomeTypeTable', 'incomeTypePagination', true);
+  if (!searchInput) return;
+  searchPayrollDataTable('incomeTypeTable', searchInput.value);
 }
 
 function filterProcess13() {
   const searchInput = document.getElementById('searchProcess13');
-  const tableBody = document.querySelector('#process13Table tbody');
-  if (!searchInput || !tableBody) return;
-
-  const filter = searchInput.value.toLowerCase();
-  const rows = tableBody.getElementsByTagName('tr');
-
-  for (let i = 0; i < rows.length; i++) {
-    const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 5) {
-      const id = cells[0].textContent.toLowerCase();
-      const name = cells[1].textContent.toLowerCase();
-      const salary = cells[2].textContent.toLowerCase();
-      const annual = cells[3].textContent.toLowerCase();
-      const month13 = cells[4].textContent.toLowerCase();
-
-      if (id.includes(filter) || name.includes(filter) || salary.includes(filter) || annual.includes(filter) || month13.includes(filter)) {
-        rows[i].dataset.filterVisible = '1';
-      } else {
-        rows[i].dataset.filterVisible = '0';
-      }
-    }
-  }
-
-  paginateTable('process13Table', 'process13Pagination', true);
+  if (!searchInput) return;
+  searchPayrollDataTable('process13Table', searchInput.value);
 }
 
 function filterAttendance() {
@@ -2477,70 +2834,14 @@ async function loadEmployees() {
 
 function filterEmployees() {
   const searchInput = document.getElementById('searchEmployees');
-  const filter = searchInput.value.toLowerCase();
-  const tableBody = document.querySelector('#employeeSearchTable tbody');
-  const rows = tableBody.getElementsByTagName('tr');
-
-  for (let i = 0; i < rows.length; i++) {
-    const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 4) {
-      const name = cells[1].textContent.toLowerCase();
-      const email = cells[2].textContent.toLowerCase();
-      const position = cells[3].textContent.toLowerCase();
-      const department = cells[4].textContent.toLowerCase();
-      if (name.includes(filter) || email.includes(filter) || position.includes(filter) || department.includes(filter)) {
-        rows[i].dataset.filterVisible = '1';
-      } else {
-        rows[i].dataset.filterVisible = '0';
-      }
-    }
-  }
-
-  paginateTable('employeeSearchTable', 'employeeSearchPagination', true);
+  if (!searchInput) return;
+  searchPayrollDataTable('employeeSearchTable', searchInput.value);
 }
 
 function filterEmployeeSalary() {
   const searchInput = document.getElementById('searchEmployeeSalary');
-  const tableBody = document.querySelector('#employeeSalaryTable tbody');
-  if (!searchInput || !tableBody) return;
-
-  const filter = searchInput.value.toLowerCase();
-  const rows = tableBody.getElementsByTagName('tr');
-
-  for (let i = 0; i < rows.length; i++) {
-    const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 10) {
-      const id = cells[0].textContent.toLowerCase();
-      const name = cells[1].textContent.toLowerCase();
-      const grossPayPerDay = cells[2].textContent.toLowerCase();
-      const hoursOfWork = cells[3].textContent.toLowerCase();
-      const biSalary = cells[4].textContent.toLowerCase();
-      const totalAllowance = cells[5].textContent.toLowerCase();
-      const legalHoliday = cells[6].textContent.toLowerCase();
-      const specialHoliday = cells[7].textContent.toLowerCase();
-      const totalDeduction = cells[8].textContent.toLowerCase();
-      const netPay = cells[9].textContent.toLowerCase();
-
-      if (
-        id.includes(filter) ||
-        name.includes(filter) ||
-        grossPayPerDay.includes(filter) ||
-        hoursOfWork.includes(filter) ||
-        biSalary.includes(filter) ||
-        totalAllowance.includes(filter) ||
-        legalHoliday.includes(filter) ||
-        specialHoliday.includes(filter) ||
-        totalDeduction.includes(filter) ||
-        netPay.includes(filter)
-      ) {
-        rows[i].dataset.filterVisible = '1';
-      } else {
-        rows[i].dataset.filterVisible = '0';
-      }
-    }
-  }
-
-  paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+  if (!searchInput) return;
+  searchPayrollDataTable('employeeSalaryTable', searchInput.value);
 }
 
 async function loadEmployeeSalary() {
@@ -2652,27 +2953,8 @@ async function loadEmployeeSalary() {
 
 function filterPayslip() {
   const searchInput = document.getElementById('searchPayslip');
-  const tableBody = document.querySelector('#payslipTable tbody');
-  if (!searchInput || !tableBody) return;
-
-  const filter = searchInput.value.toLowerCase();
-  const rows = tableBody.getElementsByTagName('tr');
-
-  for (let i = 0; i < rows.length; i++) {
-    const cells = rows[i].getElementsByTagName('td');
-    if (cells.length >= 19) {
-      let matches = false;
-      for (let cellIndex = 0; cellIndex < cells.length; cellIndex++) {
-        if ((cells[cellIndex].textContent || '').toLowerCase().includes(filter)) {
-          matches = true;
-          break;
-        }
-      }
-      rows[i].dataset.filterVisible = matches ? '1' : '0';
-    }
-  }
-
-  paginateTable('payslipTable', 'payslipPagination', true);
+  if (!searchInput) return;
+  searchPayrollDataTable('payslipTable', searchInput.value);
 }
 
 let selectedPayslipEmployee = null;
@@ -2733,6 +3015,171 @@ function sendPayslipBreakdownInEmail() {
     .catch(error => {
       alert(`Error: ${error.message}`);
     });
+}
+
+function openBulkEmailModal() {
+  const modal = document.getElementById('bulkEmailModal');
+  if (!modal) return;
+
+  selectedBulkEmailEmployees.clear();
+  bulkEmailEmployees = [...allPayslipEmployees];
+  populateBulkEmailList();
+  modal.classList.remove('d-none');
+}
+
+function closeBulkEmailModal() {
+  const modal = document.getElementById('bulkEmailModal');
+  if (!modal) return;
+
+  modal.classList.add('d-none');
+  selectedBulkEmailEmployees.clear();
+}
+
+function populateBulkEmailList() {
+  const listContainer = document.getElementById('bulkEmailEmployeeList');
+  if (!listContainer) return;
+
+  const table = document.createElement('table');
+  table.className = 'table table-hover';
+  table.innerHTML = `
+    <thead class="table-light">
+      <tr>
+        <th style="width: 50%;">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(event)">
+            <label class="form-check-label" for="selectAllCheckbox">Employee</label>
+          </div>
+        </th>
+        <th style="width: 50%;">
+          <div class="form-check">
+            <label class="form-check-label">Email</label>
+          </div>
+        </th>
+      </tr>
+    </thead>
+    <tbody id="bulkEmailTableBody"></tbody>
+  `;
+  listContainer.innerHTML = '';
+  listContainer.appendChild(table);
+
+  const tableBody = table.querySelector('#bulkEmailTableBody');
+  bulkEmailEmployees.forEach((emp, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>
+        <div class="form-check">
+          <input 
+            class="form-check-input bulk-email-checkbox" 
+            type="checkbox" 
+            id="bulkEmailCheckbox${index}" 
+            data-employee-id="${emp.id}"
+          >
+          <label class="form-check-label" for="bulkEmailCheckbox${index}">
+            ${emp.name}
+          </label>
+        </div>
+      </td>
+      <td>${emp.email}</td>
+    `;
+    tableBody.appendChild(row);
+
+    const checkbox = row.querySelector('input');
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        selectedBulkEmailEmployees.add(emp.id);
+      } else {
+        selectedBulkEmailEmployees.delete(emp.id);
+        document.getElementById('selectAllCheckbox').checked = false;
+      }
+    });
+  });
+}
+
+function toggleSelectAll(event) {
+  const checkboxes = document.querySelectorAll('.bulk-email-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = event.target.checked;
+    if (event.target.checked) {
+      selectedBulkEmailEmployees.add(checkbox.dataset.employeeId);
+    } else {
+      selectedBulkEmailEmployees.delete(checkbox.dataset.employeeId);
+    }
+  });
+}
+
+function selectAllBulkEmailEmployees() {
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  if (selectAllCheckbox) {
+    selectAllCheckbox.checked = true;
+    toggleSelectAll({ target: selectAllCheckbox });
+  }
+}
+
+function filterBulkEmailEmployees() {
+  const searchInput = document.getElementById('bulkEmailSearchInput');
+  if (!searchInput) return;
+
+  const searchTerm = searchInput.value.toLowerCase();
+  bulkEmailEmployees = allPayslipEmployees.filter(emp =>
+    emp.name.toLowerCase().includes(searchTerm) ||
+    emp.email.toLowerCase().includes(searchTerm)
+  );
+  populateBulkEmailList();
+}
+
+function sendBulkPayslipEmails() {
+  if (selectedBulkEmailEmployees.size === 0) {
+    alert('Please select at least one employee.');
+    return;
+  }
+
+  const selectedEmployees = allPayslipEmployees.filter(emp =>
+    selectedBulkEmailEmployees.has(emp.id)
+  );
+
+  const sendButton = document.querySelector('#bulkEmailModal .card-footer .btn-success');
+  if (sendButton) {
+    sendButton.disabled = true;
+    sendButton.textContent = 'Sending...';
+  }
+
+  let successCount = 0;
+  let failureCount = 0;
+
+  Promise.all(
+    selectedEmployees.map(emp =>
+      fetch('send_payslip_email.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(emp)
+      })
+        .then(response => response.json())
+        .then(result => {
+          if (result.success) {
+            successCount++;
+          } else {
+            failureCount++;
+            console.error(`Failed to send to ${emp.email}:`, result.message);
+          }
+        })
+        .catch(error => {
+          failureCount++;
+          console.error(`Error sending to ${emp.email}:`, error.message);
+        })
+    )
+  ).then(() => {
+    if (sendButton) {
+      sendButton.disabled = false;
+      sendButton.textContent = 'Send Payslips';
+    }
+
+    let message = `Sent ${successCount} payslip${successCount !== 1 ? 's' : ''}`;
+    if (failureCount > 0) {
+      message += ` (${failureCount} failed)`;
+    }
+    alert(message);
+    closeBulkEmailModal();
+  });
 }
 
 function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = null) {
@@ -2851,6 +3298,7 @@ async function loadPayslip() {
     }
 
     const employees = employeeResult.data || [];
+    allPayslipEmployees = employees;
     if (employees.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="19" class="text-center">No employees found.</td></tr>';
       paginateTable('payslipTable', 'payslipPagination', true);
@@ -2924,34 +3372,6 @@ async function loadPayslip() {
         <td>${formatCurrency(netPay)}</td>
       `;
 
-      const actionCell = document.createElement('td');
-      const selectButton = document.createElement('button');
-      selectButton.type = 'button';
-      selectButton.className = 'btn btn-sm btn-primary';
-      selectButton.textContent = 'Select Employee';
-      selectButton.addEventListener('click', () => openPayslipEmailModal({
-        id: emp.id,
-        name: emp.name,
-        email: emp.email,
-        grossPayPerMonth: salary,
-        grossPayPerDay: grossPayPerDay,
-        regularDays: regularDays,
-        totalOt: totalOtPay,
-        legalHoliday: legalHoliday,
-        specialHoliday: specialHoliday,
-        riceSubsidy: riceSubsidy,
-        electricity: electricity,
-        sss: sss,
-        phlth: phlth,
-        pagibig: pagibig,
-        tax: tax,
-        personalCa: personalCa,
-        totalDeduction: totalDeduction,
-        netPay: netPay
-      }));
-      actionCell.appendChild(selectButton);
-      row.appendChild(actionCell);
-
       tableBody.appendChild(row);
     });
 
@@ -3017,6 +3437,8 @@ async function fetchEmployeeIncomeAssignments() {
 fetchEmployeeIncomeAssignments();
 </script>
 
+<!-- Premium Tables CRUD Management -->
+<script src="premium_tables_manager.js"></script>
 
 </body>
 </html>

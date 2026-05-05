@@ -1,0 +1,25 @@
+To: axiserondc@gmail.com
+Subject: Payslip Breakdown - Alexis Eron
+Generated At: 2026-05-05 11:54:13
+
+Payslip Breakdown
+-----------------------------
+Employee ID: 4
+Employee: Alexis Eron
+Email: axiserondc@gmail.com
+
+Gross Pay Per Month: PHP 0.00
+Gross Pay Per Day: PHP 0.00
+Regular Days: 0.00
+Total OT: PHP 0.00
+Legal Holiday: PHP 0.00
+Special Holiday: PHP 0.00
+Rice Subsidy: PHP 0.00
+Electricity: PHP 0.00
+SSS: PHP 0.00
+PHLTH: PHP 0.00
+PAGIBIG: PHP 0.00
+TAX: PHP 0.00
+Personal CA: PHP 0.00
+Total Deduction: PHP 0.00
+Net Pay: PHP 0.00
