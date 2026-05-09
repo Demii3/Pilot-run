@@ -1,4 +1,5 @@
 <?php
+/** @var mysqli $dbc */
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

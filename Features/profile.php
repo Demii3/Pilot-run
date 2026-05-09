@@ -2,6 +2,7 @@
 // User Profile Edit Page
 // Requires session to be logged in
 
+/** @var mysqli $dbc */
 session_start();
 
 if (!isset($_SESSION['login']) || !isset($_SESSION['id'])) {
