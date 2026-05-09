@@ -8,5 +8,6 @@
 
     $dbc = mysqli_connect($hostname, $username, $password);
     mysqli_select_db($dbc, $dbasename);
+    mysqli_set_charset($dbc, 'utf8mb4');
 
 ?>

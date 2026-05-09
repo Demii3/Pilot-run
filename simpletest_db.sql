@@ -181,7 +181,6 @@ INSERT INTO `employee_location` (`tb_id`, `User_Id`, `loc_id`) VALUES
 CREATE TABLE `emp_deduc_type` (
   `id` int(10) UNSIGNED NOT NULL,
   `type_of_deduction` varchar(255) NOT NULL,
-  `cost` decimal(15,2) NOT NULL DEFAULT 0.00,
   `taxable` tinyint(1) NOT NULL DEFAULT 1,
   `included_in_13month` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -431,7 +430,6 @@ CREATE TABLE IF NOT EXISTS `Assigned_Inc` (
 CREATE TABLE IF NOT EXISTS `Emp_Deduc_Type` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `type_of_deduction` VARCHAR(255) NOT NULL,
-  `cost` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
   `taxable` TINYINT(1) NOT NULL DEFAULT 1,
   `included_in_13month` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
