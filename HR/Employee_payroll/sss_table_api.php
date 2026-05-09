@@ -43,20 +43,90 @@ try {
     $year = isset($_GET['year']) ? intval($_GET['year']) : 2026;
     
     if ($method === 'GET') {
-        // Fetch SSS table data by year
-        $sql = "SELECT * FROM `sss_table` WHERE `year` = ? ORDER BY `salary_from` ASC";
-        $stmt = mysqli_prepare($dbc, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $year);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        
-        $data = [];
-        while ($row = mysqli_fetch_assoc($result)) {
-            $data[] = $row;
+        // Check for DataTables server-side processing
+        if (isset($_GET['draw'])) {
+            // DataTables server-side processing
+            $draw = intval($_GET['draw']);
+            $start = isset($_GET['start']) ? intval($_GET['start']) : 0;
+            $length = isset($_GET['length']) ? intval($_GET['length']) : 10;
+            $searchValue = isset($_GET['search']['value']) ? mysqli_real_escape_string($dbc, $_GET['search']['value']) : '';
+            
+            // Get sort parameters
+            $orderColumn = 0;
+            $orderDir = 'ASC';
+            if (isset($_GET['order']) && is_array($_GET['order']) && count($_GET['order']) > 0) {
+                $orderColumn = intval($_GET['order'][0]['column']);
+                $orderDir = strtoupper($_GET['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+            }
+            
+            $columns = ['id', 'salary_from', 'salary_to', 'monthly_contribution', 'description', 'year'];
+            $orderColumnName = isset($columns[$orderColumn]) ? $columns[$orderColumn] : 'salary_from';
+            
+            // Build WHERE clause
+            $whereClause = "`year` = ?";
+            if (!empty($searchValue)) {
+                $whereClause .= " AND (CAST(`salary_from` AS CHAR) LIKE '%$searchValue%' OR CAST(`salary_to` AS CHAR) LIKE '%$searchValue%' OR CAST(`monthly_contribution` AS CHAR) LIKE '%$searchValue%' OR `description` LIKE '%$searchValue%')";
+            }
+            
+            // Get total count
+            $countSql = "SELECT COUNT(*) as count FROM `sss_table` WHERE `year` = ?";
+            $countStmt = mysqli_prepare($dbc, $countSql);
+            mysqli_stmt_bind_param($countStmt, 'i', $year);
+            mysqli_stmt_execute($countStmt);
+            $countResult = mysqli_stmt_get_result($countStmt);
+            $totalRecords = mysqli_fetch_assoc($countResult)['count'];
+            mysqli_stmt_close($countStmt);
+            
+            // Get filtered count
+            $filteredCountSql = "SELECT COUNT(*) as count FROM `sss_table` WHERE $whereClause";
+            $filteredStmt = mysqli_prepare($dbc, $filteredCountSql);
+            mysqli_stmt_bind_param($filteredStmt, 'i', $year);
+            mysqli_stmt_execute($filteredStmt);
+            $filteredResult = mysqli_stmt_get_result($filteredStmt);
+            $filteredRecords = mysqli_fetch_assoc($filteredResult)['count'];
+            mysqli_stmt_close($filteredStmt);
+            
+            // Get data
+            $sql = "SELECT * FROM `sss_table` WHERE $whereClause ORDER BY `$orderColumnName` $orderDir LIMIT ?, ?";
+            $stmt = mysqli_prepare($dbc, $sql);
+            mysqli_stmt_bind_param($stmt, 'iii', $year, $start, $length);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            
+            $data = [];
+            while ($row = mysqli_fetch_assoc($result)) {
+                $data[] = $row;
+            }
+            mysqli_stmt_close($stmt);
+            
+            $response = [
+                'draw' => $draw,
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $filteredRecords,
+                'data' => $data
+            ];
+            http_response_code(200);
+            if (ob_get_length()) {
+                ob_end_clean();
+            }
+            echo json_encode($response);
+            exit;
+        } else {
+            // Legacy API call (for backwards compatibility)
+            $sql = "SELECT * FROM `sss_table` WHERE `year` = ? ORDER BY `salary_from` ASC";
+            $stmt = mysqli_prepare($dbc, $sql);
+            mysqli_stmt_bind_param($stmt, 'i', $year);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            
+            $data = [];
+            while ($row = mysqli_fetch_assoc($result)) {
+                $data[] = $row;
+            }
+            mysqli_stmt_close($stmt);
+            
+            respond(true, $data, 'SSS table data retrieved');
         }
-        mysqli_stmt_close($stmt);
-        
-        respond(true, $data, 'SSS table data retrieved');
     } 
     else if ($method === 'POST') {
         // Create new SSS table entry

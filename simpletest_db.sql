@@ -1,4 +1,4 @@
--- phpMyAdmin SQL Dump
+﻿-- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
@@ -186,6 +186,7 @@ CREATE TABLE `emp_inc_type` (
   `cost` decimal(15,2) NOT NULL DEFAULT 0.00,
   `taxable` tinyint(1) NOT NULL DEFAULT 1,
   `included_in_13month` tinyint(1) NOT NULL DEFAULT 1,
+  `recurring` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
