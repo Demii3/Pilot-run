@@ -94,7 +94,8 @@ $(document).ready(function() {
                         ws.querySelector('sheetData').insertAdjacentHTML('beforeend', totalRow);
                     }
                 },
-                'print'
+                'print',
+                'colvis'
             ]
         });
         makeColumnsResizable('#attendanceTable');
@@ -398,5 +399,3 @@ function removeNegativeNumbers(array) {
 function toggleMenu() {
     document.getElementById("profileMenu").classList.toggle("active");
 };
-
-

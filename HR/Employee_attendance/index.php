@@ -204,6 +204,20 @@
                 </span>
               </span>
             </div>
+
+            <div class="d-flex align-items-center gap-3 mt-3">
+              <div class="toggle-switch">
+                <input type="checkbox" id="Include-lunchbreak" class="toggle-input">
+                <label for="Include-lunchbreak" class="toggle-label"></label>
+              </div>
+              <label class="form-check-label mb-0" for="Include-lunchbreak">Include Lunch Break</label>
+              <span class="help-badge" tabindex="0" aria-label="Help about Include Lunch Break">
+                ?
+                <span class="help-badge-tooltip" style="text-align: center;">
+                  This is will include the lunch break duration in the total duration calculation.
+                </span>
+              </span>
+            </div>
           </div>
         </div>
       </div>

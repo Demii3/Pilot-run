@@ -22,6 +22,7 @@
         return null;
     }
 
+    /** @var mysqli $dbc */
     function findOpenAttendanceId($dbc, $empId) {
         $sqlFind = "SELECT Attendance_id
                     FROM employee_attendance
@@ -37,7 +38,7 @@
 
         return 0;
     }
-
+    /** @var mysqli $dbc */
     if (isset($_SESSION['login'], $_SESSION['type']) && $_SESSION['type'] === 'Emp' && !empty($_SESSION['attendance_active'])) {
         $empId = (int) ($_SESSION['id'] ?? 0);
         $attendanceId = isset($_SESSION['Attendance_id']) ? (int) $_SESSION['Attendance_id'] : 0;
