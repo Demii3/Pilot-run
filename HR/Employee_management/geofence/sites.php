@@ -336,13 +336,16 @@
     }
 
     function loadGeofencesForAssign() {
-      fetch('geofences.php')
+      fetch('../api_geofences.php')
         .then(function(res) { return res.json(); })
         .then(function(data) {
-          geofencesForAssign = data;
+          // Handle both array response and object with success flag
+          const geofences = Array.isArray(data) ? data : (data.geofences || []);
+          geofencesForAssign = geofences;
+          
           const select = document.getElementById('siteSelect');
           select.innerHTML = '<option value="">-- choose site --</option>';
-          data.forEach(function(gf) {
+          geofences.forEach(function(gf) {
             const option = document.createElement('option');
             option.value = gf.id;
             option.textContent = gf.name;
@@ -355,6 +358,7 @@
         })
         .catch(function(err) {
           console.error('Error loading geofences:', err);
+          document.getElementById('siteSelect').innerHTML = '<option>Error loading sites</option>';
         });
     }
 
@@ -378,22 +382,24 @@
       // Parse coordinates - handle both array and string formats
       let coordinates = [];
       try {
-        if (typeof geofence.coordinates === 'string') {
-          // Remove any non-JSON characters and parse
-          const cleanCoords = geofence.coordinates.trim();
-          coordinates = JSON.parse(cleanCoords);
-        } else {
+        // If already an array (from JSON decode), use directly
+        if (Array.isArray(geofence.coordinates)) {
           coordinates = geofence.coordinates;
+        } else if (typeof geofence.coordinates === 'string') {
+          // If string, try to parse as JSON
+          coordinates = JSON.parse(geofence.coordinates);
+        } else {
+          throw new Error('Invalid coordinate format');
         }
         
         // Validate coordinates
         if (!Array.isArray(coordinates) || coordinates.length < 3) {
-          throw new Error('Invalid coordinate array');
+          throw new Error('Invalid coordinate array - need at least 3 points for polygon');
         }
       } catch (e) {
         console.error('Error parsing coordinates:', e);
-        console.log('Raw coordinates:', geofence.coordinates);
-        mapContainer.innerHTML = '<div style="padding:20px; display:flex; align-items:center; justify-content:center; height:100%; color:#666;">Invalid map data for this site</div>';
+        console.log('Geofence data:', geofence);
+        mapContainer.innerHTML = '<div style="padding:20px; display:flex; align-items:center; justify-content:center; height:100%; color:#999; text-align:center;">Invalid or missing map data</div>';
         return;
       }
 
@@ -406,6 +412,9 @@
       // Create new map
       setTimeout(function() {
         try {
+          const mapDiv = document.getElementById('assignMap');
+          mapDiv.innerHTML = ''; // Clear any previous error messages
+          
           assignmentMapInstance = L.map('assignMap', {
             zoomControl: true,
             attributionControl: false,
@@ -436,8 +445,8 @@
             assignmentMapInstance.fitBounds(polygon.getBounds(), { padding: [50, 50] });
           }, 100);
         } catch (mapError) {
-          console.error('Map error:', mapError);
-          document.getElementById('assignMap').innerHTML = '<div style="padding:20px; color:#666;">Error loading map</div>';
+          console.error('Map initialization error:', mapError);
+          document.getElementById('assignMap').innerHTML = '<div style="padding:20px; color:#999;">Error initializing map</div>';
         }
       }, 50);
     }
