@@ -8,54 +8,86 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../Assets/login.css">
+    <link rel="icon" type="image/png" href="../Images/logo.jpg"/>
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .forgot-card {
-            max-width: 400px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            border-radius: 10px;
-        }
-        .forgot-card .card-header {
-            background-color: #667eea;
+        .login-card input[type="email"] {
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
             color: white;
-            border-radius: 10px 10px 0 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        .login-card input[type="email"]::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        .login-card input[type="email"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+        .alert-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .forgot-link {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .forgot-link a {
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .forgot-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card forgot-card">
-            <div class="card-header">
-                <h4 class="mb-0">Forgot Password</h4>
-            </div>
-            <div class="card-body">
-                <p class="text-muted small">Enter your email or username to receive a password reset link.</p>
-                <form id="forgotForm">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email or Username</label>
-                        <input 
-                            type="text" 
-                            class="form-control" 
-                            id="email" 
-                            name="email" 
-                            placeholder="user@example.com or username"
-                            required
-                        >
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Send Reset Link</button>
-                </form>
-                <div id="msg" class="mt-3"></div>
-                <hr>
-                <p class="text-center small">
-                    <a href="../index.php">Back to Login</a>
-                </p>
+    <div class="bg-container">
+        <img src="../Images/bgimg.jpg" class="bg-image" alt="Background">
+        <div class="overlay"></div>
+    </div>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <h1>Forgot Password</h1>
+            <p style="font-size: 13px; margin-bottom: 20px; color: rgba(255,255,255,0.8);">Enter your email to receive a password reset link (valid for 1 hour)</p>
+            
+            <form id="forgotForm">
+                <label>Email or Username</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="Enter your email"
+                    required
+                >
+                
+                <button type="submit">Send Reset Link</button>
+            </form>
+            
+            <div id="msg"></div>
+            
+            <div class="forgot-link">
+                <a href="../index.php">← Back to Login</a>
             </div>
         </div>
     </div>
@@ -65,22 +97,22 @@
         $('#forgotForm').on('submit', function(e){
             e.preventDefault();
             const email = $('#email').val();
-            $('#msg').removeClass().text('Sending...');
+            $('#msg').html('').removeClass();
             
             $.post('api_forgot_password.php', { email: email }, function(resp){
                 try {
                     const j = typeof resp === 'object' ? resp : JSON.parse(resp);
                     if (j.success) {
-                        $('#msg').addClass('alert alert-success').text(j.message || 'Check your email for reset link');
+                        $('#msg').addClass('alert alert-success').html(j.message || 'Check your email for reset link');
                         $('#forgotForm')[0].reset();
                     } else {
-                        $('#msg').addClass('alert alert-danger').text(j.message || 'Failed to send reset link');
+                        $('#msg').addClass('alert alert-danger').html(j.message || 'Failed to send reset link');
                     }
                 } catch(e) {
-                    $('#msg').addClass('alert alert-danger').text('Unexpected response');
+                    $('#msg').addClass('alert alert-danger').html('Unexpected response');
                 }
             }).fail(function(){
-                $('#msg').addClass('alert alert-danger').text('Request failed');
+                $('#msg').addClass('alert alert-danger').html('Request failed');
             });
         });
     </script>

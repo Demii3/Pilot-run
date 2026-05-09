@@ -42,9 +42,10 @@
       <h2>Employee Management</h2>
       <button onclick="window.location.href='../index.php?section=employees'">Manage Employees</button>
       <button class="active" onclick="window.location.href='sites.php'">Manage Sites</button>
+      <button onclick="showAssignSection()">Assign Employees</button>
     </div>
 
-      <div class="card sites-card">
+      <div id="sitesSection" class="card sites-card">
         <div class="sites-header">
           <h3>Saved Sites</h3>
           <div class="sites-actions">
@@ -53,6 +54,30 @@
           </div>
         </div>
         <div id="geofence-list"></div>
+      </div>
+
+      <div id="assignSection" class="card sites-card" style="display:none;">
+        <div class="sites-header">
+          <h3>Assign Employee to Site</h3>
+        </div>
+        <div style="padding: 20px;">
+          <form id="assignForm">
+            <div style="margin-bottom: 15px;">
+              <label style="display:block; margin-bottom:8px; font-weight:500;">Select Geofence Site</label>
+              <select id="siteSelect" name="geofence_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
+                <option value="">-- choose site --</option>
+              </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <label style="display:block; margin-bottom:8px; font-weight:500;">Select Employee</label>
+              <select id="employeeSelect" name="employee_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
+                <option value="">-- choose employee --</option>
+              </select>
+            </div>
+            <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer;">Assign Employee</button>
+          </form>
+          <div id="assignMsg" style="margin-top:15px;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -263,6 +288,87 @@
       });
 
       updateGeofenceList(filtered);
+    });
+
+    // Assign Employees Functions
+    function showAssignSection() {
+      document.getElementById('sitesSection').style.display = 'none';
+      document.getElementById('assignSection').style.display = 'block';
+      loadGeofencesForAssign();
+      loadEmployeesForAssign();
+    }
+
+    function loadGeofencesForAssign() {
+      fetch('geofences.php')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          const select = document.getElementById('siteSelect');
+          select.innerHTML = '<option value="">-- choose site --</option>';
+          data.forEach(function(gf) {
+            const option = document.createElement('option');
+            option.value = gf.id;
+            option.textContent = gf.name;
+            select.appendChild(option);
+          });
+        })
+        .catch(function(err) {
+          console.error('Error loading geofences:', err);
+        });
+    }
+
+    function loadEmployeesForAssign() {
+      fetch('../api_employees.php')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          const select = document.getElementById('employeeSelect');
+          select.innerHTML = '<option value="">-- choose employee --</option>';
+          data.forEach(function(emp) {
+            const option = document.createElement('option');
+            option.value = emp.id;
+            option.textContent = emp.name;
+            select.appendChild(option);
+          });
+        })
+        .catch(function(err) {
+          console.error('Error loading employees:', err);
+        });
+    }
+
+    document.getElementById('assignForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const geofenceId = document.getElementById('siteSelect').value;
+      const employeeId = document.getElementById('employeeSelect').value;
+      const msgDiv = document.getElementById('assignMsg');
+
+      if (!geofenceId || !employeeId) {
+        msgDiv.innerHTML = '<div style="background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px; font-size:13px;">Please select both site and employee</div>';
+        return;
+      }
+
+      msgDiv.innerHTML = '<div style="color:#666; font-size:13px;">Assigning...</div>';
+
+      fetch('../api_assign_employee.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'geofence_id=' + geofenceId + '&employee_id=' + employeeId
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          msgDiv.innerHTML = '<div style="background:#d1fae5; color:#065f46; padding:10px; border-radius:6px; font-size:13px;">Employee assigned successfully!</div>';
+          document.getElementById('assignForm').reset();
+          setTimeout(function() {
+            msgDiv.innerHTML = '';
+          }, 3000);
+        } else {
+          msgDiv.innerHTML = '<div style="background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px; font-size:13px;">' + (data.message || 'Failed to assign employee') + '</div>';
+        }
+      })
+      .catch(function(err) {
+        msgDiv.innerHTML = '<div style="background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px; font-size:13px;">Error: ' + err.message + '</div>';
+      });
     });
 
     loadSites();

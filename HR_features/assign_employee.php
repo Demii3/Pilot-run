@@ -8,7 +8,7 @@ $res = mysqli_query($dbc, "SELECT id, name, coordinates FROM geofences ORDER BY 
 if ($res) $geofences = mysqli_fetch_all($res, MYSQLI_ASSOC);
 
 $employees = [];
-$res2 = mysqli_query($dbc, "SELECT id, name, username, type FROM employees ORDER BY name");
+$res2 = mysqli_query($dbc, "SELECT id, name FROM employees ORDER BY name");
 if ($res2) $employees = mysqli_fetch_all($res2, MYSQLI_ASSOC);
 ?>
 <!doctype html>
