@@ -12,15 +12,46 @@ class PremiumTableManager {
   async loadTableData(year = 2026) {
     this.currentYear = year;
     try {
-      const response = await fetch(`${this.apiUrl}?year=${year}`);
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to load data');
+      const tableElement = document.getElementById(this.tableId);
+      if (!tableElement) return false;
+
+      // Destroy existing DataTable if it exists
+      if ($.fn.DataTable.isDataTable(`#${this.tableId}`)) {
+        $(`#${this.tableId}`).DataTable().destroy();
       }
-      
-      this.tableData = result.data || [];
-      this.renderTable();
+
+      this.tableData = [];
+      const manager = this;
+
+      // Initialize DataTable with server-side processing
+      $(`#${this.tableId}`).DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: {
+          url: this.apiUrl,
+          type: 'GET',
+          data: function(d) {
+            d.year = year;
+          },
+          dataSrc: function(json) {
+            manager.tableData = json.data || [];
+            return json.data || [];
+          }
+        },
+        paging: true,
+        pageLength: 10,
+        lengthChange: false,
+        searching: true,
+        info: true,
+        ordering: true,
+        autoWidth: false,
+        dom: 'rt<"d-flex justify-content-between align-items-center mt-3"lip>',
+        columns: this.getColumnDefinitions(),
+        columnDefs: [
+          { orderable: false, targets: -1 } // Disable sorting on last column (actions)
+        ]
+      });
+
       return true;
     } catch (error) {
       console.error(`Error loading ${this.tableType} data:`, error);
@@ -29,26 +60,13 @@ class PremiumTableManager {
     }
   }
 
-  renderTable() {
-    const tableBody = document.querySelector(`#${this.tableId} tbody`);
-    if (!tableBody) return;
-    
-    if (this.tableData.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No data available for year ${this.currentYear}</td></tr>`;
-      return;
-    }
-    
-    tableBody.innerHTML = '';
-    this.tableData.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = this.formatTableRow(row);
-      tableBody.appendChild(tr);
-    });
+  getColumnDefinitions() {
+    // Override in subclasses
+    return [];
   }
 
-  formatTableRow(row) {
-    // Override in subclasses
-    return '';
+  renderTable() {
+    // No longer needed - DataTables handles rendering
   }
 
   async deleteRecord(id) {
@@ -63,12 +81,42 @@ class PremiumTableManager {
       if (!result.success) {
         throw new Error(result.message || 'Failed to delete record');
       }
+
+      // Reload the table
+      if ($.fn.DataTable.isDataTable(`#${this.tableId}`)) {
+        $(`#${this.tableId}`).DataTable().ajax.reload();
+      }
       
-      await this.loadTableData(this.currentYear);
       return true;
     } catch (error) {
       alert(`Error deleting record: ${error.message}`);
       return false;
+    }
+  }
+
+  async openEditForm(id) {
+    try {
+      // Fetch the record data
+      const response = await fetch(`${this.apiUrl}?year=${this.currentYear}`);
+      const result = await response.json();
+      
+      if (!result.success && !result.data) {
+        throw new Error('Failed to fetch record');
+      }
+
+      // For server-side processing, we need to fetch the record differently
+      // This is a simple approach - in production you might want a dedicated fetch endpoint
+      const data = result.data || [];
+      const record = data.find(r => r.id === id);
+      
+      if (record) {
+        this.populateFormForEdit(record);
+        this.showForm();
+      } else {
+        alert('Record not found');
+      }
+    } catch (error) {
+      alert(`Error loading record: ${error.message}`);
     }
   }
 
@@ -125,7 +173,10 @@ class PremiumTableManager {
         }
       }
 
-      await this.loadTableData(targetYear);
+      // Reload DataTable
+      if ($.fn.DataTable.isDataTable(`#${this.tableId}`)) {
+        $(`#${this.tableId}`).DataTable().ajax.reload();
+      }
       alert(`Imported ${sourceYear} computations into ${targetYear}.`);
       return true;
     } catch (error) {
@@ -174,6 +225,23 @@ class TaxTableManager extends PremiumTableManager {
     super('Tax Table', 'taxTable', 'tax_table_api.php');
   }
 
+  getColumnDefinitions() {
+    return [
+      { data: 'description', title: 'Description' },
+      { data: 'tax_rate', title: 'Tax Rate', render: (data) => parseFloat(data).toFixed(2) + '%' },
+      { data: 'base_tax', title: 'Base Amount', render: (data) => data ? parseFloat(data).toLocaleString('en-US', {minimumFractionDigits: 2}) : 'N/A' },
+      {
+        data: 'id',
+        title: 'Actions',
+        orderable: false,
+        render: (data, type, row) => `
+          <button class="btn btn-sm btn-warning" onclick="taxManager.openEditForm(${row.id})">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="taxManager.deleteRecord(${row.id})">Delete</button>
+        `
+      }
+    ];
+  }
+
   formatTableRow(row) {
     return `
       <td>${row.description || ''}</td>
@@ -218,16 +286,20 @@ class TaxTableManager extends PremiumTableManager {
   }
 
   showForm() {
-    const form = document.getElementById('taxTableForm');
-    if (form) {
-      form.style.display = 'block';
+    const modalElement = document.getElementById('taxTableModal');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
     }
   }
 
   hideForm() {
-    const form = document.getElementById('taxTableForm');
-    if (form) {
-      form.style.display = 'none';
+    const modalElement = document.getElementById('taxTableModal');
+    if (modalElement) {
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      if (modal) {
+        modal.hide();
+      }
     }
   }
 
@@ -271,7 +343,10 @@ class TaxTableManager extends PremiumTableManager {
       }
 
       this.hideForm();
-      await this.loadTableData(year);
+      // Reload DataTable
+      if ($.fn.DataTable.isDataTable(`#${this.tableId}`)) {
+        $(`#${this.tableId}`).DataTable().ajax.reload();
+      }
       alert(id ? 'Record updated' : 'Record created');
       return true;
     } catch (error) {
@@ -284,6 +359,22 @@ class TaxTableManager extends PremiumTableManager {
 class SssTableManager extends PremiumTableManager {
   constructor() {
     super('SSS Table', 'sssTable', 'sss_table_api.php');
+  }
+
+  getColumnDefinitions() {
+    return [
+      { data: 'description', title: 'Description' },
+      { data: 'monthly_contribution', title: 'Monthly Contribution', render: (data) => '₱' + parseFloat(data).toLocaleString('en-US', {minimumFractionDigits: 2}) },
+      {
+        data: 'id',
+        title: 'Actions',
+        orderable: false,
+        render: (data, type, row) => `
+          <button class="btn btn-sm btn-warning" onclick="sssManager.openEditForm(${row.id})">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="sssManager.deleteRecord(${row.id})">Delete</button>
+        `
+      }
+    ];
   }
 
   formatTableRow(row) {
@@ -326,16 +417,20 @@ class SssTableManager extends PremiumTableManager {
   }
 
   showForm() {
-    const form = document.getElementById('sssTableForm');
-    if (form) {
-      form.style.display = 'block';
+    const modalElement = document.getElementById('sssTableModal');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
     }
   }
 
   hideForm() {
-    const form = document.getElementById('sssTableForm');
-    if (form) {
-      form.style.display = 'none';
+    const modalElement = document.getElementById('sssTableModal');
+    if (modalElement) {
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      if (modal) {
+        modal.hide();
+      }
     }
   }
 
@@ -377,7 +472,10 @@ class SssTableManager extends PremiumTableManager {
       }
 
       this.hideForm();
-      await this.loadTableData(year);
+      // Reload DataTable
+      if ($.fn.DataTable.isDataTable(`#${this.tableId}`)) {
+        $(`#${this.tableId}`).DataTable().ajax.reload();
+      }
       alert(id ? 'Record updated' : 'Record created');
       return true;
     } catch (error) {
@@ -390,6 +488,23 @@ class SssTableManager extends PremiumTableManager {
 class PhilhealthTableManager extends PremiumTableManager {
   constructor() {
     super('PhilHealth Table', 'philhealthTable', 'philhealth_table_api.php');
+  }
+
+  getColumnDefinitions() {
+    return [
+      { data: 'description', title: 'Description' },
+      { data: 'contribution_rate', title: 'Rate / Fixed Amount', render: (data, type, row) => row.fixed_amount ? `Fixed ₱${parseFloat(row.fixed_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}` : `${(parseFloat(data) * 100).toFixed(2)}%` },
+      { data: 'maximum_contribution', title: 'Maximum', render: (data) => '₱' + parseFloat(data).toLocaleString('en-US', {minimumFractionDigits: 2}) },
+      {
+        data: 'id',
+        title: 'Actions',
+        orderable: false,
+        render: (data, type, row) => `
+          <button class="btn btn-sm btn-warning" onclick="philhealthManager.openEditForm(${row.id})">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="philhealthManager.deleteRecord(${row.id})">Delete</button>
+        `
+      }
+    ];
   }
 
   formatTableRow(row) {
@@ -440,16 +555,20 @@ class PhilhealthTableManager extends PremiumTableManager {
   }
 
   showForm() {
-    const form = document.getElementById('philhealthTableForm');
-    if (form) {
-      form.style.display = 'block';
+    const modalElement = document.getElementById('philhealthTableModal');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
     }
   }
 
   hideForm() {
-    const form = document.getElementById('philhealthTableForm');
-    if (form) {
-      form.style.display = 'none';
+    const modalElement = document.getElementById('philhealthTableModal');
+    if (modalElement) {
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      if (modal) {
+        modal.hide();
+      }
     }
   }
 
@@ -495,7 +614,10 @@ class PhilhealthTableManager extends PremiumTableManager {
       }
 
       this.hideForm();
-      await this.loadTableData(year);
+      // Reload DataTable
+      if ($.fn.DataTable.isDataTable(`#${this.tableId}`)) {
+        $(`#${this.tableId}`).DataTable().ajax.reload();
+      }
       alert(id ? 'Record updated' : 'Record created');
       return true;
     } catch (error) {
@@ -508,6 +630,23 @@ class PhilhealthTableManager extends PremiumTableManager {
 class PagibigTableManager extends PremiumTableManager {
   constructor() {
     super('Pag-IBIG Table', 'pagibigTable', 'pagibig_table_api.php');
+  }
+
+  getColumnDefinitions() {
+    return [
+      { data: 'description', title: 'Description' },
+      { data: 'contribution_rate', title: 'Rate', render: (data) => (parseFloat(data) * 100).toFixed(2) + '%' },
+      { data: 'maximum_contribution', title: 'Maximum', render: (data) => '₱' + parseFloat(data).toLocaleString('en-US', {minimumFractionDigits: 2}) },
+      {
+        data: 'id',
+        title: 'Actions',
+        orderable: false,
+        render: (data, type, row) => `
+          <button class="btn btn-sm btn-warning" onclick="pagibigManager.openEditForm(${row.id})">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="pagibigManager.deleteRecord(${row.id})">Delete</button>
+        `
+      }
+    ];
   }
 
   formatTableRow(row) {
@@ -554,16 +693,20 @@ class PagibigTableManager extends PremiumTableManager {
   }
 
   showForm() {
-    const form = document.getElementById('pagibigTableForm');
-    if (form) {
-      form.style.display = 'block';
+    const modalElement = document.getElementById('pagibigTableModal');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
     }
   }
 
   hideForm() {
-    const form = document.getElementById('pagibigTableForm');
-    if (form) {
-      form.style.display = 'none';
+    const modalElement = document.getElementById('pagibigTableModal');
+    if (modalElement) {
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      if (modal) {
+        modal.hide();
+      }
     }
   }
 
@@ -607,7 +750,10 @@ class PagibigTableManager extends PremiumTableManager {
       }
 
       this.hideForm();
-      await this.loadTableData(year);
+      // Reload DataTable
+      if ($.fn.DataTable.isDataTable(`#${this.tableId}`)) {
+        $(`#${this.tableId}`).DataTable().ajax.reload();
+      }
       alert(id ? 'Record updated' : 'Record created');
       return true;
     } catch (error) {
@@ -622,6 +768,12 @@ const taxManager = new TaxTableManager();
 const sssManager = new SssTableManager();
 const philhealthManager = new PhilhealthTableManager();
 const pagibigManager = new PagibigTableManager();
+
+// Expose managers for inline onclick handlers used in the table markup.
+window.taxManager = taxManager;
+window.sssManager = sssManager;
+window.philhealthManager = philhealthManager;
+window.pagibigManager = pagibigManager;
 
 // Modify toggleTableData to use manager
 function toggleTableData(tableId, yearSelectId) {

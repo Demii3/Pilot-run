@@ -199,6 +199,7 @@ CREATE TABLE `emp_inc_type` (
   `cost` decimal(15,2) NOT NULL DEFAULT 0.00,
   `taxable` tinyint(1) NOT NULL DEFAULT 1,
   `included_in_13month` tinyint(1) NOT NULL DEFAULT 1,
+  `recurring` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -447,6 +448,7 @@ CREATE TABLE IF NOT EXISTS `Emp_Inc_Type` (
   `cost` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
   `taxable` TINYINT(1) NOT NULL DEFAULT 1,
   `included_in_13month` TINYINT(1) NOT NULL DEFAULT 1,
+  `recurring` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
