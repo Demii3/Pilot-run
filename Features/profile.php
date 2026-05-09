@@ -15,6 +15,15 @@ include __DIR__ . '/../Modules/dbcon.php';
 $userId = $_SESSION['id'];
 
 // Get current user info
+/** @var string $name */
+/** @var string $email */
+/** @var string $username */
+/** @var string|null $avatarPath */
+$name = '';
+$email = '';
+$username = '';
+$avatarPath = null;
+
 $stmt = mysqli_prepare($dbc, "SELECT name, email, username, avatar_path FROM employees WHERE id = ?");
 mysqli_stmt_bind_param($stmt, 'i', $userId);
 mysqli_stmt_execute($stmt);
@@ -93,8 +102,8 @@ $currentAvatar = $avatarPath ? '../' . $avatarPath : '../Images/default-avatar.p
             </div>
             <input type="file" id="avatarInput" accept="image/*">
         </div>
-        <h2><?php echo htmlspecialchars($name); ?></h2>
-        <p class="mb-0">@<?php echo htmlspecialchars($username); ?></p>
+        <h2><?php echo htmlspecialchars($name ?? ''); ?></h2>
+        <p class="mb-0">@<?php echo htmlspecialchars($username ?? ''); ?></p>
     </div>
 
     <div class="profile-form">
@@ -106,7 +115,7 @@ $currentAvatar = $avatarPath ? '../' . $avatarPath : '../Images/default-avatar.p
                     class="form-control" 
                     id="fullName" 
                     name="name"
-                    value="<?php echo htmlspecialchars($name); ?>"
+                    value="<?php echo htmlspecialchars($name ?? ''); ?>"
                     required
                 >
             </div>
@@ -118,7 +127,7 @@ $currentAvatar = $avatarPath ? '../' . $avatarPath : '../Images/default-avatar.p
                     class="form-control" 
                     id="emailAddr" 
                     name="email"
-                    value="<?php echo htmlspecialchars($email); ?>"
+                    value="<?php echo htmlspecialchars($email ?? ''); ?>"
                     required
                 >
             </div>

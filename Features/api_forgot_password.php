@@ -71,7 +71,7 @@ if (function_exists('mail')) {
     mysqli_stmt_bind_param($emailStmt, 'i', $userId);
     mysqli_stmt_execute($emailStmt);
     mysqli_stmt_bind_result($emailStmt, $toEmail);
-    if (mysqli_stmt_fetch($emailStmt)) {
+    if (mysqli_stmt_fetch($emailStmt) && $toEmail !== null) {
         @mail($toEmail, $subject, $body);
     }
     mysqli_stmt_close($emailStmt);
