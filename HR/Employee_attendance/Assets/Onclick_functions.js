@@ -147,7 +147,6 @@ function manualMode() {
 
     } else {
         allowOvertimeInput.classList.remove('d-none');
-        allowOvertimeInputField.checked = false;
         statusButtons.classList.remove('d-none');
         onleaveOptionIn.disabled = true;
         absentOptionIn.disabled = true;

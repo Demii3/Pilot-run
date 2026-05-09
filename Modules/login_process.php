@@ -14,6 +14,7 @@
 
     if($login_start){
         include("dbcon.php");
+        /** @var mysqli $dbc */
         $query = "SELECT id, username, `password`, `type`, `status` FROM employees 
                   WHERE Username='".mysqli_real_escape_string($dbc, $_POST['username'])."' 
                   AND password='".mysqli_real_escape_string($dbc, $_POST['password'])."'";
@@ -34,7 +35,12 @@
             $_SESSION['status'] = $row['status'];
             $_SESSION['locations'] = [];
             $_SESSION['coordinates'] = [];
-            $another__query = "SELECT `name`, `coordinates` FROM geofences WHERE geofences.id IN (SELECT loc_id FROM employee_location WHERE User_id = " . $row['id'] . ")";
+            $another__query = "SELECT `name`, `coordinates` 
+                               FROM geofences 
+                               WHERE geofences.id 
+                               IN (SELECT loc_id 
+                                   FROM employee_location 
+                                   WHERE User_id = " . $row['id'] . ")";
 
 
             $result2 = mysqli_query($dbc, $another__query);

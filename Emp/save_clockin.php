@@ -2,6 +2,7 @@
     session_start();
 
     include './dbcon.php';
+    /** @var mysqli $dbc */
 
     $msg = 'error';
 
