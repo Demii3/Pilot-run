@@ -41,7 +41,7 @@
     <div class="sidebar">
       <h2>Employee Management</h2>
       <button onclick="window.location.href='../index.php?section=employees'">Manage Employees</button>
-      <button class="active" onclick="window.location.href='sites.php'">Manage Sites</button>
+      <button class="active" onclick="showSitesSection()">Manage Sites</button>
       <button onclick="showAssignSection()">Assign Employees</button>
     </div>
 
@@ -294,8 +294,28 @@
     function showAssignSection() {
       document.getElementById('sitesSection').style.display = 'none';
       document.getElementById('assignSection').style.display = 'block';
+      
+      // Update active button
+      const sidebarButtons = document.querySelectorAll('.sidebar button');
+      sidebarButtons.forEach(btn => btn.classList.remove('active'));
+      const assignBtn = Array.from(sidebarButtons).find(btn => btn.textContent.includes('Assign'));
+      if (assignBtn) assignBtn.classList.add('active');
+      
       loadGeofencesForAssign();
       loadEmployeesForAssign();
+    }
+
+    function showSitesSection() {
+      document.getElementById('sitesSection').style.display = 'block';
+      document.getElementById('assignSection').style.display = 'none';
+      
+      // Update active button
+      const sidebarButtons = document.querySelectorAll('.sidebar button');
+      sidebarButtons.forEach(btn => btn.classList.remove('active'));
+      const sitesBtn = Array.from(sidebarButtons).find(btn => btn.textContent.includes('Manage Sites'));
+      if (sitesBtn) sitesBtn.classList.add('active');
+      
+      loadSites();
     }
 
     function loadGeofencesForAssign() {
@@ -371,7 +391,13 @@
       });
     });
 
-    loadSites();
+    // Check if should show assign section on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'assign') {
+      showAssignSection();
+    } else {
+      loadSites();
+    }
   </script>
 </body>
 </html>

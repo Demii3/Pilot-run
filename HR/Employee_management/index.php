@@ -69,6 +69,7 @@
 
     <button onclick="showContent(this,'employees')">Manage Employees</button>
     <button onclick="showContent(this,'sites')">Manage Sites</button>
+    <button onclick="showContent(this,'assign')">Assign Employees</button>
 
   </div>
 
@@ -160,6 +161,9 @@
 
   } else if (section === "sites") {
     window.location.href = 'geofence/sites.php';
+    return;
+  } else if (section === "assign") {
+    window.location.href = 'geofence/sites.php?action=assign';
     return;
   }
 
