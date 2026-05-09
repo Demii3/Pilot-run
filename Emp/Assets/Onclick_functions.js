@@ -6,36 +6,37 @@ const empLocationLat = document.getElementById('empLocationLat');
 const empLocationLng = document.getElementById('empLocationLng');
 let map; // Declare map variable in a scope accessible to all functions
 let markers; // Declare marker variable to manage the marker on the map
+let geofenceLayer;
 
 function loadAttendanceContent() {
-        const content = document.getElementById('content-area');
-        const payload = { TEST: 'This is a string', USER_ID: '' };
+    const content = document.getElementById('content-area');
+    const payload = { TEST: 'This is a string', USER_ID: '' };
 
-        fetch('./Modules/test.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Failed to load content');
-            return response.text();
-        })
-        .then(html => { 
-            content.innerHTML = html; 
-            fillspans(); // Call the function to fill spans after loading the content
-            return getUserLocation(); // Get user location after loading the content
-        })
-        .then(() => {
-            applymap(); // Call the function to initialize the map after loading the content
-            setAttendanceModuleProperties(); // Set properties for attendance module buttons
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            content.innerHTML = '<p style="color: red;">Failed to load content. Please try again later.</p>';
-        });
-    }
+    fetch('./Modules/test.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to load content');
+        return response.text();
+    })
+    .then(html => { 
+        content.innerHTML = html; 
+        fillspans(); // Call the function to fill spans after loading the content
+        return getUserLocation(); // Get user location after loading the content
+    })
+    .then(() => {
+        applymap(); // Call the function to initialize the map after loading the content
+        setAttendanceModuleProperties(); // Set properties for attendance module buttons
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        content.innerHTML = '<p style="color: red;">Failed to load content. Please try again later.</p>';
+    });
+}
 
 
 if (proceedButton) {
@@ -85,7 +86,6 @@ function getUserLocation() {
 }
 
 function applymap() {
-    console.log('Initializing map with coordinates:', empLocationLat.value, empLocationLng.value);
     const MapContainer = document.getElementById('Map-container');
     if (!MapContainer || typeof L === 'undefined') return;
 
@@ -114,9 +114,82 @@ function applymap() {
     }
 };
 
+function drawGeofence(coords) {
+    console.log('Drawing geofence with coordinates:', coords);
+
+    if (!map || !Array.isArray(coords) || coords.length < 3) return;
+
+    if (geofenceLayer) {
+        geofenceLayer.remove();
+    }
+
+    geofenceLayer = L.polygon(coords, {
+        color: 'blue',
+        fillColor: '#3388ff',
+        fillOpacity: 0.2
+    }).addTo(map);
+
+    map.fitBounds(geofenceLayer.getBounds());
+}
+
 function setAttendanceModuleProperties() {
     const returnToHomeButton = document.getElementById('returnToHome');
     const refreshLocationButton = document.getElementById('refreshLocation');
+    const tapInButton = document.getElementById('tapIn');
+    const locationSelect = document.getElementById('locationSelect');
+
+    function parseJsonList(rawValue) {
+        if (!rawValue) {
+            return [];
+        }
+
+        if (Array.isArray(rawValue)) {
+            return rawValue;
+        }
+
+        try {
+            const parsedValue = JSON.parse(rawValue);
+            return Array.isArray(parsedValue) ? parsedValue : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    if (locationSelect) {
+        const locationsData = parseJsonList(document.getElementById('locations')?.value);
+        const coordinatesData = parseJsonList(document.getElementById('coordinates')?.value);
+
+        locationsData.forEach((location, index) => {
+            const option = document.createElement('option');
+            option.value = location;
+            option.textContent = location;
+
+            if (coordinatesData[index]) {
+                option.setAttribute('data-coordinates', JSON.stringify(coordinatesData[index]));
+            }
+
+            locationSelect.appendChild(option);
+        });
+    }
+
+    locationSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const coordinates = selectedOption.getAttribute('data-coordinates');
+        if (coordinates) {
+            drawGeofence(JSON.parse(JSON.parse(coordinates)));
+        }
+    });
+
+    if(tapInButton) {
+        tapInButton.addEventListener('click', function() {
+            const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+            const locationName = selectedOption.value;
+            const coordinates = selectedOption.getAttribute('data-coordinates');
+            if (locationName && coordinates) {
+                    saveInfotoDatabase();
+                };
+            });
+    }
 
     if(refreshLocationButton) {
         refreshLocationButton.addEventListener('click', function() {
@@ -133,4 +206,5 @@ function setAttendanceModuleProperties() {
         });
     }
 }
+
 

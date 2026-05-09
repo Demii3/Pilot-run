@@ -7,6 +7,13 @@
 </div>
 
 <div class="content-body">
+
+    <div id="locationSelector">
+        <select id="locationSelect" class="form-select">
+            <option value="" disabled selected>Select Location</option>
+        </select>
+    </div>
+
     <div id="Map-container" class="map-container"></div>
 
     <div class="welcome-card-container">

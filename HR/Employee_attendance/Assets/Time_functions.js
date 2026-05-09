@@ -96,7 +96,7 @@ function excludeLunchBreak(clockIn, clockOut) {
     };
 
     if (result < 0) {
-        result = 0;
+        result += 24 * 60;
     };
 
     return result;

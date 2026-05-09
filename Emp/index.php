@@ -9,10 +9,12 @@
     header('Cache-Control: no-store, no-cache, must-revalidate');
     header('Cache-Control: post-check=0, pre-check=0', FALSE);
     header('Pragma: no-cache');
-	//print_r($_SESSION);
+	print_r($_SESSION);
 	echo "<input type='hidden' id='userId' value='".$_SESSION['id']."'>";
 	echo "<input type='hidden' id='username' value='".$_SESSION['username']."'>";
 	echo "<input type='hidden' id='workStatus' value='".$_SESSION['work_status']."'>";
+	echo "<input type='hidden' id='locations' value='".json_encode($_SESSION['locations'])."'>";
+	echo "<input type='hidden' id='coordinates' value='".json_encode($_SESSION['coordinates'])."'>";
 	echo "<input type='hidden' id='empLocationLat' value=''>";
 	echo "<input type='hidden' id='empLocationLng' value=''>";
 ?>
@@ -37,6 +39,7 @@
 	<script src="./Assets/Onclick_functions.js" defer></script>
 	<script src="./Assets/Event_functions.js" defer></script>
 	<script src="./Assets/Miscellaneous_functions.js" defer></script>
+	<script src="./Assets/Database_functions.js" defer></script>
 
 </head>
 
