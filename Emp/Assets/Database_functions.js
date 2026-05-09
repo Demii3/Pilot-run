@@ -1,17 +1,23 @@
 function saveInfotoDatabase () {
-    $.post('save_info.php', {
-        userId: document.getElementById('userId').value,
-        username: document.getElementById('username').value,
-        location: document.getElementById('locationSelect').value,
-        empLocationLat: document.getElementById('empLocationLat').value,
-        empLocationLng: document.getElementById('empLocationLng').value
+    const userId = document.getElementById('userId').value;
+    const date = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
+    const location = document.getElementById('locationSelect').value;
+    const coordinates = document.getElementById('locationSelect').options[document.getElementById('locationSelect').selectedIndex].getAttribute('data-coordinates');
+    const timeIn = document.getElementById('time').textContent;
+    $.post('./Modules/save_clockin.php', {
+        userId: userId,
+        date: date,
+        location: location,
+        coordinates: coordinates,
+        timeIn: timeIn,
+        timeInStatus: checkTimeInStatus([timeIn.split(' ')[0], timeIn.split(' ')[1]])
     }, function(response) {
         console.log('Server response:', response);
     });
 }
 
-function checkClockinStatus(timeStr) {
-    let [h1, m1, s1] = timeStr[0].split(':').map(Number);
+function checkTimeInStatus(timeStr) {
+    let [h1, m1] = timeStr[0].split(':').map(Number);
     if(h1 === 12 && timeStr[1] === 'AM') { 
         h1 = 0; // Convert 12 AM to 0 hours for easier comparison{
     };

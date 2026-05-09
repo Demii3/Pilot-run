@@ -10,7 +10,7 @@ let geofenceLayer;
 
 function loadAttendanceContent() {
     const content = document.getElementById('content-area');
-    const payload = { TEST: 'This is a string', USER_ID: '' };
+    const payload = { TEST: 'This is a string', USER_ID: document.getElementById('userId').value };
 
     fetch('./Modules/test.php', {
         method: 'POST',
@@ -21,27 +21,22 @@ function loadAttendanceContent() {
     })
     .then(response => {
         if (!response.ok) throw new Error('Failed to load content');
-        return response.text();
+        return response.json();
     })
-    .then(html => { 
-        content.innerHTML = html; 
+    .then(data => { 
+        content.innerHTML = data.datafile; // Assuming the response contains a property 'datafile' with the HTML content
         fillspans(); // Call the function to fill spans after loading the content
-        return getUserLocation(); // Get user location after loading the content
+        return getUserLocation().then(() => data);
     })
-    .then(() => {
+    .then((data) => {
         applymap(); // Call the function to initialize the map after loading the content
-        setAttendanceModuleProperties(); // Set properties for attendance module buttons
+        setAttendanceModuleProperties(data.workStatus); // Set properties for attendance module buttons
     })
     .catch(error => {
         console.error('Error:', error);
         content.innerHTML = '<p style="color: red;">Failed to load content. Please try again later.</p>';
     });
 }
-
-
-if (proceedButton) {
-    proceedButton.addEventListener('click', loadAttendanceContent);
-};
 
 if (attendanceBtn) {
     attendanceBtn.addEventListener('click', loadAttendanceContent);
@@ -132,7 +127,8 @@ function drawGeofence(coords) {
     map.fitBounds(geofenceLayer.getBounds());
 }
 
-function setAttendanceModuleProperties() {
+function setAttendanceModuleProperties(workStatus) {
+    console.log('Setting attendance module properties with workStatus:', workStatus);
     const returnToHomeButton = document.getElementById('returnToHome');
     const refreshLocationButton = document.getElementById('refreshLocation');
     const tapInButton = document.getElementById('tapIn');
@@ -170,6 +166,12 @@ function setAttendanceModuleProperties() {
 
             locationSelect.appendChild(option);
         });
+
+        if (workStatus == 'Tapped-in') {
+            locationSelect.value = document.getElementById('locationSelect').options[1].value; // Set to the first location if already tapped in
+            locationSelect.disabled = true;
+
+        }
     }
 
     locationSelect.addEventListener('change', function() {
@@ -181,14 +183,15 @@ function setAttendanceModuleProperties() {
     });
 
     if(tapInButton) {
-        tapInButton.addEventListener('click', function() {
-            const selectedOption = locationSelect.options[locationSelect.selectedIndex];
-            const locationName = selectedOption.value;
-            const coordinates = selectedOption.getAttribute('data-coordinates');
-            if (locationName && coordinates) {
-                    saveInfotoDatabase();
-                };
-            });
+        tapInButton.addEventListener('click', TapIn);
+
+            if (workStatus == 'Tapped-in') {
+                tapInButton.innerText = 'Tapped Out';
+                tapInButton.classList.remove('btn-success');
+                tapInButton.removeEventListener('click', TapIn);
+                tapInButton.classList.add('btn-danger');
+                tapInButton.addEventListener('click', TapOut);
+            }
     }
 
     if(refreshLocationButton) {
@@ -207,4 +210,20 @@ function setAttendanceModuleProperties() {
     }
 }
 
+function TapIn() {
+    const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+    const locationName = selectedOption.value;
+    const coordinates = selectedOption.getAttribute('data-coordinates');
+    if (locationName && coordinates) {
+            saveInfotoDatabase();
+    };
+}
 
+function TapOut() {
+    const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+    const locationName = selectedOption.value;
+    const coordinates = selectedOption.getAttribute('data-coordinates');
+    if (locationName && coordinates) {
+            saveInfotoDatabase();
+    };
+}

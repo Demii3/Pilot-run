@@ -7,21 +7,21 @@
     $msg = 'error';
 
     if (!isset($_SESSION['login']) || $_SESSION['type'] != 'Emp') {
-        echo $msg;
+        echo mysqli_error($dbc);
         exit();
     }
 
-    if (!isset($_SESSION['id'], $_POST['date'], $_POST['location'], $_POST['coordinates'], $_POST['clockin_time'], $_POST['clockin_status'])) {
-        echo $msg;
+    if (!isset($_POST['userId'], $_POST['date'], $_POST['location'], $_POST['coordinates'], $_POST['timeIn'], $_POST['timeInStatus'])) {
+        echo mysqli_error($dbc);
         exit();
     }
 
-    $empId = (int) $_SESSION['id'];
+    $empId = (int) $_POST['userId'];
     $date = mysqli_real_escape_string($dbc, $_POST['date']);
     $location = mysqli_real_escape_string($dbc, $_POST['location']);
     $coordinates = mysqli_real_escape_string($dbc, $_POST['coordinates']);
-    $clockinTime = mysqli_real_escape_string($dbc, $_POST['clockin_time']);
-    $clockinStatus = mysqli_real_escape_string($dbc, $_POST['clockin_status']);
+    $clockinTime = mysqli_real_escape_string($dbc, $_POST['timeIn']);
+    $clockinStatus = mysqli_real_escape_string($dbc, $_POST['timeInStatus']);
 
     $sql1 = "INSERT INTO employee_attendance (Emp_id, `Date`, `Location`, `Coordinates`, `Clock_in`, `Clockin_Status`) 
             VALUES ($empId, 
@@ -33,8 +33,13 @@
 
     $result1 = mysqli_query($dbc, $sql1);
 
+    if (!$result1) {
+        echo mysqli_error($dbc);
+        exit();
+    }
+
     $sql2 = "UPDATE users 
-             SET `Clockin_status` = 'Tapped-in' 
+             SET `Work_status` = 'Tapped-in' 
              WHERE `User_id` = $empId";
 
     $result2 = mysqli_query($dbc, $sql2);
@@ -43,11 +48,11 @@
     $result3 = mysqli_query($dbc, $sql3);
 
     if ($result1 && $result2 && $result3) {
-        $_SESSION['Clock-in'] = $_POST['clockin_time'];
+        $_SESSION['Clock-in'] = $_POST['timeIn'];
         $_SESSION['date'] = $_POST['date'];
         $_SESSION['selectedLocation'] = $_POST['location'];
         $_SESSION['selectedCoordinates'] = $_POST['coordinates'];
-        $_SESSION['Clockin-status'] = $_POST['clockin_status'];
+        $_SESSION['Clockin-status'] = $_POST['timeInStatus'];
         $_SESSION['Attendance_id'] = mysqli_fetch_array($result3)['last_id'];
         $_SESSION['attendance_active'] = true;
         unset($_SESSION['Clockout-status']);
