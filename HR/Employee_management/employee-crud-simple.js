@@ -7,7 +7,8 @@ function openAddForm() {
   document.getElementById('employeeId').value = '';
   document.getElementById('status').value = 'Active';
   document.getElementById('formTitle').textContent = 'Add New Employee';
-  document.getElementById('employeeModal').style.display = 'block';
+  const modal = document.getElementById('employeeModal');
+  modal.style.display = 'flex';
   document.body.classList.add('modal-open');
 }
 
@@ -69,7 +70,8 @@ async function editEmployee(id) {
   document.getElementById('joinDate').value = employee.join_date || employee.joinDate || '';
   document.getElementById('status').value = employee.status || 'Active';
   document.getElementById('formTitle').textContent = 'Edit Employee';
-  document.getElementById('employeeModal').style.display = 'block';
+  const modal = document.getElementById('employeeModal');
+  modal.style.display = 'flex';
   document.body.classList.add('modal-open');
 }
 
@@ -114,8 +116,19 @@ function saveEmployee() {
   const joinDate = document.getElementById('joinDate').value;
   const status = document.getElementById('status').value;
 
-  if (!name || !email || !username || (!id && !password) || !type || !position || !department || !salary || !joinDate || !status) {
+  // Password is required only for new employees
+  const isNewEmployee = !id;
+  if (!name || !email || !username || !type || !position || !department || !salary || !joinDate || !status) {
     showNotification('Please fill in all fields', 'error');
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = 'Save Employee';
+    }
+    return;
+  }
+  
+  if (isNewEmployee && !password) {
+    showNotification('Password is required for new employees', 'error');
     if (saveButton) {
       saveButton.disabled = false;
       saveButton.textContent = 'Save Employee';

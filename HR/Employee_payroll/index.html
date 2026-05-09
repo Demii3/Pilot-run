@@ -12,6 +12,7 @@
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.datatables.net/2.3.7/js/dataTables.min.js"></script>
 
   <!-- CSS -->
@@ -121,6 +122,341 @@
 
 </div>
 
+<!-- Income Type Modal -->
+<div class="modal fade" id="incomeTypeModal" tabindex="-1" aria-labelledby="incomeTypeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="incomeTypeModalLabel">Add Income Type</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="incomeTypeForm">
+          <input type="hidden" id="incomeTypeId">
+          <input type="hidden" id="incomeTypeCost" value="0">
+          <div class="mb-3">
+            <label for="incomeTypeName" class="form-label">Type of Income</label>
+            <input type="text" id="incomeTypeName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="incomeTypeTaxable" checked>
+              <label class="form-check-label" for="incomeTypeTaxable">Taxable</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="incomeType13th" checked>
+              <label class="form-check-label" for="incomeType13th">Included in 13th Month</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="incomeTypeRecurring" checked>
+              <label class="form-check-label" for="incomeTypeRecurring">Recurring</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveIncomeType()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Deduction Type Modal -->
+<div class="modal fade" id="deductionTypeModal" tabindex="-1" aria-labelledby="deductionTypeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deductionTypeModalLabel">Add Deduction Type</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="deductionTypeForm">
+          <input type="hidden" id="deductionTypeId">
+          <div class="mb-3">
+            <label for="deductionTypeName" class="form-label">Type of Deduction</label>
+            <input type="text" id="deductionTypeName" class="form-control" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveDeductionType()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Employee Deduction Modal -->
+<div class="modal fade" id="employeeDeductionModal" tabindex="-1" aria-labelledby="employeeDeductionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="employeeDeductionModalLabel">Add Deduction to Employee</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="employeeDeductionForm">
+          <input type="hidden" id="employeeDeductionAssignmentId">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="deductionEmployeeSelect" class="form-label">Employee</label>
+              <select id="deductionEmployeeSelect" class="form-select" required></select>
+            </div>
+            <div class="col-md-4">
+              <label for="deductionTypeSelect" class="form-label">Deduction Type</label>
+              <select id="deductionTypeSelect" class="form-select" onchange="updateSelectedDeductionDetails()" required></select>
+            </div>
+            <div class="col-md-2">
+              <label for="selectedDeductionCost" class="form-label">Cost</label>
+              <input type="number" id="selectedDeductionCost" class="form-control" min="0" step="0.01" placeholder="0.00" required>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveEmployeeDeductionAssignment()">Save Assignment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Employee Income Modal -->
+<div class="modal fade" id="employeeIncomeModal" tabindex="-1" aria-labelledby="employeeIncomeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="employeeIncomeModalLabel">Add Income to Employee</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="employeeIncomeForm">
+          <input type="hidden" id="employeeIncomeAssignmentId">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="incomeEmployeeSelect" class="form-label">Employee</label>
+              <select id="incomeEmployeeSelect" class="form-select" required></select>
+            </div>
+            <div class="col-md-4">
+              <label for="incomeTypeSelect" class="form-label">Income Type</label>
+              <select id="incomeTypeSelect" class="form-select" onchange="updateSelectedIncomeDetails()" required></select>
+            </div>
+            <div class="col-md-2">
+              <label for="selectedIncomeCost" class="form-label">Cost</label>
+              <input type="number" id="selectedIncomeCost" class="form-control" min="0" step="0.01" placeholder="0.00" required>
+            </div>
+            <div class="col-md-1 d-flex align-items-center">
+              <div class="form-check mt-3">
+                <input class="form-check-input" type="checkbox" id="selectedIncomeTaxable" disabled>
+                <label class="form-check-label" for="selectedIncomeTaxable">Taxable</label>
+              </div>
+            </div>
+            <div class="col-md-1 d-flex align-items-center">
+              <div class="form-check mt-3">
+                <input class="form-check-input" type="checkbox" id="selectedIncome13th" disabled>
+                <label class="form-check-label" for="selectedIncome13th">13th</label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveEmployeeIncomeAssignment()">Save Assignment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Premium Table Modals -->
+<div class="modal fade" id="taxTableModal" tabindex="-1" aria-labelledby="taxTableModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taxTableModalLabel">Add Tax Record</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="taxTableForm">
+          <input type="hidden" id="taxFormId">
+          <div class="row g-3 mb-3">
+            <div class="col-md-2">
+              <label for="taxYear" class="form-label">Year</label>
+              <input type="number" id="taxYear" class="form-control" value="2026" required>
+            </div>
+            <div class="col-md-2">
+              <label for="taxIncomeFrom" class="form-label">Income From</label>
+              <input type="number" id="taxIncomeFrom" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-2">
+              <label for="taxIncomeTo" class="form-label">Income To</label>
+              <input type="number" id="taxIncomeTo" class="form-control" step="0.01">
+            </div>
+            <div class="col-md-2">
+              <label for="taxRate" class="form-label">Tax Rate (%)</label>
+              <input type="number" id="taxRate" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-2">
+              <label for="taxBaseAmount" class="form-label">Base Amount</label>
+              <input type="number" id="taxBaseAmount" class="form-control" step="0.01" value="0">
+            </div>
+            <div class="col-md-2">
+              <label for="taxDescription" class="form-label">Description</label>
+              <input type="text" id="taxDescription" class="form-control">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="taxManager.saveRecord()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="sssTableModal" tabindex="-1" aria-labelledby="sssTableModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sssTableModalLabel">Add SSS Record</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="sssTableForm">
+          <input type="hidden" id="sssFormId">
+          <div class="row g-3 mb-3">
+            <div class="col-md-2">
+              <label for="sssYear" class="form-label">Year</label>
+              <input type="number" id="sssYear" class="form-control" value="2026" required>
+            </div>
+            <div class="col-md-3">
+              <label for="sssSalaryFrom" class="form-label">Salary From</label>
+              <input type="number" id="sssSalaryFrom" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-3">
+              <label for="sssSalaryTo" class="form-label">Salary To</label>
+              <input type="number" id="sssSalaryTo" class="form-control" step="0.01">
+            </div>
+            <div class="col-md-2">
+              <label for="sssContribution" class="form-label">Monthly Contribution</label>
+              <input type="number" id="sssContribution" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-2">
+              <label for="sssDescription" class="form-label">Description</label>
+              <input type="text" id="sssDescription" class="form-control">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="sssManager.saveRecord()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="philhealthTableModal" tabindex="-1" aria-labelledby="philhealthTableModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="philhealthTableModalLabel">Add PhilHealth Record</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="philhealthTableForm">
+          <input type="hidden" id="philhealthFormId">
+          <div class="row g-3 mb-3">
+            <div class="col-md-2">
+              <label for="philhealthYear" class="form-label">Year</label>
+              <input type="number" id="philhealthYear" class="form-control" value="2026" required>
+            </div>
+            <div class="col-md-2">
+              <label for="philhealthSalaryFrom" class="form-label">Salary From</label>
+              <input type="number" id="philhealthSalaryFrom" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-2">
+              <label for="philhealthSalaryTo" class="form-label">Salary To</label>
+              <input type="number" id="philhealthSalaryTo" class="form-control" step="0.01">
+            </div>
+            <div class="col-md-1">
+              <label for="philhealthRate" class="form-label">Rate</label>
+              <input type="number" id="philhealthRate" class="form-control" step="0.0001" required>
+            </div>
+            <div class="col-md-1">
+              <label for="philhealthMaximum" class="form-label">Maximum</label>
+              <input type="number" id="philhealthMaximum" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-1">
+              <label for="philhealthFixed" class="form-label">Fixed</label>
+              <input type="number" id="philhealthFixed" class="form-control" step="0.01">
+            </div>
+            <div class="col-md-3">
+              <label for="philhealthDescription" class="form-label">Description</label>
+              <input type="text" id="philhealthDescription" class="form-control">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="philhealthManager.saveRecord()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="pagibigTableModal" tabindex="-1" aria-labelledby="pagibigTableModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="pagibigTableModalLabel">Add Pag-IBIG Record</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="pagibigTableForm">
+          <input type="hidden" id="pagibigFormId">
+          <div class="row g-3 mb-3">
+            <div class="col-md-2">
+              <label for="pagibigYear" class="form-label">Year</label>
+              <input type="number" id="pagibigYear" class="form-control" value="2026" required>
+            </div>
+            <div class="col-md-2">
+              <label for="pagibigSalaryFrom" class="form-label">Salary From</label>
+              <input type="number" id="pagibigSalaryFrom" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-2">
+              <label for="pagibigSalaryTo" class="form-label">Salary To</label>
+              <input type="number" id="pagibigSalaryTo" class="form-control" step="0.01">
+            </div>
+            <div class="col-md-2">
+              <label for="pagibigRate" class="form-label">Rate</label>
+              <input type="number" id="pagibigRate" class="form-control" step="0.0001" required>
+            </div>
+            <div class="col-md-2">
+              <label for="pagibigMaximum" class="form-label">Maximum</label>
+              <input type="number" id="pagibigMaximum" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-2">
+              <label for="pagibigDescription" class="form-label">Description</label>
+              <input type="text" id="pagibigDescription" class="form-control">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="pagibigManager.saveRecord()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
   <!-- Background -->
@@ -179,23 +515,9 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h2>Employee Deduction Types</h2>
-          <button class="btn btn-secondary" onclick="openDeductionTypeForm()">+ Add Deduction To EmployeeType</button>
+          <button class="btn btn-secondary" onclick="openDeductionTypeForm()">+ Add Deduction To Employee Type</button>
         </div>
         <div class="card-body">
-          <form id="deductionTypeForm" class="mb-4" style="display: none;">
-            <input type="hidden" id="deductionTypeId">
-            <div class="row g-3 mb-3">
-              <div class="col-md-4">
-                <label for="deductionTypeName" class="form-label">Type of Deduction</label>
-                <input type="text" id="deductionTypeName" class="form-control" required>
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-primary" onclick="saveDeductionType()">Save</button>
-              <button type="button" class="btn btn-secondary" onclick="hideDeductionTypeForm()">Cancel</button>
-            </div>
-          </form>
-
           <div class="mb-3">
             <input 
               type="text" 
@@ -231,33 +553,6 @@
             <button class="btn btn-secondary" onclick="openIncomeTypeForm()">+ Add Income Type</button>
           </div>
           <div class="card-body">
-            <form id="incomeTypeForm" class="mb-4" style="display: none;">
-              <input type="hidden" id="incomeTypeId">
-              <input type="hidden" id="incomeTypeCost" value="0">
-              <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                  <label for="incomeTypeName" class="form-label">Type of Income</label>
-                  <input type="text" id="incomeTypeName" class="form-control" required>
-                </div>
-                <div class="col-md-3 d-flex align-items-end">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="incomeTypeTaxable" checked>
-                    <label class="form-check-label" for="incomeTypeTaxable">Taxable</label>
-                  </div>
-                </div>
-                <div class="col-md-3 d-flex align-items-end">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="incomeType13th" checked>
-                    <label class="form-check-label" for="incomeType13th">13th Month</label>
-                  </div>
-                </div>
-              </div>
-              <div class="d-flex gap-2">
-                <button type="button" class="btn btn-primary" onclick="saveIncomeType()">Save</button>
-                <button type="button" class="btn btn-secondary" onclick="hideIncomeTypeForm()">Cancel</button>
-              </div>
-            </form>
-
             <div class="mb-3">
               <input 
                 type="text" 
@@ -275,6 +570,7 @@
                     <th>Type of Income</th>
                     <th>Taxable / Non-Taxable</th>
                     <th>Included in 13th Month</th>
+                    <th>Recurring</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -303,32 +599,10 @@
               type="text"
               id="searchDeductions" 
               class="form-control" 
-              placeholder="Search by employee name or deduction type..."
+              placeholder="Search by employee name..."
               onkeyup="filterEmployeesForDeductions()"
             >
           </div>
-
-          <form id="employeeDeductionForm" class="mb-4" style="display: none;">
-            <input type="hidden" id="employeeDeductionAssignmentId">
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label for="deductionEmployeeSelect" class="form-label">Employee</label>
-                <select id="deductionEmployeeSelect" class="form-select" required></select>
-              </div>
-              <div class="col-md-4">
-                <label for="deductionTypeSelect" class="form-label">Deduction Type</label>
-                <select id="deductionTypeSelect" class="form-select" onchange="updateSelectedDeductionDetails()" required></select>
-              </div>
-              <div class="col-md-2">
-                <label for="selectedDeductionCost" class="form-label">Cost</label>
-                <input type="number" id="selectedDeductionCost" class="form-control" min="0" step="0.01" placeholder="0.00" required>
-              </div>
-            </div>
-            <div class="mt-3 d-flex gap-2">
-              <button type="button" class="btn btn-primary" onclick="saveEmployeeDeductionAssignment()">Save Assignment</button>
-              <button type="button" class="btn btn-secondary" onclick="hideEmployeeDeductionForm()">Cancel</button>
-            </div>
-          </form>
 
           <div class="table-responsive">
             <table class="table table-hover" id="employeeDeductionSearchTable">
@@ -337,10 +611,7 @@
                   <th>ID</th>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Position</th>
-                  <th>Department</th>
                   <th>Salary</th>
-                  <th>Status</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -383,49 +654,33 @@
           <button class="btn btn-success" onclick="openEmployeeIncomeForm()">Add Income to Employee</button>
         </div>
         <div class="card-body">
-          <div class="mb-3">
-            <input
-              type="text"
-              id="searchEmployees"
-              class="form-control"
-              placeholder="Search by name, email, position, or department..."
-              onkeyup="filterEmployees()"
-            >
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input
+                type="text"
+                id="searchEmployees"
+                class="form-control"
+                placeholder="Search by name or email..."
+                onkeyup="filterEmployees()"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="employeeIncomeDateFrom" class="form-label mb-1">From</label>
+              <input
+                type="date"
+                id="employeeIncomeDateFrom"
+                class="form-control"
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="employeeIncomeDateTo" class="form-label mb-1">To</label>
+              <input
+                type="date"
+                id="employeeIncomeDateTo"
+                class="form-control"
+              >
+            </div>
           </div>
-
-          <form id="employeeIncomeForm" class="mb-4" style="display: none;">
-            <input type="hidden" id="employeeIncomeAssignmentId">
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label for="incomeEmployeeSelect" class="form-label">Employee</label>
-                <select id="incomeEmployeeSelect" class="form-select" required></select>
-              </div>
-              <div class="col-md-4">
-                <label for="incomeTypeSelect" class="form-label">Income Type</label>
-                <select id="incomeTypeSelect" class="form-select" onchange="updateSelectedIncomeDetails()" required></select>
-              </div>
-              <div class="col-md-2">
-                <label for="selectedIncomeCost" class="form-label">Cost</label>
-                <input type="number" id="selectedIncomeCost" class="form-control" min="0" step="0.01" placeholder="0.00" required>
-              </div>
-              <div class="col-md-1 d-flex align-items-center">
-                <div class="form-check mt-3">
-                  <input class="form-check-input" type="checkbox" id="selectedIncomeTaxable" disabled>
-                  <label class="form-check-label" for="selectedIncomeTaxable">Taxable</label>
-                </div>
-              </div>
-              <div class="col-md-1 d-flex align-items-center">
-                <div class="form-check mt-3">
-                  <input class="form-check-input" type="checkbox" id="selectedIncome13th" disabled>
-                  <label class="form-check-label" for="selectedIncome13th">13th</label>
-                </div>
-              </div>
-            </div>
-            <div class="mt-3 d-flex gap-2">
-              <button type="button" class="btn btn-primary" onclick="saveEmployeeIncomeAssignment()">Save Assignment</button>
-              <button type="button" class="btn btn-secondary" onclick="hideEmployeeIncomeForm()">Cancel</button>
-            </div>
-          </form>
 
           <div class="table-responsive">
             <table class="table table-hover" id="employeeSearchTable">
@@ -434,10 +689,7 @@
                   <th>ID</th>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Position</th>
-                  <th>Department</th>
                   <th>Salary</th>
-                  <th>Status</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -456,6 +708,7 @@
                     <th>Cost</th>
                     <th>Taxable</th>
                     <th>13th Month</th>
+                    <th>Recurring</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -750,39 +1003,6 @@
               </select>
             </div>
           </div>
-          <form id="taxTableForm" style="display: none;" class="mb-4">
-            <input type="hidden" id="taxFormId">
-            <div class="row g-3 mb-3">
-              <div class="col-md-2">
-                <label for="taxYear" class="form-label">Year</label>
-                <input type="number" id="taxYear" class="form-control" value="2026" required>
-              </div>
-              <div class="col-md-2">
-                <label for="taxIncomeFrom" class="form-label">Income From</label>
-                <input type="number" id="taxIncomeFrom" class="form-control" step="0.01" required>
-              </div>
-              <div class="col-md-2">
-                <label for="taxIncomeTo" class="form-label">Income To</label>
-                <input type="number" id="taxIncomeTo" class="form-control" step="0.01">
-              </div>
-              <div class="col-md-2">
-                <label for="taxRate" class="form-label">Tax Rate (%)</label>
-                <input type="number" id="taxRate" class="form-control" step="0.01" required>
-              </div>
-              <div class="col-md-2">
-                <label for="taxBaseAmount" class="form-label">Base Amount</label>
-                <input type="number" id="taxBaseAmount" class="form-control" step="0.01" value="0">
-              </div>
-              <div class="col-md-2">
-                <label for="taxDescription" class="form-label">Description</label>
-                <input type="text" id="taxDescription" class="form-control">
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-primary" onclick="taxManager.saveRecord()">Save</button>
-              <button type="button" class="btn btn-secondary" onclick="taxManager.hideForm()">Cancel</button>
-            </div>
-          </form>
           <div class="table-responsive">
             <table class="table table-hover" id="taxTable">
               <thead class="table-dark">
@@ -830,35 +1050,6 @@
               </select>
             </div>
           </div>
-          <form id="sssTableForm" style="display: none;" class="mb-4">
-            <input type="hidden" id="sssFormId">
-            <div class="row g-3 mb-3">
-              <div class="col-md-2">
-                <label for="sssYear" class="form-label">Year</label>
-                <input type="number" id="sssYear" class="form-control" value="2026" required>
-              </div>
-              <div class="col-md-3">
-                <label for="sssSalaryFrom" class="form-label">Salary From</label>
-                <input type="number" id="sssSalaryFrom" class="form-control" step="0.01" required>
-              </div>
-              <div class="col-md-3">
-                <label for="sssSalaryTo" class="form-label">Salary To</label>
-                <input type="number" id="sssSalaryTo" class="form-control" step="0.01">
-              </div>
-              <div class="col-md-2">
-                <label for="sssContribution" class="form-label">Monthly Contribution</label>
-                <input type="number" id="sssContribution" class="form-control" step="0.01" required>
-              </div>
-              <div class="col-md-2">
-                <label for="sssDescription" class="form-label">Description</label>
-                <input type="text" id="sssDescription" class="form-control">
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-primary" onclick="sssManager.saveRecord()">Save</button>
-              <button type="button" class="btn btn-secondary" onclick="sssManager.hideForm()">Cancel</button>
-            </div>
-          </form>
           <div class="table-responsive">
             <table class="table table-hover" id="sssTable">
               <thead class="table-dark">
@@ -905,43 +1096,6 @@
               </select>
             </div>
           </div>
-          <form id="philhealthTableForm" style="display: none;" class="mb-4">
-            <input type="hidden" id="philhealthFormId">
-            <div class="row g-3 mb-3">
-              <div class="col-md-2">
-                <label for="philhealthYear" class="form-label">Year</label>
-                <input type="number" id="philhealthYear" class="form-control" value="2026" required>
-              </div>
-              <div class="col-md-2">
-                <label for="philhealthSalaryFrom" class="form-label">Salary From</label>
-                <input type="number" id="philhealthSalaryFrom" class="form-control" step="0.01" required>
-              </div>
-              <div class="col-md-2">
-                <label for="philhealthSalaryTo" class="form-label">Salary To</label>
-                <input type="number" id="philhealthSalaryTo" class="form-control" step="0.01">
-              </div>
-              <div class="col-md-1">
-                <label for="philhealthRate" class="form-label">Rate</label>
-                <input type="number" id="philhealthRate" class="form-control" step="0.0001" required>
-              </div>
-              <div class="col-md-1">
-                <label for="philhealthMaximum" class="form-label">Maximum</label>
-                <input type="number" id="philhealthMaximum" class="form-control" step="0.01" required>
-              </div>
-              <div class="col-md-1">
-                <label for="philhealthFixed" class="form-label">Fixed</label>
-                <input type="number" id="philhealthFixed" class="form-control" step="0.01">
-              </div>
-              <div class="col-md-3">
-                <label for="philhealthDescription" class="form-label">Description</label>
-                <input type="text" id="philhealthDescription" class="form-control">
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-primary" onclick="philhealthManager.saveRecord()">Save</button>
-              <button type="button" class="btn btn-secondary" onclick="philhealthManager.hideForm()">Cancel</button>
-            </div>
-          </form>
           <div class="table-responsive">
             <table class="table table-hover" id="philhealthTable">
               <thead class="table-dark">
@@ -989,39 +1143,6 @@
               </select>
             </div>
           </div>
-          <form id="pagibigTableForm" style="display: none;" class="mb-4">
-            <input type="hidden" id="pagibigFormId">
-            <div class="row g-3 mb-3">
-              <div class="col-md-2">
-                <label for="pagibigYear" class="form-label">Year</label>
-                <input type="number" id="pagibigYear" class="form-control" value="2026" required>
-              </div>
-              <div class="col-md-2">
-                <label for="pagibigSalaryFrom" class="form-label">Salary From</label>
-                <input type="number" id="pagibigSalaryFrom" class="form-control" step="0.01" required>
-              </div>
-              <div class="col-md-2">
-                <label for="pagibigSalaryTo" class="form-label">Salary To</label>
-                <input type="number" id="pagibigSalaryTo" class="form-control" step="0.01">
-              </div>
-              <div class="col-md-2">
-                <label for="pagibigRate" class="form-label">Rate</label>
-                <input type="number" id="pagibigRate" class="form-control" step="0.0001" required>
-              </div>
-              <div class="col-md-2">
-                <label for="pagibigMaximum" class="form-label">Maximum</label>
-                <input type="number" id="pagibigMaximum" class="form-control" step="0.01" required>
-              </div>
-              <div class="col-md-2">
-                <label for="pagibigDescription" class="form-label">Description</label>
-                <input type="text" id="pagibigDescription" class="form-control">
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-primary" onclick="pagibigManager.saveRecord()">Save</button>
-              <button type="button" class="btn btn-secondary" onclick="pagibigManager.hideForm()">Cancel</button>
-            </div>
-          </form>
           <div class="table-responsive">
             <table class="table table-hover" id="pagibigTable">
               <thead class="table-dark">
@@ -1274,6 +1395,48 @@
       </div>`;
   }
 }
+
+// Set bi-monthly date ranges (1-15, 16-end) for From/To inputs when empty
+function setBiMonthlyRangeForInputs(fromId, toId, referenceDate = new Date()) {
+  const fromInput = document.getElementById(fromId);
+  const toInput = document.getElementById(toId);
+  if (!fromInput || !toInput) return;
+
+  // Only set defaults when inputs are empty
+  if (fromInput.value || toInput.value) return;
+
+  const ref = new Date(referenceDate);
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
+  let fromDate, toDate;
+
+  if (ref.getDate() <= 15) {
+    fromDate = new Date(year, month, 1);
+    toDate = new Date(year, month, 15);
+  } else {
+    fromDate = new Date(year, month, 16);
+    // last day of month: day 0 of next month
+    toDate = new Date(year, month + 1, 0);
+  }
+
+  const pad = n => String(n).padStart(2, '0');
+  const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+  fromInput.value = isoDate(fromDate);
+  toInput.value = isoDate(toDate);
+}
+
+function initBiMonthlyRanges() {
+  const pairs = [
+    ['attendanceDateFrom', 'attendanceDateTo'],
+    ['premiumDateFrom', 'premiumDateTo'],
+    ['employeeSalaryDateFrom', 'employeeSalaryDateTo'],
+    ['payslipDateFrom', 'payslipDateTo']
+  ];
+  pairs.forEach(p => setBiMonthlyRangeForInputs(p[0], p[1]));
+}
+
+document.addEventListener('DOMContentLoaded', initBiMonthlyRanges);
 
 let employeesForIncome = [];
 let incomeTypesForAssignments = [];
@@ -1673,20 +1836,26 @@ async function loadDeductionTypes() {
 }
 
 function openDeductionTypeForm(reset = true) {
-  const form = document.getElementById('deductionTypeForm');
-  if (!form) return;
-  form.style.display = 'block';
-
+  // Reset form fields
   if (reset) {
     document.getElementById('deductionTypeId').value = '';
     document.getElementById('deductionTypeName').value = '';
   }
+  
+  // Show modal
+  const modalElement = document.getElementById('deductionTypeModal');
+  const modal = new bootstrap.Modal(modalElement);
+  modal.show();
 }
 
 function hideDeductionTypeForm() {
-  const form = document.getElementById('deductionTypeForm');
-  if (!form) return;
-  form.style.display = 'none';
+  const modalElement = document.getElementById('deductionTypeModal');
+  if (modalElement) {
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+      modal.hide();
+    }
+  }
 }
 
 async function saveDeductionType() {
@@ -1789,7 +1958,7 @@ async function loadIncomeTypes() {
 
     const rows = result.data || [];
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No income types found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No income types found.</td></tr>';
       paginateTable('incomeTypeTable', 'incomeTypePagination', true);
       return;
     }
@@ -1798,11 +1967,13 @@ async function loadIncomeTypes() {
     rows.forEach(item => {
       const isTaxable = Number(item.taxable) === 1;
       const isIncludedIn13th = Number(item.included_in_13month) === 1;
+      const isRecurring = Number(item.recurring) === 1;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item.type_of_income}</td>
         <td>${isTaxable ? 'Taxable' : 'Non-Taxable'}</td>
         <td>${isIncludedIn13th ? 'Yes' : 'No'}</td>
+        <td>${isRecurring ? 'Yes' : 'No'}</td>
         <td>
           <button class="btn btn-primary edit-income-type" data-id="${item.id}">Edit</button>
           <button class="btn btn-danger delete-income-type" data-id="${item.id}">Delete</button>
@@ -1820,28 +1991,36 @@ async function loadIncomeTypes() {
     });
     paginateTable('incomeTypeTable', 'incomeTypePagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('incomeTypeTable', 'incomeTypePagination', true);
   }
 }
 
 function openIncomeTypeForm(reset = true) {
-  const form = document.getElementById('incomeTypeForm');
-  if (!form) return;
-  form.style.display = 'block';
+  // Reset form fields
   if (reset) {
     document.getElementById('incomeTypeId').value = '';
     document.getElementById('incomeTypeName').value = '';
     document.getElementById('incomeTypeCost').value = '';
     document.getElementById('incomeTypeTaxable').checked = true;
     document.getElementById('incomeType13th').checked = true;
+    document.getElementById('incomeTypeRecurring').checked = true;
   }
+  
+  // Show modal
+  const modalElement = document.getElementById('incomeTypeModal');
+  const modal = new bootstrap.Modal(modalElement);
+  modal.show();
 }
 
 function hideIncomeTypeForm() {
-  const form = document.getElementById('incomeTypeForm');
-  if (!form) return;
-  form.style.display = 'none';
+  const modalElement = document.getElementById('incomeTypeModal');
+  if (modalElement) {
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+      modal.hide();
+    }
+  }
 }
 
 async function saveIncomeType() {
@@ -1850,6 +2029,7 @@ async function saveIncomeType() {
   const cost = document.getElementById('incomeTypeCost').value || '0';
   const taxable = document.getElementById('incomeTypeTaxable').checked ? 1 : 0;
   const includedIn13 = document.getElementById('incomeType13th').checked ? 1 : 0;
+  const recurring = document.getElementById('incomeTypeRecurring').checked ? 1 : 0;
 
   if (!typeOfIncome) {
     alert('Please fill in the income type.');
@@ -1860,7 +2040,8 @@ async function saveIncomeType() {
     type_of_income: typeOfIncome,
     cost: parseFloat(cost),
     taxable,
-    included_in_13month: includedIn13
+    included_in_13month: includedIn13,
+    recurring
   };
 
   if (id) {
@@ -1916,6 +2097,7 @@ async function editIncomeType(id) {
     document.getElementById('incomeTypeCost').value = parseFloat(item.cost || 0).toFixed(2);
     document.getElementById('incomeTypeTaxable').checked = item.taxable == 1;
     document.getElementById('incomeType13th').checked = item.included_in_13month == 1;
+    document.getElementById('incomeTypeRecurring').checked = item.recurring == 1;
     openIncomeTypeForm(false);
   } catch (error) {
     alert(error.message);
@@ -2029,21 +2211,26 @@ async function loadDeductionTypesForAssignments() {
 }
 
 function openEmployeeDeductionForm(reset = true) {
-  const form = document.getElementById('employeeDeductionForm');
-  if (!form) return;
-  form.style.display = 'block';
   if (reset) {
     document.getElementById('employeeDeductionAssignmentId').value = '';
     document.getElementById('deductionEmployeeSelect').value = '';
     document.getElementById('deductionTypeSelect').value = '';
     document.getElementById('selectedDeductionCost').value = '';
   }
+
+  const modalElement = document.getElementById('employeeDeductionModal');
+  const modal = new bootstrap.Modal(modalElement);
+  modal.show();
 }
 
 function hideEmployeeDeductionForm() {
-  const form = document.getElementById('employeeDeductionForm');
-  if (!form) return;
-  form.style.display = 'none';
+  const modalElement = document.getElementById('employeeDeductionModal');
+  if (modalElement) {
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+      modal.hide();
+    }
+  }
 }
 
 function openPremiumTypeForm() {
@@ -2201,7 +2388,7 @@ async function loadEmployeesForDeductions() {
   const tableBody = document.querySelector('#employeeDeductionSearchTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading employees...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading employees...</td></tr>';
 
   try {
     const response = await fetch('../Employee_management/employees_api.php');
@@ -2215,7 +2402,7 @@ async function loadEmployeesForDeductions() {
     populateDeductionEmployeeSelect();
 
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No employees found.</td></tr>';
       paginateTable('employeeDeductionSearchTable', 'employeeDeductionSearchPagination', true);
       return;
     }
@@ -2227,16 +2414,13 @@ async function loadEmployeesForDeductions() {
         <td>${emp.id}</td>
         <td>${emp.name}</td>
         <td>${emp.email}</td>
-        <td>${emp.position}</td>
-        <td>${emp.department}</td>
         <td>₱${parseFloat(emp.salary).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-        <td>${emp.status}</td>
       `;
       tableBody.appendChild(row);
     });
     paginateTable('employeeDeductionSearchTable', 'employeeDeductionSearchPagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeeDeductionSearchTable', 'employeeDeductionSearchPagination', true);
   }
 }
@@ -2569,9 +2753,6 @@ async function fetchEmployeeDeductionAssignments() {
 }
 
 function openEmployeeIncomeForm(reset = true) {
-  const form = document.getElementById('employeeIncomeForm');
-  if (!form) return;
-  form.style.display = 'block';
   if (reset) {
     document.getElementById('employeeIncomeAssignmentId').value = '';
     document.getElementById('incomeEmployeeSelect').value = '';
@@ -2580,12 +2761,20 @@ function openEmployeeIncomeForm(reset = true) {
     document.getElementById('selectedIncomeTaxable').checked = false;
     document.getElementById('selectedIncome13th').checked = false;
   }
+
+  const modalElement = document.getElementById('employeeIncomeModal');
+  const modal = new bootstrap.Modal(modalElement);
+  modal.show();
 }
 
 function hideEmployeeIncomeForm() {
-  const form = document.getElementById('employeeIncomeForm');
-  if (!form) return;
-  form.style.display = 'none';
+  const modalElement = document.getElementById('employeeIncomeModal');
+  if (modalElement) {
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+      modal.hide();
+    }
+  }
 }
 
 function updateSelectedIncomeDetails() {
@@ -2677,7 +2866,7 @@ function renderEmployeeIncomeAssignments() {
   const tableBody = document.querySelector('#employeeIncomeAssignmentTable tbody');
   if (!tableBody) return;
   if (employeeIncomeAssignments.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No assigned income items yet.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No assigned income items yet.</td></tr>';
     paginateTable('employeeIncomeAssignmentTable', 'employeeIncomeAssignmentPagination', true);
     return;
   }
@@ -2686,6 +2875,7 @@ function renderEmployeeIncomeAssignments() {
   employeeIncomeAssignments.forEach(item => {
     const isTaxable = Number(item.taxable) === 1;
     const isIncludedIn13th = Number(item.included13) === 1;
+    const isRecurring = Number(item.recurring) === 1;
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${item.employeeName}</td>
@@ -2693,6 +2883,7 @@ function renderEmployeeIncomeAssignments() {
       <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
       <td>${isTaxable ? 'Yes' : 'No'}</td>
       <td>${isIncludedIn13th ? 'Yes' : 'No'}</td>
+      <td>${isRecurring ? 'Yes' : 'No'}</td>
       <td>
         <button type="button" class="btn btn-sm btn-warning edit-employee-income">Edit</button>
         <button type="button" class="btn btn-sm btn-danger delete-employee-income">Delete</button>
@@ -3081,7 +3272,7 @@ async function loadEmployees() {
   const tableBody = document.querySelector('#employeeSearchTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading employees...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading employees...</td></tr>';
 
   try {
     const response = await fetch('../Employee_management/employees_api.php');
@@ -3094,7 +3285,7 @@ async function loadEmployees() {
     employeesForIncome = rows;
     populateEmployeeSelect();
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No employees found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No employees found.</td></tr>';
       paginateTable('employeeSearchTable', 'employeeSearchPagination', true);
       return;
     }
@@ -3106,16 +3297,13 @@ async function loadEmployees() {
         <td>${emp.id}</td>
         <td>${emp.name}</td>
         <td>${emp.email}</td>
-        <td>${emp.position}</td>
-        <td>${emp.department}</td>
         <td>₱${parseFloat(emp.salary).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-        <td>${emp.status}</td>
       `;
       tableBody.appendChild(row);
     });
     paginateTable('employeeSearchTable', 'employeeSearchPagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeeSearchTable', 'employeeSearchPagination', true);
   }
 }
@@ -3144,15 +3332,17 @@ async function loadEmployeeSalary() {
   tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading employees...</td></tr>';
 
   try {
-    const [employeeResponse, attendanceResponse, assignedIncomeResponse] = await Promise.all([
+    const [employeeResponse, attendanceResponse, assignedIncomeResponse, incomeTypesResponse] = await Promise.all([
       fetch('../Employee_management/employees_api.php'),
       fetch('attendance_api.php'),
-      fetch('assigned_emp_inc_api.php')
+      fetch('assigned_emp_inc_api.php'),
+      fetch('emp_inc_type_api.php')
     ]);
 
     const employeeResult = await employeeResponse.json();
     const attendanceResult = attendanceResponse.ok ? await attendanceResponse.json() : { success: false, data: [] };
     const assignedIncomeResult = assignedIncomeResponse.ok ? await assignedIncomeResponse.json() : { success: false, data: [] };
+    const incomeTypesResult = incomeTypesResponse.ok ? await incomeTypesResponse.json() : { success: false, data: [] };
 
     if (!employeeResult.success) {
       throw new Error(employeeResult.message || 'Unable to load employees.');
@@ -3163,6 +3353,13 @@ async function loadEmployeeSalary() {
 
     const attendanceRows = attendanceResult.success ? (attendanceResult.data || []) : [];
     const assignedIncomeData = assignedIncomeResult.success ? (assignedIncomeResult.data || []) : [];
+    const incomeTypesData = incomeTypesResult.success ? (incomeTypesResult.data || []) : [];
+    
+    // Calculate total recurring income (all income types marked as recurring)
+    const recurringIncomeTotal = incomeTypesData
+      .filter(type => Number(type.recurring) === 1)
+      .reduce((sum, type) => sum + (Number(type.cost) || 0), 0);
+    
     const nonTaxableCostByEmployee = buildNonTaxableIncomeMap(assignedIncomeData);
     const totalIncomeByEmployee = buildTotalIncomeMap(assignedIncomeData);
     const minutesByEmployee = new Map();
@@ -3209,11 +3406,21 @@ async function loadEmployeeSalary() {
       const totalHoursWorked = totalMinutesWorked / 60;
       const biSalary = grossPayPerDay * totalHoursWorked;
       const employeeNameKey = String(emp.name || '').trim().toLowerCase();
-      const totalAllowance = (totalIncomeByEmployee[employeeNameKey] || 0) / 2;
+      const assignedIncomeAllowance = (totalIncomeByEmployee[employeeNameKey] || 0) / 2;
+      // Add recurring income to the total allowance
+      const totalAllowance = assignedIncomeAllowance + (recurringIncomeTotal / 2);
       const legalHoliday = 0;
       const specialHoliday = 0;
       const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
-      const { totalDeductions } = computePremiumDeductions(salary, nonTaxableIncome);
+      const premium = computePremiumDeductions(salary, nonTaxableIncome);
+      let { sssContribution, pagibigContribution, philhealthContribution, withholdingTax, totalDeductions } = premium;
+
+      // When there is no attendance (no hours worked), do not apply withholding tax
+      if (totalHoursWorked <= 0) {
+        withholdingTax = 0;
+        totalDeductions = (Number(sssContribution) || 0) + (Number(pagibigContribution) || 0) + (Number(philhealthContribution) || 0) + (Number(withholdingTax) || 0);
+      }
+
       const netPay = biSalary + totalAllowance + legalHoliday + specialHoliday - totalDeductions;
 
       const row = document.createElement('tr');
@@ -3719,7 +3926,8 @@ async function fetchEmployeeIncomeAssignments() {
           // Show latest cost from income types table when available.
           cost: latestType ? latestType.cost : item.cost,
           taxable: latestType ? latestType.taxable : item.taxable,
-          included13: latestType ? latestType.included_in_13month : item['month_13th']
+          included13: latestType ? latestType.included_in_13month : item['month_13th'],
+          recurring: latestType ? latestType.recurring : 0
         };
       });
       renderEmployeeIncomeAssignments();
@@ -3736,6 +3944,9 @@ async function fetchEmployeeIncomeAssignments() {
 // Call fetchEmployeeIncomeAssignments when the page loads or data needs to be refreshed
 fetchEmployeeIncomeAssignments();
 </script>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Premium Tables CRUD Management -->
 <script src="premium_tables_manager.js"></script>

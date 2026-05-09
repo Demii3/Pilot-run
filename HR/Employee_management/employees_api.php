@@ -202,8 +202,13 @@ if ($method === 'POST') {
 
     if (isset($input['id']) && is_numeric($input['id'])) {
         $id = intval($input['id']);
-        $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, username = ?, type = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, 'ssssssdssi', $name, $email, $username, $type, $position, $department, $salary, $joinDate, $status, $id);
+        if ($password === null) {
+            $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, username = ?, type = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, 'ssssssdssi', $name, $email, $username, $type, $position, $department, $salary, $joinDate, $status, $id);
+        } else {
+            $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, username = ?, password = ?, type = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, 'sssssssdssi', $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status, $id);
+        }
         if (!mysqli_stmt_execute($stmt)) {
             respond(false, null, 'Database update failed: ' . mysqli_error($dbc));
         }

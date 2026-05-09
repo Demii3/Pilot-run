@@ -5,7 +5,7 @@
       <button class="btn btn-info me-2" onclick="document.getElementById('importFile').click()">Import from Excel</button>
       <input type="file" id="importFile" accept=".csv,.xlsx,.xls" style="display: none;" onchange="importFromExcel(this)">
       <button class="btn btn-success me-2" onclick="exportToExcel()">Export to Excel</button>
-      <button class="btn btn-primary add-employee-btn">+ Add Employee</button>
+      <button class="btn btn-primary add-employee-btn" onclick="openAddForm()">+ Add Employee</button>
     </div>
   </div>
 
@@ -43,7 +43,7 @@
 
       <div class="form-group">
         <label for="password">Password:</label>
-        <input type="password" id="password" class="form-control" required>
+        <input type="password" id="password" class="form-control">
       </div>
 
       <div class="form-group">

@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 12, 2026 at 03:04 PM
+-- Generation Time: May 09, 2026 at 03:02 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -74,7 +74,7 @@ CREATE TABLE `deleted_geofences` (
 --
 
 CREATE TABLE `employees` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id` int(10) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `username` varchar(255) NOT NULL,
@@ -84,8 +84,7 @@ CREATE TABLE `employees` (
   `department` varchar(255) NOT NULL,
   `salary` decimal(15,2) NOT NULL DEFAULT 0.00,
   `join_date` date NOT NULL,
-  `status` varchar(50) NOT NULL DEFAULT 'Active',
-  PRIMARY KEY (`id`)
+  `status` varchar(50) NOT NULL DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -95,16 +94,13 @@ CREATE TABLE `employees` (
 INSERT INTO `employees` (`id`, `name`, `email`, `username`, `password`, `type`, `position`, `department`, `salary`, `join_date`, `status`) VALUES
 (3, 'Romer Navoa', 'romer.navoa@gmail.com', 'Romer', '123', 'HR', 'Director', 'CpE', 123456.00, '2004-09-26', 'Active'),
 (4, 'Alexis Eron', 'axiserondc@gmail.com', 'Alexis', '123', 'Emp', 'Chief Operating Office', 'CpE', 45000.50, '2026-04-09', 'Active'),
-(5, 'Romer Navoa', 'romer.navoa09@gmail.com', 'Omer', '123', 'Emp', 'Sex', 'Office', 100000.00, '2025-12-29', 'Inactive'),
 (6, 'Justine Simone Garcia', 'justingarcia@adamson.edu.ph', 'Justine', '123', 'Emp', 'ewan ko', 'CpE', 123456.00, '2025-09-10', 'Active'),
 (7, 'Demetri Mayor', 'demetri@yahoo.com', 'Demetri', '123', 'Emp', 'Baka', 'CpE', 123656.00, '2026-04-09', 'Active'),
 (8, 'Jeremiah Guarino', 'palemlem@gmail.com', 'Jeremiah', '123', 'Emp', 'Doggy', 'CpE', 123456.00, '2026-04-09', 'Active'),
 (9, 'Joseph Mayor', 'joseph@yahoo.com', 'Joseph', '123', 'Emp', 'asdfgsdfa', 'adfs', 1234.00, '2001-12-31', 'Active'),
-(10, 'Simone Factor', 'factor@simone.com', 'Simone', '123', 'Emp', 'adik', 'PDEA', 1236.00, '2001-03-31', 'Active'),
+(10, 'Simone Factor', 'factor@simone.com', 'Simone', '123', 'Emp', 'Super Adik', 'PDEA', 1236.00, '2001-03-31', 'Active'),
 (11, 'Ken Axel Quanico', '12343556kenaxelquanico@gmail.com', 'Ken', '123', 'Emp', 'Yearner', 'CpE', 676767.00, '2003-12-31', 'Active'),
-(12, 'Eron De La Cruz', 'eronski@gmail.com', 'Eron', '123', 'Emp', 'Bully', 'CpE', 124245.00, '2026-04-09', 'Active'),
-(13, 'Factor Bread', 'breadfactor@gmail.com', 'Factor', '123', 'Emp', 'Sakit sa Ulo', 'CpE', 689.00, '2026-04-09', 'Active'),
-(14, 'Simone The Factor', 'simonef@gmail.com', 'Simone', '123', 'Emp', 'kahit ano', 'cpe', 12389.00, '2003-09-12', 'Active');
+(12, 'Eron De La Cruz', 'eronski@gmail.com', 'Erin', '123', 'Emp', 'Bully', 'CpE', 124245.00, '2026-04-09', 'Active');
 
 -- --------------------------------------------------------
 
@@ -131,25 +127,16 @@ CREATE TABLE `employee_attendance` (
 --
 
 INSERT INTO `employee_attendance` (`Attendance_id`, `Emp_id`, `Date`, `Location`, `Coordinates`, `Clock_in`, `Clock_out`, `Clockin_status`, `Clockout_status`, `Duration`, `AO`) VALUES
-(64, 4, '2026-04-01', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '05:00:00 PM', 'On-leave', 'Present', 480, 0),
-(65, 4, '2026-04-02', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '05:00:00 PM', 'On-time', 'Present', 480, 0),
-(66, 4, '2026-04-03', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '05:00:00 PM', 'On-time', 'Present', 480, 0),
-(67, 4, '2026-04-04', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '05:00:00 PM', 'On-time', 'Present', 480, 0),
-(68, 4, '2026-04-05', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '05:36:10 PM', 'On-time', 'Over-time (Rejected)', 516, 0),
-(69, 4, '2026-04-06', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '05:39:22 PM', 'On-time', 'Over-time (Allowed)', 519, 1),
-(70, 4, '2026-04-07', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '06:41:04 PM', 'On-time', 'Over-time (Allowed)', 581, 1),
-(71, 4, '2026-04-08', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '09:25:16 PM', 'On-time', 'Over-time (Rejected)', 745, 0),
-(72, 4, '2026-04-09', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '05:00:00 PM', 'On-time', 'Present', 480, 0),
-(73, 4, '2026-04-10', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '07:05:25 PM', 'On-time', 'Over-time (Allowed)', 605, 1),
-(74, 4, '2026-04-11', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '07:05:28 PM', 'On-time', 'Over-time (Allowed)', 605, 1),
-(75, 4, '2026-04-12', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '7:05:34 PM', '7:05:35 PM', 'Late', 'Over-time', 0, 0),
-(76, 4, '2026-04-13', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '07:05:36 PM', 'On-time', 'Over-time (Rejected)', 605, 0),
-(77, 4, '2026-04-14', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '07:05:38 PM', 'On-time', 'Over-time (Allowed)', 605, 1),
-(78, 4, '2026-04-15', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '07:05:39 PM', 'On-time', 'Over-time (Rejected)', 605, 0),
-(79, 4, '2026-04-16', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '05:00:00 PM', 'On-time', 'Present', 480, 0),
-(80, 4, '2026-04-17', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '05:00:00 PM', 'On-leave', 'Present', 480, 0),
-(81, 4, '2026-04-18', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '07:05:51 PM', 'On-time', 'Over-time (Rejected)', 605, 0),
-(82, 4, '2026-04-12', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '08:00:00 AM', '02:05:52 PM', 'On-time', 'Under-time', 305, 0);
+(64, 4, '2026-04-01', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '8:00 AM', '5:00 PM', 'On-time', 'Present', 480, 0),
+(65, 4, '2026-04-02', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '8:01 AM', '5:00 PM', 'Late', 'Present', 479, 0),
+(66, 4, '2026-04-03', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '8:00 AM', '5:00 PM', 'On-time', 'Present', 480, 0),
+(67, 4, '2026-04-04', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '8:00 AM', '6:00 PM', 'On-time', 'Over-time', 480, 0),
+(68, 4, '2026-04-05', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '8:00 AM', '5:36 PM', 'On-time', 'Over-time', 480, 0),
+(69, 4, '2026-04-06', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '6:02 AM', '5:39 PM', 'On-time', 'Over-time', 598, 0),
+(70, 4, '2026-04-07', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '8:00 AM', '7:41 PM', 'On-time', 'Over-time', 641, 0),
+(71, 4, '2026-04-08', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '7:00 AM', '9:25 PM', 'On-time', 'Over-time', 805, 1),
+(83, 4, '2026-04-22', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '8:00 AM', '7:00 PM', 'On-time', 'Over-time', 480, 0),
+(84, 4, '2026-04-22', 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.58729021475', '8:00 AM', '6:00 PM', 'On-time', 'Over-time', 480, 0);
 
 -- --------------------------------------------------------
 
@@ -169,8 +156,7 @@ CREATE TABLE `employee_location` (
 
 INSERT INTO `employee_location` (`tb_id`, `User_Id`, `loc_id`) VALUES
 (1, 4, 1),
-(2, 4, 2),
-(3, 5, 2);
+(2, 4, 2);
 
 -- --------------------------------------------------------
 
@@ -181,6 +167,7 @@ INSERT INTO `employee_location` (`tb_id`, `User_Id`, `loc_id`) VALUES
 CREATE TABLE `emp_deduc_type` (
   `id` int(10) UNSIGNED NOT NULL,
   `type_of_deduction` varchar(255) NOT NULL,
+  `cost` decimal(15,2) NOT NULL DEFAULT 0.00,
   `taxable` tinyint(1) NOT NULL DEFAULT 1,
   `included_in_13month` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -199,6 +186,7 @@ CREATE TABLE `emp_inc_type` (
   `cost` decimal(15,2) NOT NULL DEFAULT 0.00,
   `taxable` tinyint(1) NOT NULL DEFAULT 1,
   `included_in_13month` tinyint(1) NOT NULL DEFAULT 1,
+  `recurring` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -229,6 +217,73 @@ INSERT INTO `geofences` (`id`, `name`, `coordinates`, `created_at`, `updated_at`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `hr_attendance_settings`
+--
+
+CREATE TABLE `hr_attendance_settings` (
+  `id` int(11) NOT NULL,
+  `Manual_mode` tinyint(1) NOT NULL,
+  `Hide_attendance_id` tinyint(1) NOT NULL,
+  `Hide_employee_id` tinyint(1) NOT NULL,
+  `Hide_name` tinyint(1) NOT NULL,
+  `Hide_department` tinyint(1) NOT NULL,
+  `Hide_date` tinyint(1) NOT NULL,
+  `Hide_locations` tinyint(1) NOT NULL,
+  `Hide_clockin` tinyint(1) NOT NULL,
+  `Hide_clockinstatus` tinyint(1) NOT NULL,
+  `Hide_clockout` tinyint(1) NOT NULL,
+  `Hide_clockoutstatus` tinyint(1) NOT NULL,
+  `Hide_duration` tinyint(1) NOT NULL,
+  `Hide_AO` tinyint(1) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `hr_attendance_settings`
+--
+
+INSERT INTO `hr_attendance_settings` (`id`, `Manual_mode`, `Hide_attendance_id`, `Hide_employee_id`, `Hide_name`, `Hide_department`, `Hide_date`, `Hide_locations`, `Hide_clockin`, `Hide_clockinstatus`, `Hide_clockout`, `Hide_clockoutstatus`, `Hide_duration`, `Hide_AO`) VALUES
+(1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `premiums`
+--
+
+CREATE TABLE `premiums` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `employee_id` int(10) UNSIGNED NOT NULL,
+  `employee_name` varchar(255) NOT NULL,
+  `sss` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `philhealth` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `pagibig` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `withholding_tax` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_premium` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `premiums`
+--
+
+INSERT INTO `premiums` (`id`, `employee_id`, `employee_name`, `sss`, `philhealth`, `pagibig`, `withholding_tax`, `total_premium`, `created_at`, `updated_at`) VALUES
+(1, 3, 'Romer Navoa', 1750.00, 1375.00, 200.00, 21907.80, 25232.80, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(2, 4, 'Alexis Eron', 1750.00, 1237.51, 200.00, 3571.00, 6758.51, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(3, 5, 'Romer Navoa', 1750.00, 1375.00, 200.00, 16043.80, 19368.80, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(4, 6, 'Justine Simone Garcia', 1750.00, 1375.00, 200.00, 21907.80, 25232.80, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(5, 7, 'Demetri Mayor', 1750.00, 1375.00, 200.00, 21957.80, 25282.80, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(6, 8, 'Jeremiah Guarino', 1750.00, 1375.00, 200.00, 21907.80, 25232.80, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(7, 9, 'Joseph Mayor', 250.00, 275.00, 12.34, 0.00, 537.34, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(8, 10, 'Simone Factor', 250.00, 275.00, 12.36, 0.00, 537.36, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(9, 11, 'Ken Axel Quanico', 1750.00, 1375.00, 200.00, 185913.05, 189238.05, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(10, 12, 'Eron De La Cruz', 1750.00, 1375.00, 200.00, 22105.05, 25430.05, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(11, 13, 'Factor Bread', 250.00, 275.00, 6.89, 0.00, 531.89, '2026-04-13 14:55:55', '2026-04-13 14:55:55'),
+(12, 14, 'Simone The Factor', 625.00, 340.70, 200.00, 0.00, 1165.70, '2026-04-13 14:55:55', '2026-04-13 14:55:55');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -237,26 +292,24 @@ CREATE TABLE `users` (
   `Username` varchar(255) NOT NULL,
   `Password` varchar(255) NOT NULL,
   `Type` varchar(255) NOT NULL,
-  `Clockin_status` varchar(255) NOT NULL
+  `Clockin_status` varchar(255) NOT NULL,
+  `Work_status` varchar(255) NOT NULL DEFAULT 'Tapped-out'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`, `Clockin_status`) VALUES
-(3, 'Romer', '123', 'HR', 'Tapped-out'),
-(4, 'Alexis', '123', 'Emp', 'Tapped-out'),
-(5, 'Omer', '123', 'Emp', 'Tapped-out'),
-(6, 'Justine', '123', 'Emp', 'Tapped-out'),
-(7, 'Demetri', '123', 'Emp', 'Tapped-out'),
-(8, 'Jeremiah', '123', 'Emp', 'Tapped-out'),
-(9, 'Joseph', '123', 'Emp', 'Tapped-out'),
-(10, 'Simone', '123', 'Emp', 'Tapped-out'),
-(11, 'Ken', '123', 'Emp', 'Tapped-out'),
-(12, 'Eron', '123', 'Emp', 'Tapped-out'),
-(13, 'Factor', '123', 'Emp', 'Tapped-out'),
-(14, 'Simone', '123', 'Emp', 'Tapped-out');
+INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`, `Clockin_status`, `Work_status`) VALUES
+(3, 'Romer', '123', 'HR', 'Tapped-out', 'Tapped-out'),
+(4, 'Alexis', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(6, 'Justine', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(7, 'Demetri', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(8, 'Jeremiah', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(9, 'Joseph', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(10, 'Simone', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(11, 'Ken', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(12, 'Erin', '123', 'Emp', 'Tapped-out', 'Tapped-out');
 
 --
 -- Indexes for dumped tables
@@ -320,10 +373,23 @@ ALTER TABLE `geofences`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `hr_attendance_settings`
+--
+ALTER TABLE `hr_attendance_settings`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `premiums`
+--
+ALTER TABLE `premiums`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_employee_id` (`employee_id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD KEY `User_id` (`User_id`);
+  ADD KEY `users_ibfk_1` (`User_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -345,13 +411,13 @@ ALTER TABLE `assigned_emp_inc`
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `employee_attendance`
 --
 ALTER TABLE `employee_attendance`
-  MODIFY `Attendance_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
+  MODIFY `Attendance_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
 
 --
 -- AUTO_INCREMENT for table `employee_location`
@@ -378,6 +444,18 @@ ALTER TABLE `geofences`
   MODIFY `id` bigint(255) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `hr_attendance_settings`
+--
+ALTER TABLE `hr_attendance_settings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `premiums`
+--
+ALTER TABLE `premiums`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
 -- Constraints for dumped tables
 --
 
@@ -398,75 +476,9 @@ ALTER TABLE `employee_location`
 -- Constraints for table `users`
 --
 ALTER TABLE `users`
-  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`User_id`) REFERENCES `employees` (`id`);
+  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`User_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
--- --------------------------------------------------------
-
--- Table structure for table `Assigned_Inc`
-
-CREATE TABLE IF NOT EXISTS `Assigned_Inc` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `employee_id` INT UNSIGNED NOT NULL,
-  `income_type_id` INT UNSIGNED NOT NULL,
-  `type_of_income` VARCHAR(255) NOT NULL,
-  `cost` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
-  `taxable` TINYINT(1) NOT NULL DEFAULT 0,
-  `included_in_13month` TINYINT(1) NOT NULL DEFAULT 0,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX (`employee_id`),
-  INDEX (`income_type_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
--- Table structure for table `Emp_Deduc_Type`
-
-CREATE TABLE IF NOT EXISTS `Emp_Deduc_Type` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `type_of_deduction` VARCHAR(255) NOT NULL,
-  `taxable` TINYINT(1) NOT NULL DEFAULT 1,
-  `included_in_13month` TINYINT(1) NOT NULL DEFAULT 1,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
--- Table structure for table `Emp_Inc_Type`
-
-CREATE TABLE IF NOT EXISTS `Emp_Inc_Type` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `type_of_income` VARCHAR(255) NOT NULL,
-  `cost` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
-  `taxable` TINYINT(1) NOT NULL DEFAULT 1,
-  `included_in_13month` TINYINT(1) NOT NULL DEFAULT 1,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
--- Table structure for table `premiums`
-
-CREATE TABLE IF NOT EXISTS `premiums` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `employee_id` INT UNSIGNED NOT NULL,
-  `employee_name` VARCHAR(255) NOT NULL,
-  `sss` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
-  `philhealth` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
-  `pagibig` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
-  `withholding_tax` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
-  `total_premium` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_employee_id` (`employee_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
