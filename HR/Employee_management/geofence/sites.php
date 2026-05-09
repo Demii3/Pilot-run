@@ -60,6 +60,41 @@
         </div>
         <div id="geofence-list"></div>
       </div>
+<<<<<<< Updated upstream
+=======
+
+      <div id="assignSection" class="card sites-card" style="display:none;">
+        <div class="sites-header">
+          <h3>Assign Employee to Site</h3>
+        </div>
+        <div style="display:flex; gap:15px; padding:25px; min-height:600px; height:calc(100vh - 280px);">
+          <!-- Left: Form -->
+          <div style="flex:0 0 300px; overflow-y:auto;">
+            <form id="assignForm">
+              <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:8px; font-weight:500;">Select Geofence Site</label>
+                <select id="siteSelect" name="geofence_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
+                  <option value="">-- choose site --</option>
+                </select>
+              </div>
+              <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:8px; font-weight:500;">Select Employee</label>
+                <select id="employeeSelect" name="employee_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
+                  <option value="">-- choose employee --</option>
+                </select>
+              </div>
+              <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer; width:100%;">Assign Employee</button>
+            </form>
+            <div id="assignMsg" style="margin-top:15px;"></div>
+          </div>
+
+          <!-- Right: Map Preview -->
+          <div style="flex:1; background:#f3f4f6; border-radius:6px; overflow:hidden; display:none; min-width:400px;" id="mapContainer">
+            <div id="assignMap" style="width:100%; height:100%;"></div>
+          </div>
+        </div>
+      </div>
+>>>>>>> Stashed changes
     </div>
   </div>
 
