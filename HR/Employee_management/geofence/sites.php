@@ -60,23 +60,31 @@
         <div class="sites-header">
           <h3>Assign Employee to Site</h3>
         </div>
-        <div style="padding: 20px;">
-          <form id="assignForm">
-            <div style="margin-bottom: 15px;">
-              <label style="display:block; margin-bottom:8px; font-weight:500;">Select Geofence Site</label>
-              <select id="siteSelect" name="geofence_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
-                <option value="">-- choose site --</option>
-              </select>
-            </div>
-            <div style="margin-bottom: 15px;">
-              <label style="display:block; margin-bottom:8px; font-weight:500;">Select Employee</label>
-              <select id="employeeSelect" name="employee_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
-                <option value="">-- choose employee --</option>
-              </select>
-            </div>
-            <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer;">Assign Employee</button>
-          </form>
-          <div id="assignMsg" style="margin-top:15px;"></div>
+        <div style="display:flex; gap:20px; padding:20px; min-height:400px;">
+          <!-- Left: Form -->
+          <div style="flex:1; min-width:300px;">
+            <form id="assignForm">
+              <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:8px; font-weight:500;">Select Geofence Site</label>
+                <select id="siteSelect" name="geofence_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
+                  <option value="">-- choose site --</option>
+                </select>
+              </div>
+              <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:8px; font-weight:500;">Select Employee</label>
+                <select id="employeeSelect" name="employee_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
+                  <option value="">-- choose employee --</option>
+                </select>
+              </div>
+              <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer; width:100%;">Assign Employee</button>
+            </form>
+            <div id="assignMsg" style="margin-top:15px;"></div>
+          </div>
+
+          <!-- Right: Map Preview -->
+          <div style="flex:1; min-width:300px; background:#f3f4f6; border-radius:6px; overflow:hidden; display:none;" id="mapContainer">
+            <div id="assignMap" style="width:100%; height:100%;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -90,6 +98,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     let savedGeofences = [];
+    let geofencesForAssign = [];
+    let assignmentMapInstance = null;
 
     function toggleMenu() {
       document.getElementById('profileMenu').classList.toggle('active');
@@ -294,6 +304,7 @@
     function showAssignSection() {
       document.getElementById('sitesSection').style.display = 'none';
       document.getElementById('assignSection').style.display = 'block';
+      document.getElementById('mapContainer').style.display = 'none';
       
       // Update active button
       const sidebarButtons = document.querySelectorAll('.sidebar button');
@@ -309,6 +320,12 @@
       document.getElementById('sitesSection').style.display = 'block';
       document.getElementById('assignSection').style.display = 'none';
       
+      // Clean up map
+      if (assignmentMapInstance) {
+        assignmentMapInstance.remove();
+        assignmentMapInstance = null;
+      }
+      
       // Update active button
       const sidebarButtons = document.querySelectorAll('.sidebar button');
       sidebarButtons.forEach(btn => btn.classList.remove('active'));
@@ -322,6 +339,7 @@
       fetch('geofences.php')
         .then(function(res) { return res.json(); })
         .then(function(data) {
+          geofencesForAssign = data;
           const select = document.getElementById('siteSelect');
           select.innerHTML = '<option value="">-- choose site --</option>';
           data.forEach(function(gf) {
@@ -330,10 +348,80 @@
             option.textContent = gf.name;
             select.appendChild(option);
           });
+          
+          // Add change event listener
+          select.removeEventListener('change', handleSiteSelectChange);
+          select.addEventListener('change', handleSiteSelectChange);
         })
         .catch(function(err) {
           console.error('Error loading geofences:', err);
         });
+    }
+
+    function handleSiteSelectChange() {
+      const siteId = document.getElementById('siteSelect').value;
+      if (!siteId) {
+        document.getElementById('mapContainer').style.display = 'none';
+        return;
+      }
+
+      const selectedGeofence = geofencesForAssign.find(gf => gf.id == siteId);
+      if (!selectedGeofence) return;
+
+      displayAssignmentMap(selectedGeofence);
+    }
+
+    function displayAssignmentMap(geofence) {
+      const mapContainer = document.getElementById('mapContainer');
+      mapContainer.style.display = 'block';
+
+      // Parse coordinates
+      let coordinates = [];
+      try {
+        coordinates = JSON.parse(geofence.coordinates);
+      } catch (e) {
+        console.error('Invalid coordinates:', e);
+        return;
+      }
+
+      // Destroy existing map
+      if (assignmentMapInstance) {
+        assignmentMapInstance.remove();
+        assignmentMapInstance = null;
+      }
+
+      // Create new map
+      setTimeout(function() {
+        assignmentMapInstance = L.map('assignMap', {
+          zoomControl: true,
+          attributionControl: false,
+          dragging: true,
+          scrollWheelZoom: true,
+          doubleClickZoom: true
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '',
+          maxZoom: 19
+        }).addTo(assignmentMapInstance);
+
+        // Create polygon
+        const polygon = L.polygon(coordinates, {
+          color: '#3b82f6',
+          weight: 2,
+          fillOpacity: 0.2,
+          fillColor: '#3b82f6'
+        }).addTo(assignmentMapInstance);
+
+        // Fit bounds
+        assignmentMapInstance.fitBounds(polygon.getBounds(), { padding: [50, 50] });
+
+        // Invalidate size to fix rendering
+        setTimeout(function() {
+          assignmentMapInstance.invalidateSize();
+          assignmentMapInstance.fitBounds(polygon.getBounds(), { padding: [50, 50] });
+        }, 100);
+      }, 50);
     }
 
     function loadEmployeesForAssign() {
