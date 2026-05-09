@@ -13,6 +13,8 @@
 	echo "<input type='hidden' id='userId' value='".$_SESSION['id']."'>";
 	echo "<input type='hidden' id='username' value='".$_SESSION['username']."'>";
 	echo "<input type='hidden' id='workStatus' value='".$_SESSION['work_status']."'>";
+	echo "<input type='hidden' id='empLocationLat' value=''>";
+	echo "<input type='hidden' id='empLocationLng' value=''>";
 ?>
 
 <!DOCTYPE html>
@@ -30,6 +32,8 @@
 	<script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin ="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 	<link rel="icon" type="image/png" href="./Images/logo.jpg"/>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+	<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 	<script src="./Assets/Onclick_functions.js" defer></script>
 	<script src="./Assets/Event_functions.js" defer></script>
 	<script src="./Assets/Miscellaneous_functions.js" defer></script>
@@ -77,10 +81,10 @@
 		<h2>Home</h2>
         <hr>
 		<button class="dropdown-btn" type="button">
-			Payroll
+			Home
 		</button>
-		<button class="dropdown-btn" type="button">
-			Reports
+		<button id="attendanceBtn" class="dropdown-btn" type="button">
+			Attendance
 		</button>
 	</div>
 
@@ -120,15 +124,19 @@
 </div>
 
 <script>
-	const userNameElements = document.querySelectorAll('.userName');
-	userNameElements.forEach(element => {
-		element.textContent = document.getElementById('username').value;
-	});
+	function fillspans() {
+		const userNameElements = document.querySelectorAll('.userName');
+		userNameElements.forEach(element => {
+			element.textContent = document.getElementById('username').value;
+		});
 
-	const userTapStatusElements = document.querySelectorAll('.userTapStatus');
-	userTapStatusElements.forEach(element => {
-		element.textContent = document.getElementById('workStatus').value;
-	});
+		const userTapStatusElements = document.querySelectorAll('.userTapStatus');
+		userTapStatusElements.forEach(element => {
+			element.textContent = document.getElementById('workStatus').value;
+		});
+	};
+
+	fillspans();
 	
 	// Update date and time
 	function updateDateTime() {

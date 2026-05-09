@@ -391,8 +391,23 @@ h2 {
   outline: none;
 }
 
+.map-container {
+  width: 100%;
+  height: 400px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 20px;
+  color: #1abc9c;
+}
+
 /* Mobile */
 @media screen and (max-width: 768px) {
+  html, body {
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   body {
     padding-top: 55px;
   }
@@ -437,6 +452,8 @@ h2 {
   .payroll-container {
     flex-direction: column;
     height: auto;
+    min-height: calc(100vh - 55px);
+    overflow: visible;
   }
 
   .sidebar {
@@ -471,6 +488,8 @@ h2 {
     gap: 20px;
     height: auto;
     min-height: calc(100vh - 120px);
+    max-height: none;
+    overflow: visible;
   }
 
   .content h1 {
@@ -570,6 +589,12 @@ h2 {
 
 /* Tablets - Landscape */
 @media screen and (max-width: 1024px) and (orientation: landscape) {
+  html, body {
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   body {
     padding-top: 50px;
   }
@@ -584,6 +609,8 @@ h2 {
 
   .content {
     padding: 30px;
+    max-height: none;
+    overflow: visible;
   }
 
   .content h1 {
@@ -597,6 +624,12 @@ h2 {
 
 /* Small phones */
 @media screen and (max-width: 480px) {
+  html, body {
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   .custom-navbar {
     padding: 8px 10px;
     gap: 6px;
@@ -615,6 +648,8 @@ h2 {
   .content {
     padding: 12px 10px;
     gap: 15px;
+    max-height: none;
+    overflow: visible;
   }
 
   .content h1 {

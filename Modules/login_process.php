@@ -15,7 +15,7 @@
     if($login_start){
         include("dbcon.php");
         /** @var mysqli $dbc */
-        $query = "SELECT id, employees.username, employees.type, employees.status, users.Work_status FROM employees
+        $query = "SELECT id, employees.username, employees.type, employees.status, users.Clockin_status FROM employees
                   JOIN users ON employees.id = users.User_id
                   WHERE users.Username='".mysqli_real_escape_string($dbc, $_POST['username'])."' 
                   AND users.Password='".mysqli_real_escape_string($dbc, $_POST['password'])."'";
@@ -34,7 +34,7 @@
             $_SESSION['username'] = $row['username'];
             $_SESSION['type'] = $row['type'];
             $_SESSION['status'] = $row['status'];
-            $_SESSION['work_status'] = $row['Work_status'];
+            $_SESSION['work_status'] = $row['Clockin_status'];
             $_SESSION['locations'] = [];
             $_SESSION['coordinates'] = [];
             $another__query = "SELECT `name`, `coordinates` 

@@ -2,15 +2,23 @@
     <h1>Employee Dashboard</h1>
     <div class="card">
         <h2>Attendance Module</h2>
-        <p>Hello <span class="userName">User</span>!, you are currently <span class="userStatus">#</span></p>
+        <p>Hello <span class="userName">User</span>!, you are currently <span class="userTapStatus">#</span></p>
     </div>
 </div>
 
 <div class="content-body">
+    <div id="Map-container" class="map-container"></div>
+
     <div class="welcome-card-container">
         <!-- Welcome Card -->
         <div class="welcome-card">
             <div class="welcomecard-left">
+                <button id="tapIn" class="btn btn-success" type="button">
+                    Tap In
+                </button>
+                <button id="refreshLocation" class="btn btn-warning" type="button">
+                    Refresh Location
+                </button>
                 <button id="returnToHome" class="btn btn-primary" type="button">
                     Return to Home
                 </button>
