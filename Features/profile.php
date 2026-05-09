@@ -5,7 +5,7 @@
 session_start();
 
 if (!isset($_SESSION['login']) || !isset($_SESSION['id'])) {
-    header('location: ../index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -19,7 +19,7 @@ mysqli_stmt_bind_param($stmt, 'i', $userId);
 mysqli_stmt_execute($stmt);
 mysqli_stmt_bind_result($stmt, $id, $name, $email, $username, $avatarPath);
 if (!mysqli_stmt_fetch($stmt)) {
-    header('location: ../index.php');
+    header('Location: ../index.php');
     exit;
 }
 mysqli_stmt_close($stmt);
