@@ -64,7 +64,6 @@ $body .= "If you did not request this, please ignore this email.\n";
 
 // For local testing, just return success (email sending requires SMTP config)
 // In production, configure mail() or use a library like PHPMailer
-$emailSent = false;
 if (function_exists('mail')) {
     // Get email from db
     $emailStmt = mysqli_prepare($dbc, "SELECT email FROM employees WHERE id = ?");
@@ -72,7 +71,7 @@ if (function_exists('mail')) {
     mysqli_stmt_execute($emailStmt);
     mysqli_stmt_bind_result($emailStmt, $toEmail);
     if (mysqli_stmt_fetch($emailStmt)) {
-        $emailSent = @mail($toEmail, $subject, $body);
+        @mail($toEmail, $subject, $body);
     }
     mysqli_stmt_close($emailStmt);
 }

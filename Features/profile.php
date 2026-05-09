@@ -14,10 +14,10 @@ include __DIR__ . '/../Modules/dbcon.php';
 $userId = $_SESSION['id'];
 
 // Get current user info
-$stmt = mysqli_prepare($dbc, "SELECT id, name, email, username, avatar_path FROM employees WHERE id = ?");
+$stmt = mysqli_prepare($dbc, "SELECT name, email, username, avatar_path FROM employees WHERE id = ?");
 mysqli_stmt_bind_param($stmt, 'i', $userId);
 mysqli_stmt_execute($stmt);
-mysqli_stmt_bind_result($stmt, $id, $name, $email, $username, $avatarPath);
+mysqli_stmt_bind_result($stmt, $name, $email, $username, $avatarPath);
 if (!mysqli_stmt_fetch($stmt)) {
     header('Location: ../index.php');
     exit;
