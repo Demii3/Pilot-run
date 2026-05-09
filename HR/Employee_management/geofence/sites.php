@@ -375,12 +375,25 @@
       const mapContainer = document.getElementById('mapContainer');
       mapContainer.style.display = 'block';
 
-      // Parse coordinates
+      // Parse coordinates - handle both array and string formats
       let coordinates = [];
       try {
-        coordinates = JSON.parse(geofence.coordinates);
+        if (typeof geofence.coordinates === 'string') {
+          // Remove any non-JSON characters and parse
+          const cleanCoords = geofence.coordinates.trim();
+          coordinates = JSON.parse(cleanCoords);
+        } else {
+          coordinates = geofence.coordinates;
+        }
+        
+        // Validate coordinates
+        if (!Array.isArray(coordinates) || coordinates.length < 3) {
+          throw new Error('Invalid coordinate array');
+        }
       } catch (e) {
-        console.error('Invalid coordinates:', e);
+        console.error('Error parsing coordinates:', e);
+        console.log('Raw coordinates:', geofence.coordinates);
+        mapContainer.innerHTML = '<div style="padding:20px; display:flex; align-items:center; justify-content:center; height:100%; color:#666;">Invalid map data for this site</div>';
         return;
       }
 
@@ -392,35 +405,40 @@
 
       // Create new map
       setTimeout(function() {
-        assignmentMapInstance = L.map('assignMap', {
-          zoomControl: true,
-          attributionControl: false,
-          dragging: true,
-          scrollWheelZoom: true,
-          doubleClickZoom: true
-        });
+        try {
+          assignmentMapInstance = L.map('assignMap', {
+            zoomControl: true,
+            attributionControl: false,
+            dragging: true,
+            scrollWheelZoom: true,
+            doubleClickZoom: true
+          });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '',
-          maxZoom: 19
-        }).addTo(assignmentMapInstance);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '',
+            maxZoom: 19
+          }).addTo(assignmentMapInstance);
 
-        // Create polygon
-        const polygon = L.polygon(coordinates, {
-          color: '#3b82f6',
-          weight: 2,
-          fillOpacity: 0.2,
-          fillColor: '#3b82f6'
-        }).addTo(assignmentMapInstance);
+          // Create polygon
+          const polygon = L.polygon(coordinates, {
+            color: '#3b82f6',
+            weight: 2,
+            fillOpacity: 0.2,
+            fillColor: '#3b82f6'
+          }).addTo(assignmentMapInstance);
 
-        // Fit bounds
-        assignmentMapInstance.fitBounds(polygon.getBounds(), { padding: [50, 50] });
-
-        // Invalidate size to fix rendering
-        setTimeout(function() {
-          assignmentMapInstance.invalidateSize();
+          // Fit bounds
           assignmentMapInstance.fitBounds(polygon.getBounds(), { padding: [50, 50] });
-        }, 100);
+
+          // Invalidate size to fix rendering
+          setTimeout(function() {
+            assignmentMapInstance.invalidateSize();
+            assignmentMapInstance.fitBounds(polygon.getBounds(), { padding: [50, 50] });
+          }, 100);
+        } catch (mapError) {
+          console.error('Map error:', mapError);
+          document.getElementById('assignMap').innerHTML = '<div style="padding:20px; color:#666;">Error loading map</div>';
+        }
       }, 50);
     }
 
