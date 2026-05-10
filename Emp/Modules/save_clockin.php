@@ -4,6 +4,36 @@
     include './dbcon.php';
     /** @var mysqli $dbc */
 
+    function hasValue($value) {
+        return isset($value) && trim((string) $value) !== '';
+    }
+
+    function detectVpnOrProxySignals() {
+        $signals = [];
+
+        if (hasValue($_SERVER['HTTP_VIA'] ?? null)) {
+            $signals[] = 'HTTP_VIA';
+        }
+
+        if (hasValue($_SERVER['HTTP_FORWARDED'] ?? null)) {
+            $signals[] = 'HTTP_FORWARDED';
+        }
+
+        if (hasValue($_SERVER['HTTP_X_FORWARDED_FOR'] ?? null)) {
+            $signals[] = 'HTTP_X_FORWARDED_FOR';
+        }
+
+        if (hasValue($_SERVER['HTTP_CLIENT_IP'] ?? null)) {
+            $signals[] = 'HTTP_CLIENT_IP';
+        }
+
+        if (hasValue($_SERVER['HTTP_X_REAL_IP'] ?? null)) {
+            $signals[] = 'HTTP_X_REAL_IP';
+        }
+
+        return $signals;
+    }
+
     $msg = 'error';
 
     if (!isset($_SESSION['login']) || $_SESSION['type'] != 'Emp') {
@@ -13,6 +43,12 @@
 
     if (!isset($_POST['userId'], $_POST['date'], $_POST['location'], $_POST['coordinates'], $_POST['timeIn'], $_POST['timeInStatus'])) {
         echo mysqli_error($dbc);
+        exit();
+    }
+
+    $vpnSignals = detectVpnOrProxySignals();
+    if (count($vpnSignals) > 0) {
+        echo 'vpn_detected';
         exit();
     }
 

@@ -110,6 +110,7 @@
                   <th>Clock Out Status</th>
                   <th>Duration</th>
                   <th>AO</th>
+                  <th>Work Classification</th>
               </tr>
           </thead>
           <tbody>
@@ -187,15 +188,16 @@
             <button id="absentButton" class="btn btn-danger d-none" onclick="setAttendanceStatus('Absent')">Absent</button>
             <button id="onLeaveButton" class="btn btn-info d-none" onclick="setAttendanceStatus('On-Leave')">On Leave</button>
           </div>
-          <div class="col-md-12 d-none" id="additionalSettings">
+          <div class="col-md-12 d-none row" id="additionalSettings">
             <span><hr></span>
             <h5>Additional Settings</h5>
-            <div class="d-flex align-items-center gap-3 mt-3">
+            
+            <div class="col-md-6 d-flex align-items-center gap-3 mt-3">
               <div class="toggle-switch">
                 <input type="checkbox" id="Manual-modify" class="toggle-input">
                 <label for="Manual-modify" class="toggle-label"></label>
               </div>
-              <label class="form-check-label mb-0" for="Manual-modify">Modify the current attendance manually</label>
+              <label class="form-check-label mb-0" for="Manual-modify">Modify attendance manually</label>
               <span class="help-badge" tabindex="0" aria-label="Help about Override All Preset Functions">
                 ?
                 <span class="help-badge-tooltip" style="text-align: center;">
@@ -205,7 +207,7 @@
               </span>
             </div>
 
-            <div class="d-flex align-items-center gap-3 mt-3">
+            <div class="col-md-6 d-flex align-items-center gap-3 mt-3">
               <div class="toggle-switch">
                 <input type="checkbox" id="Include-lunchbreak" class="toggle-input">
                 <label for="Include-lunchbreak" class="toggle-label"></label>
@@ -218,6 +220,17 @@
                 </span>
               </span>
             </div>
+
+            <div class="col-md-6 mt-3">
+              <label class="form-label">Work Classification</label>
+              <select id="workClassification" class="form-select">
+                <option value="">Select a work classification</option>
+                <option value="R">Regular Day</option>
+                <option value="SH">Special Holiday</option>
+                <option value="LH">Legal Holiday</option>
+              </select>
+            </div>
+
           </div>
         </div>
       </div>
@@ -239,7 +252,7 @@
       </div> -->
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="editAttendance()">Close</button>
-        <button id="saveButton" class="btn btn-primary">Save changes</button>
+        <button id="saveButton" class="btn btn-primary d-none">Save changes</button>
       </div>
     </div>
   </div>
@@ -295,10 +308,6 @@
               <div id="locationSuggestionDropdown" class="employee-suggestion-dropdown d-none" role="listbox" aria-label="Location suggestions">#</div>
             </div>
           </div>
-          <!-- <div class="col-md-6">
-            <label class="form-label">Location</label>
-            <input id="newModalLocation" type="text" class="form-control">
-          </div> -->
 
           <div class="col-md-6">
             <label class="form-label">Clock In</label>
@@ -335,13 +344,23 @@
             </div>
           </div>
 
+          <div class="col-md-6 mt-3">
+              <label class="form-label">Work Classification</label>
+              <select id="newWorkClassification" class="form-select">
+                <option value="">Select a work classification</option>
+                <option value="R">Regular Day</option>
+                <option value="SH">Special Holiday</option>
+                <option value="LH">Legal Holiday</option>
+              </select>
+          </div>
+
           <div class="modal-footer col-md-12 row g-3 justify-content-between">
             <div class= "col-md-6 d-flex justify-content-start gap-2">
               <button type="button" id="clearCreateAttendanceButton" class="btn btn-danger">Clear</button>
             </div>
             <div class= "col-md-5 d-flex justify-content-end gap-2">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button id="newSaveButton" class="btn btn-primary">Save</button>
+              <button id="newSaveButton" class="btn btn-primary" onclick="insertAttendance()">Save</button>
             </div>
           </div>
 

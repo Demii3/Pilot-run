@@ -1,3 +1,5 @@
+let attendanceTable; // Global variable
+
 $(document).ready(function() {
     function target_columns() {
         return $.ajax({
@@ -37,7 +39,7 @@ $(document).ready(function() {
     };
     
     target_columns().then(function(columnsToHide) {
-        const attendanceTable = $('#attendanceTable').DataTable({
+        attendanceTable = $('#attendanceTable').DataTable({
             dom: 'Bfrtipl',
             order: [[0, 'desc']],
             autoWidth: false,

@@ -23,7 +23,8 @@ function searchAttendance(searchTerm, searchDate, table) {
                         row.Clock_out,
                         row.Clockout_status_html,
                         row.Duration,
-                        row.AO
+                        row.AO,
+                        row.Work_classification
                     ]).draw();
                 });
             }
@@ -103,7 +104,6 @@ function searchEmployeeLocation() {
 function configAttendance(attendance_id, searchTerm, table, action) {
     const message = action == 'delete' ? 'delete this record?' : 'save this record?';
     if (!confirm('Are you sure you want to ' + message)) {
-        alert(document.getElementById('modalDate').value);
         return;
     } else {
             
@@ -131,6 +131,7 @@ function configAttendance(attendance_id, searchTerm, table, action) {
                 data.clockOutStatus = document.getElementById('modalClockOutStatus').value;
                 data.duration = excludeLunchBreak(document.getElementById('modalClockIn').value, document.getElementById('modalClockOut').value);
                 data.allowOvertime = document.getElementById('allowOvertime').checked ? 1 : 0;
+                data.workClassification = document.getElementById('workClassification').value ? document.getElementById('workClassification').value : 'R';
                 break;
             default:
                 console.error('Invalid action specified');
@@ -171,5 +172,67 @@ function saveOptions() {
             const message = response && response.msg ? response.msg : 'Options saved successfully.';
             alert(message);
             window.location.reload();
-        }});
+    }});
 };
+
+function insertAttendance() {
+    console.log('Inserting attendance record...');
+    const empId = document.getElementById('newModalId').value;
+    const name = document.getElementById('newModalName').value;
+    const department = document.getElementById('newModalDepartment').value;
+    const date = document.getElementById('newModalDate').value;
+    const location = document.getElementById('newModalLocation').value;
+    const clockIn = convert24HourTo12Hour(document.getElementById('newModalClockIn').value);
+    const clockInStatus = document.getElementById('newModalClockInStatus').value;
+    const clockOut = convert24HourTo12Hour(document.getElementById('newModalClockOut').value);
+    const clockOutStatus = document.getElementById('newModalClockOutStatus').value;
+    const allowOvertime = document.getElementById('newAllowOvertime').checked ? 1 : 0;
+    const workClassification = document.getElementById('newWorkClassification').value ? document.getElementById('newWorkClassification').value : 'R';
+    
+    // Validate required fields
+    if (!empId || !date || !clockIn || !clockOut) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    $.ajax({
+        url: './Modules/insert_attendance.php',
+        method: 'POST',
+        data: {
+            empId: empId,
+            name: name,
+            department: department,
+            date: date,
+            location: location,
+            clockIn: clockIn,
+            clockInStatus: clockInStatus,
+            clockOut: clockOut,
+            clockOutStatus: clockOutStatus,
+            allowOvertime: allowOvertime,
+            workClassification: workClassification
+        },        
+        dataType: 'json',
+        success: function(response) {
+            console.log('Insert response:', response);
+            if (response.success) {
+                const message = response.msg || 'Record inserted successfully.';
+                alert(message);
+                // Close the modal
+                document.getElementById('createAttendanceModal').querySelector('.btn-close').click();
+                // Clear the form
+                document.getElementById('clearCreateAttendanceButton').click();
+                // Refresh the table with current search parameters
+                const searchTerm = $('#searchInput').val();
+                const searchDate = $('#searchDate').val();
+                searchAttendance(searchTerm, searchDate, attendanceTable);
+            } else {
+                alert('Error: ' + (response.msg || 'Failed to insert record'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Insert request failed');
+            console.error('Response:', xhr.responseText);
+            alert('Failed to insert attendance record. Please try again.');
+        }
+    });
+}

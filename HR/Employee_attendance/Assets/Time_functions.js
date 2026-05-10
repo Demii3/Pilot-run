@@ -62,15 +62,15 @@ function excludeLunchBreak(clockIn, clockOut) {
 
     const IncludeLunchBreak = document.getElementById('Include-lunchbreak').checked;
     const allowOvertime = document.getElementById('allowOvertime').checked;
-    console.log('IncludeLunchBreak:', IncludeLunchBreak);
-    console.log('allowOvertime:', allowOvertime);
+    const newAllowOvertime = document.getElementById('newAllowOvertime').checked;
+
     /* const clockInMin = ((720 <= convert24HourTimetoMin(clockIn)) && (convert24HourTimetoMin(clockIn) <= 780)) ? 0 : convert24HourTimetoMin(clockIn);
     const clockOutMin = ((720 <= convert24HourTimetoMin(clockOut)) && (convert24HourTimetoMin(clockOut) <= 780)) ? 0 : convert24HourTimetoMin(clockOut); */
     let clockInMin = 0;
     let clockOutMin = 0;
     let result = 0;
 
-    if (allowOvertime) {
+    if (allowOvertime || newAllowOvertime) {
         clockOutMin = convert24HourTimetoMin(clockOut);
         clockInMin = convert24HourTimetoMin(clockIn);
         console.log('With overtime:', clockOutMin);
