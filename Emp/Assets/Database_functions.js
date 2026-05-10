@@ -1,9 +1,62 @@
-function saveTimein () {
+function showHelloModal() {
+    const modalElement = document.getElementById('helloModal');
+    if (!modalElement) {
+        return;
+    }
+
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const existingModal = bootstrap.Modal.getInstance(modalElement);
+        if (existingModal) {
+            existingModal.dispose();
+        }
+
+        new bootstrap.Modal(modalElement, {
+            backdrop: false,
+            focus: false,
+            keyboard: true
+        }).show();
+        return;
+    }
+
+    if (typeof $ !== 'undefined' && typeof $(modalElement).modal === 'function') {
+        $(modalElement).modal('show');
+    }
+}
+
+function showGoodbyeModal() {
+    const modalElement = document.getElementById('goodbyeModal');
+    if (!modalElement) {
+        return;
+    }
+
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const existingModal = bootstrap.Modal.getInstance(modalElement);
+        if (existingModal) {
+            existingModal.dispose();
+        }
+
+        new bootstrap.Modal(modalElement, {
+            backdrop: false,
+            focus: false,
+            keyboard: true
+        }).show();
+        return;
+    }
+
+    if (typeof $ !== 'undefined' && typeof $(modalElement).modal === 'function') {
+        $(modalElement).modal('show');
+    }
+}
+
+function saveTimeIn () {
     const userId = document.getElementById('userId').value;
     const date = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
     const location = document.getElementById('locationSelect').value;
     const coordinates = document.getElementById('locationSelect').options[document.getElementById('locationSelect').selectedIndex].getAttribute('data-coordinates');
     const timeIn = document.getElementById('time').textContent;
+
+    showHelloModal();
+
     $.post('./Modules/save_clockin.php', {
         userId: userId,
         date: date,
@@ -18,17 +71,24 @@ function saveTimein () {
     document.getElementById('tapIn').classList.remove('btn-success');
     document.getElementById('tapIn').classList.add('btn-danger');
     document.getElementById('locationSelect').disabled = true; // Disable location select after tapping in
+    document.getElementById('tapIn').removeEventListener('click', TapIn);
+    document.getElementById('tapIn').addEventListener('click', TapOut);
+    // Store attendance ID for later use
 }
 
 function saveTimeOut () {
     const userId = document.getElementById('userId').value;
     const attendanceId = document.getElementById('attendanceId').value;
     const timeOut = document.getElementById('time').textContent;
+
+    showGoodbyeModal();
+
     $.post('./Modules/save_clockout.php', {
         userId: userId,
         attendanceId: attendanceId,
         timeOut: timeOut,
-        timeOutStatus: checkTimeOutStatus([timeOut.split(' ')[0], timeOut.split(' ')[1]])
+        timeOutStatus: checkTimeOutStatus([timeOut.split(' ')[0], timeOut.split(' ')[1]]),
+        workClassification: 'R'
     }, function(response) {
         console.log('Server response:', response);
     });
@@ -36,6 +96,8 @@ function saveTimeOut () {
     document.getElementById('tapIn').classList.remove('btn-danger');
     document.getElementById('tapIn').classList.add('btn-success');
     document.getElementById('locationSelect').disabled = false; // Re-enable location select after tapping out
+    document.getElementById('tapIn').removeEventListener('click', TapOut);
+    document.getElementById('tapIn').addEventListener('click', TapIn);
 }
 
 function checkTimeInStatus(timeStr) {

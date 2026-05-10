@@ -20,6 +20,7 @@
     $empId = (int) $_POST['userId'];
     $clockoutTime = mysqli_real_escape_string($dbc, $_POST['timeOut']);
     $clockoutStatus = mysqli_real_escape_string($dbc, $_POST['timeOutStatus']);
+    $workClassification = 'R';
     $attendanceId = isset($_SESSION['Attendance_id']) ? (int) $_SESSION['Attendance_id'] : 0;
 
     if ($attendanceId <= 0) {
@@ -85,7 +86,8 @@
     $sql1 = "UPDATE employee_attendance
              SET `Clock_out` = '$clockoutTime',
                  `Clockout_Status` = '$clockoutStatus',
-                 `Duration` = $duration
+                 `Duration` = $duration,
+                 `Work_Classification` = '$workClassification'
              WHERE `Attendance_id` = $attendanceId";
     $result1 = mysqli_query($dbc, $sql1);
 

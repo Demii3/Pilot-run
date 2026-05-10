@@ -310,7 +310,7 @@ async function TapIn() {
             }
         }
 
-        saveTimein();
+        saveTimeIn();
     } else {
         alert('Please select a location before tapping in.');
     };
