@@ -10,6 +10,13 @@ if (!isset($_SESSION['login']) || !isset($_SESSION['id'])) {
     exit;
 }
 
+// Prevent caching to avoid showing logged-in content on back button
+header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0, private');
+header('Cache-Control: post-check=0, pre-check=0', FALSE);
+header('Pragma: no-cache');
+header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+
 include __DIR__ . '/../Modules/dbcon.php';
 
 $userId = $_SESSION['id'];
@@ -46,6 +53,7 @@ $currentAvatar = $avatarPath ? '../' . $avatarPath : '../Images/default-avatar.p
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../HR/Employee_management/employee_module.css">
     <link rel="icon" type="image/png" href="../Images/logo.jpg"/>
+    <script src="../Modules/universal_logout_handler.js"></script>
     <style>
         .profile-card {
             background: rgba(255,255,255,0.95);
@@ -179,7 +187,7 @@ $currentAvatar = $avatarPath ? '../' . $avatarPath : '../Images/default-avatar.p
                 </div>
                 <a href="#" class="profile-item"> Settings & Privacy </a>
                 <a href="#" class="profile-item"> Help & Support </a>
-                <a href="../Modules/logout_process.php" class="profile-item"> Logout </a>
+                <a href="../Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
             </div>
         </div>
     </nav>
@@ -240,6 +248,9 @@ $currentAvatar = $avatarPath ? '../' . $avatarPath : '../Images/default-avatar.p
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        // Set global attendance active status for logout handler
+        window.isAttendanceActive = false;
+        
         function toggleMenu() {
             document.getElementById('profileMenu').classList.toggle('active');
         }
@@ -345,6 +356,21 @@ $currentAvatar = $avatarPath ? '../' . $avatarPath : '../Images/default-avatar.p
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        // Set global attendance active status for logout handler
+        window.isAttendanceActive = false;
+
+        function toggleMenu() {
+            document.getElementById('profileMenu').classList.toggle('active');
+        }
+
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('profileMenu');
+            const avatar = document.querySelector('.avatar');
+            if (!avatar.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.remove('active');
+            }
+        });
+
         // Avatar upload
         $('#avatarUploadBtn').on('click', function(){
             $('#avatarInput').click();

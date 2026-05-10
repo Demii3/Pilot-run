@@ -1,3 +1,17 @@
+<?php
+  session_start();
+  if (!isset($_SESSION['login']) || $_SESSION['type'] != "HR") {
+    header("location: ../../");
+    exit();
+  }
+  
+  // Prevent caching to avoid showing logged-in content on back button
+  header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
+  header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0, private');
+  header('Cache-Control: post-check=0, pre-check=0', FALSE);
+  header('Pragma: no-cache');
+  header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,35 +39,39 @@
   <script src="//cdn.datatables.net/2.3.7/js/dataTables.min.js"></script>
 
   <script src="./employee-crud-simple.js?v=3"></script>
+  <script src="../../Modules/universal_logout_handler.js"></script>
 </head>
 
 <body>
 
 <!-- Navigation Bar -->
+<?php
+  $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
+?>
 <nav class="custom-navbar">
 
   <div class="nav-left">
     <a class="logo-circle" href="../index.php" aria-label="Go to Home">
-      <img src="../../Images/logo.jpg" alt="Logo">
+      <img src="<?php echo $baseUrl; ?>/Images/logo.jpg" alt="Logo">
     </a>
     <span class="company-name">Chengshi <br>Construction Corp</span>
   </div>
 
   <div class="nav-right">
     <button class="avatar" onclick="toggleMenu()">
-      <img src="../../Images/profilepic.jpg" alt="User">
+      <img src="<?php echo $baseUrl; ?>/Images/profilepic.jpg" alt="User">
     </button>
 
     <div id="profileMenu" class="dropdown-menu">
 
       <div class="profile-header">
-        <img src="../../Images/profilepic.jpg" alt="User">
+        <img src="<?php echo $baseUrl; ?>/Images/profilepic.jpg" alt="User">
         <span>User</span>
       </div>
 
       <a href="#" class="profile-item"> Settings & Privacy </a>
       <a href="#" class="profile-item"> Help & Support </a>
-      <a href="#" class="profile-item"> Logout </a>
+      <a href="<?php echo $baseUrl; ?>/Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
 
     </div>
 
@@ -95,6 +113,9 @@
 
 <!-- JAVA RICE -->
 <script>
+  // Set global attendance active status for logout handler
+  window.isAttendanceActive = false; // HR users don't have attendance active status
+  
   const sidebarButtons = document.querySelectorAll('.sidebar button');
 
   function toggleMenu() {

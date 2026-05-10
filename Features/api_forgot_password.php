@@ -15,6 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 @include __DIR__ . '/../Modules/MailHelper.php';
 
 $identifier = isset($_POST['email']) ? trim($_POST['email']) : '';
+// Normalize identifier for case-insensitive matching
+$identifier_norm = mb_strtolower($identifier);
 
 if (!$identifier) {
     echo json_encode(['success' => false, 'message' => 'Email/username required']);
@@ -25,10 +27,10 @@ if (!$identifier) {
 $userId = null;
 $userEmail = null;
 
-// First, try to find by username in users table
-$stmt = mysqli_prepare($dbc, "SELECT User_id FROM users WHERE Username = ? LIMIT 1");
+// First, try to find by username in users table (case-insensitive)
+$stmt = mysqli_prepare($dbc, "SELECT User_id FROM users WHERE LOWER(Username) = ? LIMIT 1");
 if ($stmt) {
-    mysqli_stmt_bind_param($stmt, 's', $identifier);
+    mysqli_stmt_bind_param($stmt, 's', $identifier_norm);
     mysqli_stmt_execute($stmt);
     mysqli_stmt_bind_result($stmt, $userId);
     if (!mysqli_stmt_fetch($stmt)) {
@@ -37,11 +39,11 @@ if ($stmt) {
     mysqli_stmt_close($stmt);
 }
 
-// If not found, try by email in employees table
+// If not found, try by email or name in employees table (case-insensitive)
 if ($userId === null) {
-    $stmt = mysqli_prepare($dbc, "SELECT id, email FROM employees WHERE email = ? OR name = ? LIMIT 1");
+    $stmt = mysqli_prepare($dbc, "SELECT id, email FROM employees WHERE TRIM(LOWER(email)) = ? OR TRIM(LOWER(name)) = ? LIMIT 1");
     if ($stmt) {
-        mysqli_stmt_bind_param($stmt, 'ss', $identifier, $identifier);
+        mysqli_stmt_bind_param($stmt, 'ss', $identifier_norm, $identifier_norm);
         mysqli_stmt_execute($stmt);
         mysqli_stmt_bind_result($stmt, $userId, $userEmail);
         if (!mysqli_stmt_fetch($stmt)) {
@@ -53,11 +55,36 @@ if ($userId === null) {
 }
 
 if ($userId === null) {
-    echo json_encode(['success' => false, 'message' => 'Email/username not found']);
+    // Detailed debug info when not found
+    $debugInfo = [];
+    // Does a username match exist?
+    $checkStmt = mysqli_prepare($dbc, "SELECT COUNT(*) FROM users WHERE LOWER(Username) = ?");
+    if ($checkStmt) {
+        mysqli_stmt_bind_param($checkStmt, 's', $identifier_norm);
+        mysqli_stmt_execute($checkStmt);
+        mysqli_stmt_bind_result($checkStmt, $u_cnt);
+        mysqli_stmt_fetch($checkStmt);
+        mysqli_stmt_close($checkStmt);
+        $debugInfo[] = "usernames_match: $u_cnt";
+    }
+    // Does an employee email/name match exist?
+    $checkStmt = mysqli_prepare($dbc, "SELECT COUNT(*) FROM employees WHERE LOWER(email) = ? OR LOWER(name) = ?");
+    if ($checkStmt) {
+        mysqli_stmt_bind_param($checkStmt, 'ss', $identifier_norm, $identifier_norm);
+        mysqli_stmt_execute($checkStmt);
+        mysqli_stmt_bind_result($checkStmt, $e_cnt);
+        mysqli_stmt_fetch($checkStmt);
+        mysqli_stmt_close($checkStmt);
+        $debugInfo[] = "employees_match: $e_cnt";
+    }
+
+    error_log("Forgot Password lookup failed for identifier: '" . $identifier . "' (normalized: '" . $identifier_norm . "'). Debug: " . implode('; ', $debugInfo));
+
+    echo json_encode(['success' => false, 'message' => 'Email/username not found', 'debug_info' => $debugInfo]);
     exit;
 }
 
-// Get email if not already fetched
+// Get email if not already fetched and normalize it
 if ($userEmail === null) {
     $emailStmt = mysqli_prepare($dbc, "SELECT email FROM employees WHERE id = ?");
     if ($emailStmt) {
@@ -67,6 +94,10 @@ if ($userEmail === null) {
         mysqli_stmt_fetch($emailStmt);
         mysqli_stmt_close($emailStmt);
     }
+}
+
+if ($userEmail !== null) {
+    $userEmail = trim(mb_strtolower($userEmail));
 }
 
 if ($userEmail === null) {
@@ -115,6 +146,7 @@ if (!$insertStmt) {
     exit;
 }
 
+// Ensure stored email is normalized
 mysqli_stmt_bind_param($insertStmt, 'iss', $userId, $userEmail, $otp);
 if (!mysqli_stmt_execute($insertStmt)) {
     echo json_encode(['success' => false, 'message' => 'Failed to save OTP']);

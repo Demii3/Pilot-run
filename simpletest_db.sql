@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 10, 2026 at 06:37 PM
+-- Generation Time: May 10, 2026 at 07:28 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -99,14 +99,53 @@ CREATE TABLE `employees` (
 --
 
 INSERT INTO `employees` (`id`, `name`, `email`, `username`, `password`, `type`, `position`, `department`, `salary`, `join_date`, `status`) VALUES
-(3, 'Romer Navoa', 'romer.navoa09@gmail.com', 'Romer', '123', 'HR', 'Director', 'CpE', 123456.00, '2004-09-26', 'Active'),
-(4, 'Alexis Eron', 'axiserondc@gmail.com', 'Alexis', '123', 'Emp', 'Chief Operating Office', 'CpE', 45000.50, '2026-04-09', 'Active'),
+(3, 'Romer Navoa', 'romer.navoa09@gmail.com', 'Romer', '$2y$10$LOCfXxxzbMvIkKLsnva1ve3nxJxAysr1yLKnwcP4B5E0FGq/0ujYu', 'HR', 'Director', 'CpE', 123456.00, '2004-09-26', 'Active'),
+(4, 'Alexis Eron', 'axispdc2@gmail.com\n', 'Alexis', '123', 'Emp', 'Chief Operating Office', 'CpE', 45000.50, '2026-04-09', 'Active'),
 (6, 'Justine Simone Garcia', 'justingarcia@adamson.edu.ph', 'Justine', '123', 'Emp', 'ewan ko', 'CpE', 123456.00, '2025-09-10', 'Active'),
 (7, 'Demetri Mayor', 'demetri@yahoo.com', 'Demetri', '123', 'Emp', 'Baka', 'CpE', 123656.00, '2026-04-09', 'Active'),
 (8, 'Jeremiah Guarino', 'palemlem@gmail.com', 'Jeremiah', '123', 'Emp', 'Doggy', 'CpE', 123456.00, '2026-04-09', 'Active'),
 (9, 'Joseph Mayor', 'joseph@yahoo.com', 'Joseph', '123', 'Emp', 'asdfgsdfa', 'adfs', 1234.00, '2001-12-31', 'Active'),
 (10, 'Simone Factor', 'factor@simone.com', 'Simone', '123', 'Emp', 'Super Adik', 'PDEA', 1236.00, '2001-03-31', 'Active'),
 (11, 'Ken Axel Quanico', '12343556kenaxelquanico@gmail.com', 'Ken', '123', 'Emp', 'Yearner', 'CpE', 67667.00, '2003-12-31', 'Active');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_13th_month`
+--
+
+CREATE TABLE `employee_13th_month` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `employee_id` int(10) UNSIGNED NOT NULL,
+  `employee_name` varchar(255) NOT NULL,
+  `process_year` smallint(6) NOT NULL,
+  `monthly_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_basic_salary_earned` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `month_13_pay` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `computed_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `employee_13th_month`
+--
+
+INSERT INTO `employee_13th_month` (`id`, `employee_id`, `employee_name`, `process_year`, `monthly_salary`, `total_basic_salary_earned`, `month_13_pay`, `computed_at`) VALUES
+(1, 3, 'Romer Navoa', 2026, 123456.00, 0.00, 0.00, '2026-05-11 00:51:30'),
+(2, 4, 'Alexis Eron', 2026, 45000.50, 17304.28, 1442.02, '2026-05-11 00:51:30'),
+(3, 6, 'Justine Simone Garcia', 2026, 123456.00, 0.00, 0.00, '2026-05-11 00:51:30'),
+(4, 7, 'Demetri Mayor', 2026, 123656.00, 0.00, 0.00, '2026-05-11 00:51:30'),
+(5, 8, 'Jeremiah Guarino', 2026, 123456.00, 0.00, 0.00, '2026-05-11 00:51:30'),
+(6, 9, 'Joseph Mayor', 2026, 1234.00, 0.00, 0.00, '2026-05-11 00:51:30'),
+(7, 10, 'Simone Factor', 2026, 1236.00, 0.00, 0.00, '2026-05-11 00:51:30'),
+(8, 11, 'Ken Axel Quanico', 2026, 676767.00, 0.00, 0.00, '2026-05-11 00:51:30'),
+(25, 3, 'Romer Navoa', 2025, 123456.00, 0.00, 0.00, '2026-05-10 23:46:51'),
+(26, 4, 'Alexis Eron', 2025, 45000.50, 0.00, 0.00, '2026-05-10 23:46:51'),
+(27, 6, 'Justine Simone Garcia', 2025, 123456.00, 0.00, 0.00, '2026-05-10 23:46:51'),
+(28, 7, 'Demetri Mayor', 2025, 123656.00, 0.00, 0.00, '2026-05-10 23:46:51'),
+(29, 8, 'Jeremiah Guarino', 2025, 123456.00, 0.00, 0.00, '2026-05-10 23:46:51'),
+(30, 9, 'Joseph Mayor', 2025, 1234.00, 0.00, 0.00, '2026-05-10 23:46:51'),
+(31, 10, 'Simone Factor', 2025, 1236.00, 0.00, 0.00, '2026-05-10 23:46:51'),
+(32, 11, 'Ken Axel Quanico', 2025, 676767.00, 0.00, 0.00, '2026-05-10 23:46:51');
 
 -- --------------------------------------------------------
 
@@ -276,7 +315,10 @@ CREATE TABLE `otp_tokens` (
 --
 
 INSERT INTO `otp_tokens` (`id`, `user_id`, `user_email`, `otp_code`, `is_verified`, `expires_at`, `created_at`, `verified_at`) VALUES
-(2, 3, 'romer.navoa09@gmail.com', '448330', 0, '2026-05-10 18:45:32', '2026-05-10 16:35:32', NULL);
+(11, 3, 'romer.navoa09@gmail.com', '350043', 1, '2026-05-11 01:08:57', '2026-05-10 16:58:57', '2026-05-11 00:59:09'),
+(12, 3, 'romer.navoa09@gmail.com', '518299', 1, '2026-05-11 01:25:13', '2026-05-10 17:15:13', '2026-05-11 01:15:33'),
+(13, 3, 'romer.navoa09@gmail.com', '180338', 1, '2026-05-11 01:33:03', '2026-05-10 17:23:03', '2026-05-11 01:23:21'),
+(14, 3, 'romer.navoa09@gmail.com', '815923', 0, '2026-05-11 01:34:23', '2026-05-10 17:24:23', NULL);
 
 -- --------------------------------------------------------
 
@@ -295,6 +337,40 @@ CREATE TABLE `pagibig_table` (
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `pagibig_table`
+--
+
+INSERT INTO `pagibig_table` (`id`, `year`, `salary_from`, `salary_to`, `contribution_rate`, `maximum_contribution`, `description`, `created_at`, `updated_at`) VALUES
+(1, 2026, 0.00, 1500.00, 0.0100, 15.00, 'Up to ₱1,500', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(2, 2026, 1500.01, 10000.00, 0.0200, 200.00, '₱1,500 - ₱10,000', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(3, 2026, 10000.01, NULL, 0.0200, 200.00, '₱10,000 and above', '2026-05-05 18:48:08', '2026-05-05 18:56:12');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `password_reset_sessions`
+--
+
+CREATE TABLE `password_reset_sessions` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `session_id` varchar(255) NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `user_email` varchar(255) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `is_completed` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `password_reset_sessions`
+--
+
+INSERT INTO `password_reset_sessions` (`id`, `session_id`, `user_id`, `user_email`, `expires_at`, `is_completed`, `created_at`) VALUES
+(1, 'f168460ec125690f5fddfa705fefb27d', 3, 'romer.navoa09@gmail.com', '2026-05-11 01:14:09', 1, '2026-05-10 16:59:09'),
+(2, 'f65b22c52c9729bb166b1013f774112f', 3, 'romer.navoa09@gmail.com', '2026-05-11 01:30:33', 1, '2026-05-10 17:15:33'),
+(3, '8d84e1a8b811c7f6c680407f1b72ffaa', 3, 'romer.navoa09@gmail.com', '2026-05-11 01:38:21', 1, '2026-05-10 17:23:21');
 
 -- --------------------------------------------------------
 
@@ -339,6 +415,15 @@ CREATE TABLE `philhealth_table` (
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `philhealth_table`
+--
+
+INSERT INTO `philhealth_table` (`id`, `year`, `salary_from`, `salary_to`, `contribution_rate`, `maximum_contribution`, `fixed_amount`, `description`, `created_at`, `updated_at`) VALUES
+(1, 2026, 0.00, 10000.00, 0.0275, 275.00, 275.00, 'Up to ₱10,000', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(2, 2026, 10000.01, 49999.00, 0.0275, 1375.00, NULL, '₱10,000 - ₱49,999', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(3, 2026, 50000.00, NULL, 0.0275, 1375.00, NULL, '₱50,000 and above', '2026-05-05 18:48:08', '2026-05-05 18:56:12');
 
 -- --------------------------------------------------------
 
@@ -394,6 +479,74 @@ CREATE TABLE `sss_table` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `sss_table`
+--
+
+INSERT INTO `sss_table` (`id`, `year`, `salary_from`, `salary_to`, `monthly_contribution`, `description`, `created_at`, `updated_at`) VALUES
+(1, 2026, 0.00, 5250.00, 250.00, 'Below ₱5,250', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(2, 2026, 5250.01, 5750.00, 275.00, '₱5,250 - ₱5,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(3, 2026, 5750.01, 6250.00, 300.00, '₱5,750 - ₱6,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(4, 2026, 6250.01, 6750.00, 325.00, '₱6,250 - ₱6,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(5, 2026, 6750.01, 7250.00, 350.00, '₱6,750 - ₱7,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(6, 2026, 7250.01, 7750.00, 375.00, '₱7,250 - ₱7,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(7, 2026, 7750.01, 8250.00, 400.00, '₱7,750 - ₱8,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(8, 2026, 8250.01, 8750.00, 425.00, '₱8,250 - ₱8,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(9, 2026, 8750.01, 9250.00, 450.00, '₱8,750 - ₱9,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(10, 2026, 9250.01, 9750.00, 475.00, '₱9,250 - ₱9,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(11, 2026, 9750.01, 10250.00, 500.00, '₱9,750 - ₱10,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(12, 2026, 10250.01, 10750.00, 525.00, '₱10,250 - ₱10,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(13, 2026, 10750.01, 11250.00, 550.00, '₱10,750 - ₱11,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(14, 2026, 11250.01, 11750.00, 575.00, '₱11,250 - ₱11,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(15, 2026, 11750.01, 12250.00, 600.00, '₱11,750 - ₱12,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(16, 2026, 12250.01, 12750.00, 625.00, '₱12,250 - ₱12,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(17, 2026, 12750.01, 13250.00, 650.00, '₱12,750 - ₱13,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(18, 2026, 13250.01, 13750.00, 675.00, '₱13,250 - ₱13,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(19, 2026, 13750.01, 14250.00, 700.00, '₱13,750 - ₱14,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(20, 2026, 14250.01, 14750.00, 725.00, '₱14,250 - ₱14,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(21, 2026, 14750.01, 15250.00, 750.00, '₱14,750 - ₱15,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(22, 2026, 15250.01, 15750.00, 775.00, '₱15,250 - ₱15,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(23, 2026, 15750.01, 16250.00, 800.00, '₱15,750 - ₱16,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(24, 2026, 16250.01, 16750.00, 825.00, '₱16,250 - ₱16,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(25, 2026, 16750.01, 17250.00, 850.00, '₱16,750 - ₱17,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(26, 2026, 17250.01, 17750.00, 875.00, '₱17,250 - ₱17,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(27, 2026, 17750.01, 18250.00, 900.00, '₱17,750 - ₱18,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(28, 2026, 18250.01, 18750.00, 925.00, '₱18,250 - ₱18,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(29, 2026, 18750.01, 19250.00, 950.00, '₱18,750 - ₱19,249', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(30, 2026, 19250.01, 19750.00, 975.00, '₱19,250 - ₱19,749', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(31, 2026, 19750.01, NULL, 1000.00, '₱19,750 and above', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(64, 2027, 0.01, 5250.00, 300.00, 'Below ₱5,250', '2026-05-06 14:16:50', '2026-05-06 14:17:17'),
+(65, 2027, 5250.01, 5750.00, 275.00, '₱5,250 - ₱5,749', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(66, 2027, 5750.01, 6250.00, 300.00, '₱5,750 - ₱6,249', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(67, 2027, 6250.01, 6750.00, 325.00, '₱6,250 - ₱6,749', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(68, 2027, 6750.01, 7250.00, 350.00, '₱6,750 - ₱7,249', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(69, 2027, 7250.01, 7750.00, 375.00, '₱7,250 - ₱7,749', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(70, 2027, 7750.01, 8250.00, 400.00, '₱7,750 - ₱8,249', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(71, 2027, 8250.01, 8750.00, 425.00, '₱8,250 - ₱8,749', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(72, 2027, 8750.01, 9250.00, 450.00, '₱8,750 - ₱9,249', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(73, 2027, 9250.01, 9750.00, 475.00, '₱9,250 - ₱9,749', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(74, 2027, 9750.01, 10250.00, 500.00, '₱9,750 - ₱10,249', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(75, 2027, 10250.01, 10750.00, 525.00, '₱10,250 - ₱10,749', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(76, 2027, 10750.01, 11250.00, 550.00, '₱10,750 - ₱11,249', '2026-05-06 14:16:50', '2026-05-06 14:16:50'),
+(77, 2027, 11250.01, 11750.00, 575.00, '₱11,250 - ₱11,749', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(78, 2027, 11750.01, 12250.00, 600.00, '₱11,750 - ₱12,249', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(79, 2027, 12250.01, 12750.00, 625.00, '₱12,250 - ₱12,749', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(80, 2027, 12750.01, 13250.00, 650.00, '₱12,750 - ₱13,249', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(81, 2027, 13250.01, 13750.00, 675.00, '₱13,250 - ₱13,749', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(82, 2027, 13750.01, 14250.00, 700.00, '₱13,750 - ₱14,249', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(83, 2027, 14250.01, 14750.00, 725.00, '₱14,250 - ₱14,749', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(84, 2027, 14750.01, 15250.00, 750.00, '₱14,750 - ₱15,249', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(85, 2027, 15250.01, 15750.00, 775.00, '₱15,250 - ₱15,749', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(86, 2027, 15750.01, 16250.00, 800.00, '₱15,750 - ₱16,249', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(87, 2027, 16250.01, 16750.00, 825.00, '₱16,250 - ₱16,749', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(88, 2027, 16750.01, 17250.00, 850.00, '₱16,750 - ₱17,249', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(89, 2027, 17250.01, 17750.00, 875.00, '₱17,250 - ₱17,749', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(90, 2027, 17750.01, 18250.00, 900.00, '₱17,750 - ₱18,249', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(91, 2027, 18250.01, 18750.00, 925.00, '₱18,250 - ₱18,749', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(92, 2027, 18750.01, 19250.00, 950.00, '₱18,750 - ₱19,249', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(93, 2027, 19250.01, 19750.00, 975.00, '₱19,250 - ₱19,749', '2026-05-06 14:16:51', '2026-05-06 14:16:51'),
+(94, 2027, 19750.01, NULL, 1000.00, '₱19,750 and above', '2026-05-06 14:16:51', '2026-05-06 14:16:51');
+
 -- --------------------------------------------------------
 
 --
@@ -411,6 +564,18 @@ CREATE TABLE `tax_table` (
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tax_table`
+--
+
+INSERT INTO `tax_table` (`id`, `year`, `income_from`, `income_to`, `tax_rate`, `base_tax`, `description`, `created_at`, `updated_at`) VALUES
+(1, 2026, 0.00, 20833.00, 0.00, 0.00, 'Up to ₱20,833', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(2, 2026, 20833.01, 33333.00, 0.15, 0.00, '₱20,833 - ₱33,333', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(3, 2026, 33333.01, 66667.00, 0.20, 1875.00, '₱33,333 - ₱66,667', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(4, 2026, 66667.01, 166667.00, 0.25, 8541.80, '₱66,667 - ₱166,667', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(5, 2026, 166667.01, 666667.00, 0.30, 33541.80, '₱166,667 - ₱666,667', '2026-05-05 18:48:08', '2026-05-05 18:56:12'),
+(6, 2026, 666667.01, NULL, 0.35, 183541.80, 'Above ₱666,667', '2026-05-05 18:48:08', '2026-05-05 18:56:12');
 
 -- --------------------------------------------------------
 
@@ -432,6 +597,14 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`, `Clockin_status`, `Work_status`) VALUES
+(3, 'Romer', '$2y$10$LOCfXxxzbMvIkKLsnva1ve3nxJxAysr1yLKnwcP4B5E0FGq/0ujYu', 'HR', 'Tapped-out', 'Tapped-out'),
+(4, 'Alexis', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(6, 'Justine', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(7, 'Demetri', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(8, 'Jeremiah', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(9, 'Joseph', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(10, 'Simone', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
+(11, 'Ken', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
 (3, 'Romer', '123', 'HR', 'Tapped-out', 'Tapped-out'),
 (4, 'Alexis', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
 (6, 'Justine', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
@@ -468,6 +641,14 @@ ALTER TABLE `deleted_geofences`
 --
 ALTER TABLE `employees`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `employee_13th_month`
+--
+ALTER TABLE `employee_13th_month`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_employee_year` (`employee_id`,`process_year`),
+  ADD KEY `idx_process_year` (`process_year`);
 
 --
 -- Indexes for table `employee_attendance`
@@ -524,6 +705,16 @@ ALTER TABLE `otp_tokens`
 ALTER TABLE `pagibig_table`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_year` (`year`);
+
+--
+-- Indexes for table `password_reset_sessions`
+--
+ALTER TABLE `password_reset_sessions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `session_id` (`session_id`),
+  ADD KEY `idx_session_id` (`session_id`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_expires` (`expires_at`);
 
 --
 -- Indexes for table `password_reset_tokens`
@@ -631,13 +822,19 @@ ALTER TABLE `hr_attendance_settings`
 -- AUTO_INCREMENT for table `otp_tokens`
 --
 ALTER TABLE `otp_tokens`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `pagibig_table`
 --
 ALTER TABLE `pagibig_table`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `password_reset_sessions`
+--
+ALTER TABLE `password_reset_sessions`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `password_reset_tokens`
@@ -649,7 +846,7 @@ ALTER TABLE `password_reset_tokens`
 -- AUTO_INCREMENT for table `philhealth_table`
 --
 ALTER TABLE `philhealth_table`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `premiums`
@@ -661,13 +858,13 @@ ALTER TABLE `premiums`
 -- AUTO_INCREMENT for table `sss_table`
 --
 ALTER TABLE `sss_table`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
 
 --
 -- AUTO_INCREMENT for table `tax_table`
 --
 ALTER TABLE `tax_table`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables

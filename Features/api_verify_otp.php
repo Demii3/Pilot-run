@@ -22,6 +22,9 @@ try {
         exit;
     }
 
+    // Normalize incoming email for robust comparison
+    $email = mb_strtolower(trim($email));
+
     // Log debug info
     error_log("OTP Verification - Email: $email, OTP: $otp");
 

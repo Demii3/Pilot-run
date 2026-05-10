@@ -6,9 +6,10 @@
     };
 
     header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
-    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0, private');
     header('Cache-Control: post-check=0, pre-check=0', FALSE);
     header('Pragma: no-cache');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
 	//print_r($_SESSION);
 	echo "<input type='hidden' id='userId' value='".$_SESSION['id']."'>";
 	echo "<input type='hidden' id='username' value='".$_SESSION['username']."'>";
@@ -44,6 +45,7 @@
 	<script src="./Assets/Event_functions.js" defer></script>
 	<script src="./Assets/Miscellaneous_functions.js" defer></script>
 	<script src="./Assets/Database_functions.js" defer></script>
+	<script src="../Modules/universal_logout_handler.js"></script>
 
 </head>
 
@@ -54,34 +56,38 @@
 	<div class="overlay"></div>
 </div>
 
-<nav class="custom-navbar">
-	<div class="nav-left">
-		<button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
-			<i class="fas fa-bars"></i>
-		</button>
-		<a class="logo-circle" href="../HR/index.php" aria-label="Go to Home">
-			<img src="./Images/logo.jpg" alt="Logo">
-		</a>
-		<span class="company-name">Chengshi <br>Construction Corp</span>
-	</div>
-
-	<div class="nav-right">
-		<button class="avatar" onclick="toggleMenu()" type="button" aria-label="User profile">
-			<img src="./Images/profilepic.jpg" alt="User">
-		</button>
-
-		<div id="profileMenu" class="dropdown-menu">
-			<div class="profile-header">
-				<img src="./Images/profilepic.jpg" alt="User">
-				<span>User</span>
+<?php
+            // Get base URL for universal logout
+            $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
+        ?>
+		<nav class="custom-navbar">
+			<div class="nav-left">
+				<button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
+					<i class="fas fa-bars"></i>
+				</button>
+				<a class="logo-circle" href="../HR/index.php" aria-label="Go to Home">
+					<img src="./Images/logo.jpg" alt="Logo">
+				</a>
+				<span class="company-name">Chengshi <br>Construction Corp</span>
 			</div>
 
-			<a href="#" class="profile-item"> Settings & Privacy </a>
-			<a href="#" class="profile-item"> Help & Support </a>
-			<a href="../Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
-		</div>
-	</div>
-</nav>
+			<div class="nav-right">
+				<button class="avatar" onclick="toggleMenu()" type="button" aria-label="User profile">
+					<img src="./Images/profilepic.jpg" alt="User">
+				</button>
+
+				<div id="profileMenu" class="dropdown-menu">
+					<div class="profile-header">
+						<img src="./Images/profilepic.jpg" alt="User">
+						<span>User</span>
+					</div>
+
+					<a href="#" class="profile-item"> Settings & Privacy </a>
+					<a href="#" class="profile-item"> Help & Support </a>
+					<a href="<?php echo $baseUrl; ?>/Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
+				</div>
+			</div>
+		</nav>
 
 <div class="payroll-container">
 	<div class="sidebar">
@@ -145,14 +151,16 @@
 
 	fillspans();
 	
-	const isAttendanceActive = <?php echo !empty($_SESSION['attendance_active']) ? 'true' : 'false'; ?>;
+	// Set global attendance active status for universal logout handler
+	window.isAttendanceActive = <?php echo !empty($_SESSION['attendance_active']) ? 'true' : 'false'; ?>;
 
 	function toggleMenu() {
 		document.getElementById("profileMenu").classList.toggle("active");
 	}
 
+	// This will be overridden by universal_logout_handler.js
 	function handleLogout(event) {
-		if (isAttendanceActive) {
+		if (window.isAttendanceActive) {
 			const shouldLogout = window.confirm('You are currently tapped in. Logging out will automatically tap you out first. Continue?');
 
 			if (!shouldLogout) {
