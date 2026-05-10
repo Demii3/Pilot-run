@@ -1,10 +1,27 @@
-function saveInfotoDatabase () {
+function saveTimein () {
     const userId = document.getElementById('userId').value;
     const date = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
     const location = document.getElementById('locationSelect').value;
     const coordinates = document.getElementById('locationSelect').options[document.getElementById('locationSelect').selectedIndex].getAttribute('data-coordinates');
     const timeIn = document.getElementById('time').textContent;
     $.post('./Modules/save_clockin.php', {
+        userId: userId,
+        date: date,
+        location: location,
+        coordinates: coordinates,
+        timeIn: timeIn,
+        timeInStatus: checkTimeInStatus([timeIn.split(' ')[0], timeIn.split(' ')[1]])
+    }, function(response) {
+        console.log('Server response:', response);
+    });
+}
+
+function saveTimeOut () {
+    const userId = document.getElementById('userId').value;
+    const location = document.getElementById('locationSelect').value;
+    const coordinates = document.getElementById('locationSelect').options[document.getElementById('locationSelect').selectedIndex].getAttribute('data-coordinates');
+    const timeIn = document.getElementById('time').textContent;
+    $.post('./Modules/save_clockout.php', {
         userId: userId,
         date: date,
         location: location,

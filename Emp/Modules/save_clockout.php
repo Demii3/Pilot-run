@@ -26,7 +26,7 @@
         $sqlFind = "SELECT Attendance_id
                     FROM employee_attendance
                     WHERE Emp_id = $empId
-                      AND (Clock_out IS NULL OR Clock_out = '')
+                    AND (Clock_out IS NULL OR Clock_out = '')
                     ORDER BY Attendance_id DESC
                     LIMIT 1";
         $resultFind = mysqli_query($dbc, $sqlFind);

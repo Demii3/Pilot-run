@@ -25,12 +25,13 @@ function loadAttendanceContent() {
     })
     .then(data => { 
         content.innerHTML = data.datafile; // Assuming the response contains a property 'datafile' with the HTML content
+        console.log('Received data:', data);
         fillspans(); // Call the function to fill spans after loading the content
         return getUserLocation().then(() => data);
     })
     .then((data) => {
         applymap(); // Call the function to initialize the map after loading the content
-        setAttendanceModuleProperties(data.workStatus); // Set properties for attendance module buttons
+        setAttendanceModuleProperties(data.querydata); // Set properties for attendance module buttons
     })
     .catch(error => {
         console.error('Error:', error);
@@ -215,7 +216,7 @@ function TapIn() {
     const locationName = selectedOption.value;
     const coordinates = selectedOption.getAttribute('data-coordinates');
     if (locationName && coordinates) {
-            saveInfotoDatabase();
+            saveTimein();
     };
 }
 

@@ -9,7 +9,7 @@
     $input = file_get_contents('php://input');
     $data = json_decode($input, true) ?? [];
     $userId = $data['USER_ID'] ?? 0;
-    $workStatus = 'Unknown';
+    $querydata = 'Unknown';
 
     $sql = "SELECT Work_Status, employee_attendance.Location, employee_attendance.Coordinates FROM users
             JOIN employee_attendance ON users.User_id = employee_attendance.Emp_id
@@ -18,9 +18,9 @@
     $result = mysqli_query($dbc, $sql);
     if ($result) {
         $row = mysqli_fetch_assoc($result);
-        $workStatus = $row['Work_Status'] ?? $userId;
+        $querydata = $row;
     } 
 
 
-    echo json_encode(['workStatus' => $workStatus, 'datafile' => $dataFile]);
+    echo json_encode(['workStatus' => $querydata, 'datafile' => $dataFile]);
 ?>
