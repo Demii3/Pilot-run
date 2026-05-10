@@ -17,7 +17,7 @@ $geofenceId = isset($_POST['geofence_id']) ? intval($_POST['geofence_id']) : 0;
 $employeeId = isset($_POST['employee_id']) ? intval($_POST['employee_id']) : 0;
 
 if (!$geofenceId || !$employeeId) {
-    echo json_encode(['success' => false, 'message' => 'Invalid geofence or employee ID']);
+    echo json_encode(['success' => false, 'message' => $geofenceId]);
     exit;
 }
 
