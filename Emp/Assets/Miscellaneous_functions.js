@@ -47,3 +47,59 @@ if (contentArea) {
 		}
 	});
 };
+
+function showConfirmationModal(message) {
+    return new Promise((resolve) => {
+        const existingModal = document.getElementById('geofenceConfirmModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        const modalWrapper = document.createElement('div');
+        modalWrapper.id = 'geofenceConfirmModal';
+        modalWrapper.style.position = 'fixed';
+        modalWrapper.style.top = '0';
+        modalWrapper.style.left = '0';
+        modalWrapper.style.width = '100%';
+        modalWrapper.style.height = '100%';
+        modalWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        modalWrapper.style.display = 'flex';
+        modalWrapper.style.alignItems = 'center';
+        modalWrapper.style.justifyContent = 'center';
+        modalWrapper.style.zIndex = '9999';
+
+        modalWrapper.innerHTML = `
+            <div style="background: #fff; width: min(420px, 92vw); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.2); overflow: hidden;">
+                <div style="padding: 14px 18px; border-bottom: 1px solid #eee; font-weight: 600;">Location Confirmation</div>
+                <div style="padding: 16px 18px; line-height: 1.5; color: #333;">${message}</div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 18px; border-top: 1px solid #eee;">
+                    <button id="geofenceConfirmNo" type="button" style="padding: 8px 14px; border: 1px solid #bbb; background: #fff; border-radius: 6px; cursor: pointer;">Cancel</button>
+                    <button id="geofenceConfirmYes" type="button" style="padding: 8px 14px; border: 1px solid #198754; background: #198754; color: #fff; border-radius: 6px; cursor: pointer;">Proceed</button>
+                </div>
+            </div>
+        `;
+
+        function cleanup() {
+            modalWrapper.remove();
+        }
+
+        modalWrapper.querySelector('#geofenceConfirmNo').addEventListener('click', () => {
+            cleanup();
+            resolve(false);
+        });
+
+        modalWrapper.querySelector('#geofenceConfirmYes').addEventListener('click', () => {
+            cleanup();
+            resolve(true);
+        });
+
+        modalWrapper.addEventListener('click', (event) => {
+            if (event.target === modalWrapper) {
+                cleanup();
+                resolve(false);
+            }
+        });
+
+        document.body.appendChild(modalWrapper);
+    });
+}

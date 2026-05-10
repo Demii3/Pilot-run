@@ -141,7 +141,7 @@
           </div>
           <div class="col-md-6">
             <label class="form-label">Date</label>
-            <input id="modalDate" type="text" class="form-control" readonly>
+            <input id="modalDate" type="date" class="form-control" readonly>
           </div>
           <div class="col-md-6">
             <label class="form-label">Location</label>

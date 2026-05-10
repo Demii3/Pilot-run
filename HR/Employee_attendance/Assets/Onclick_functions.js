@@ -15,6 +15,7 @@ function editAttendance() {
     const deletebtn = document.getElementById('deleteButton');
     const savebtn = document.getElementById('saveButton');
     const morebtn = document.getElementById('moreButton');
+    const dateInput = document.getElementById('modalDate');
     const clockInInput = document.getElementById('modalClockIn');
     const clockInStatusInput = document.getElementById('modalClockInStatus');
     const clockOutInput = document.getElementById('modalClockOut');
@@ -34,6 +35,7 @@ function editAttendance() {
         allowOvertimeInput.disabled = false;
         absentbtn.classList.remove('d-none');
         onLeavebtn.classList.remove('d-none');
+        dateInput.readOnly = false;
         clockInInput.readOnly = false;
         clockInStatusInput.disabled = false;
         clockOutInput.readOnly = false;
@@ -50,6 +52,7 @@ function editAttendance() {
         allowOvertimeInput.disabled = true;
         absentbtn.classList.add('d-none');
         onLeavebtn.classList.add('d-none');
+        dateInput.readOnly = true;
         clockInInput.readOnly = true;
         clockInStatusInput.disabled = true;
         clockOutInput.readOnly = true;
@@ -169,7 +172,7 @@ function moreAttendance() {
     }
 };
 
-function populateModal(data) {
+function populateModalEmpInfo(data) {
     const newModalId = document.getElementById('newModalId');
     const newModalName = document.getElementById('newModalName');
     const newModalDepartment = document.getElementById('newModalDepartment');
@@ -177,6 +180,15 @@ function populateModal(data) {
     newModalId.value = data.id || '';
     newModalName.value = data.name || '';
     newModalDepartment.value = data.department || '';
+
+    updateReadonlyEmptyState('#createAttendanceModal input[readonly]');
+
+};
+
+function populateModalLocInfo(data) {
+    const newModalLocation = document.getElementById('newModalLocation');
+
+    newModalLocation.value = data || '';
 
     updateReadonlyEmptyState('#createAttendanceModal input[readonly]');
 

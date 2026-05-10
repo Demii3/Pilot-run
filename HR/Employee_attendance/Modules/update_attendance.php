@@ -16,6 +16,7 @@
     }
 
     $attendance_id = (int) $items['id'];
+    $date = $items['date'] ?? '';
     $clock_in = $items['clockIn'] ?? '';
     $clockin_status = $items['clockInStatus'] ?? '';
     $clock_out = $items['clockOut'] ?? '';
@@ -24,7 +25,7 @@
     $allow_overtime = $items['allowOvertime'] ?? 0;
 
     $sql = "UPDATE employee_attendance
-            SET Clock_in = ?, Clockin_status = ?, Clock_out = ?, Clockout_status = ?, Duration = ?, AO = ?
+            SET Date = ?, Clock_in = ?, Clockin_status = ?, Clock_out = ?, Clockout_status = ?, Duration = ?, AO = ?
             WHERE Attendance_id = ?";
     $stmt = mysqli_prepare($dbc, $sql);
 
@@ -33,7 +34,7 @@
         exit;
     }
 
-    mysqli_stmt_bind_param($stmt, 'ssssiii', $clock_in, $clockin_status, $clock_out, $clockout_status, $duration, $allow_overtime, $attendance_id);
+    mysqli_stmt_bind_param($stmt, 'sssssiii', $date, $clock_in, $clockin_status, $clock_out, $clockout_status, $duration, $allow_overtime, $attendance_id);
     $result = mysqli_stmt_execute($stmt);
 
     if ($result) {

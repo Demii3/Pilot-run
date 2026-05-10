@@ -14,7 +14,10 @@ function saveTimein () {
     }, function(response) {
         console.log('Server response:', response);
     });
-    document.getElementById('tapIn').innerText = 'Tapped Out';
+    document.getElementById('tapIn').innerText = 'Tap Out';
+    document.getElementById('tapIn').classList.remove('btn-success');
+    document.getElementById('tapIn').classList.add('btn-danger');
+    document.getElementById('locationSelect').disabled = true; // Disable location select after tapping in
 }
 
 function saveTimeOut () {
@@ -29,7 +32,10 @@ function saveTimeOut () {
     }, function(response) {
         console.log('Server response:', response);
     });
-    document.getElementById('tapIn').innerText = 'Tapped In';
+    document.getElementById('tapIn').innerText = 'Tap In';
+    document.getElementById('tapIn').classList.remove('btn-danger');
+    document.getElementById('tapIn').classList.add('btn-success');
+    document.getElementById('locationSelect').disabled = false; // Re-enable location select after tapping out
 }
 
 function checkTimeInStatus(timeStr) {

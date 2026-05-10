@@ -21,6 +21,7 @@ function loadAttendanceContent() {
     })
     .then(response => {
         if (!response.ok) throw new Error('Failed to load content');
+        if (response.error) throw new Error(response.error); // Handle no content response
         return response.json();
     })
     .then(data => { 
@@ -30,8 +31,13 @@ function loadAttendanceContent() {
         return getUserLocation().then(() => data);
     })
     .then((data) => {
-        applymap(data.querydata); // Call the function to initialize the map after loading the content
-        setAttendanceModuleProperties(data.querydata); // Set properties for attendance module buttons
+        if (data.error) {
+            console.error('Error:', data.error);
+            content.innerHTML = '<p style="color: red;">Failed to load content. Please try again later.</p>';
+        } else {
+            applymap(data.querydata); // Call the function to initialize the map after loading the content
+            setAttendanceModuleProperties(data.querydata); // Set properties for attendance module buttons
+        }
     })
     .catch(error => {
         console.error('Error:', error);
@@ -86,8 +92,8 @@ function applymap(querydata) {
     if (!MapContainer || typeof L === 'undefined') return;
 
     if (map) {
-        // Map already exists, just update its view
-        map.setView([parseFloat(empLocationLat.value), parseFloat(empLocationLng.value)], 13);
+        // Map already exists, just update its view and marker
+        map.setView([parseFloat(empLocationLat.value), parseFloat(empLocationLng.value)], 18);
         L.marker([parseFloat(empLocationLat.value), parseFloat(empLocationLng.value)]).addTo(markers);
         return;
     }
@@ -102,22 +108,11 @@ function applymap(querydata) {
     markers = L.layerGroup().addTo(map);
 
     L.marker([parseFloat(empLocationLat.value), parseFloat(empLocationLng.value)]).addTo(markers);
-
-    const workStatus = document.getElementById('workStatus');
-
-    if (querydata == 0) {
-        return;
-    }
-
-    if (querydata.Work_Status == 'Tapped-in') {
-        drawGeofence(JSON.parse(querydata.Coordinates));
-    }
 };
 
 function drawGeofence(coords) {
-    console.log('Drawing geofence with coordinates:', coords);
-
     if (!map || !Array.isArray(coords) || coords.length < 3) return;
+    console.log('Drawing geofence with coordinates:', coords);
 
     if (geofenceLayer) {
         geofenceLayer.remove();
@@ -131,6 +126,79 @@ function drawGeofence(coords) {
 
     map.fitBounds(geofenceLayer.getBounds());
 }
+
+function parseGeofenceCoordinates(rawCoordinates) {
+    if (!rawCoordinates) {
+        return [];
+    }
+
+    try {
+        const firstParse = typeof rawCoordinates === 'string' ? JSON.parse(rawCoordinates) : rawCoordinates;
+        const coordinates = typeof firstParse === 'string' ? JSON.parse(firstParse) : firstParse;
+
+        if (!Array.isArray(coordinates)) {
+            return [];
+        }
+
+        return coordinates
+            .map((point) => {
+                if (!Array.isArray(point) || point.length < 2) {
+                    return null;
+                }
+
+                const lat = parseFloat(point[0]);
+                const lng = parseFloat(point[1]);
+                if (Number.isNaN(lat) || Number.isNaN(lng)) {
+                    return null;
+                }
+
+                return [lat, lng];
+            })
+            .filter(Boolean);
+    } catch (error) {
+        console.error('Invalid geofence coordinates:', error);
+        return [];
+    }
+}
+
+function isPointInPolygon(point, polygon) {
+    const x = point[1];
+    const y = point[0];
+    let isInside = false;
+
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i][1];
+        const yi = polygon[i][0];
+        const xj = polygon[j][1];
+        const yj = polygon[j][0];
+
+        const intersects = ((yi > y) !== (yj > y))
+            && (x < (xj - xi) * (y - yi) / ((yj - yi) || Number.EPSILON) + xi);
+
+        if (intersects) {
+            isInside = !isInside;
+        }
+    }
+
+    return isInside;
+}
+
+function isUserWithinGeofence(rawCoordinates) {
+    const userLat = parseFloat(empLocationLat.value);
+    const userLng = parseFloat(empLocationLng.value);
+
+    if (Number.isNaN(userLat) || Number.isNaN(userLng)) {
+        return false;
+    }
+
+    const polygon = parseGeofenceCoordinates(rawCoordinates);
+    if (polygon.length < 3) {
+        return false;
+    }
+
+    return isPointInPolygon([userLat, userLng], polygon);
+}
+
 
 function setAttendanceModuleProperties(querydata) {
     console.log('Setting attendance module properties with querydata:', querydata);
@@ -175,7 +243,7 @@ function setAttendanceModuleProperties(querydata) {
         });
 
         if (querydata.Work_Status == 'Tapped-in') {
-            locationSelect.value = document.getElementById('locationSelect').options[1].value; // Set to the first location if already tapped in
+            locationSelect.value = querydata.Location; // Set to the first location if already tapped in
             locationSelect.disabled = true;
         }
     }
@@ -192,7 +260,7 @@ function setAttendanceModuleProperties(querydata) {
         tapInButton.addEventListener('click', TapIn);
 
             if (querydata.Work_Status == 'Tapped-in') {
-                tapInButton.innerText = 'Tapped Out';
+                tapInButton.innerText = 'Tap Out';
                 tapInButton.classList.remove('btn-success');
                 tapInButton.removeEventListener('click', TapIn);
                 tapInButton.classList.add('btn-danger');
@@ -214,22 +282,58 @@ function setAttendanceModuleProperties(querydata) {
             window.location = './index.php';
         });
     }
-}
 
-function TapIn() {
-    const selectedOption = locationSelect.options[locationSelect.selectedIndex];
-    const locationName = selectedOption.value;
-    const coordinates = selectedOption.getAttribute('data-coordinates');
-    if (locationName && coordinates) {
-            saveTimein();
+    if (querydata == 0) {
+        return;
+        };
+
+    if (querydata.Work_Status == 'Tapped-in') {
+        drawGeofence(JSON.parse(JSON.parse(querydata.Coordinates)));
     };
 }
 
-function TapOut() {
+async function TapIn() {
     const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+    if (!selectedOption) {
+        alert('Please select a location before tapping in.');
+        return;
+    }
+
     const locationName = selectedOption.value;
     const coordinates = selectedOption.getAttribute('data-coordinates');
+
     if (locationName && coordinates) {
-            saveTimeOut();
+        if (!isUserWithinGeofence(coordinates)) {
+            const confirmed = await showConfirmationModal('You are outside the selected geofence area. Do you want to proceed with Tap In?');
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        saveTimein();
+    } else {
+        alert('Please select a location before tapping in.');
     };
+}
+
+async function TapOut() {
+    const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+    if (!selectedOption) {
+        alert('Please select a location before tapping out.');
+        return;
+    }
+
+    const locationName = selectedOption.value;
+    const coordinates = selectedOption.getAttribute('data-coordinates');
+
+    if (locationName && coordinates) {
+        if (!isUserWithinGeofence(coordinates)) {
+            const confirmed = await showConfirmationModal('You are outside the selected geofence area. Do you want to proceed with Tap Out?');
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        saveTimeOut();
+    }
 }

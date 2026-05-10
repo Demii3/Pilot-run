@@ -103,6 +103,7 @@ function searchEmployeeLocation() {
 function configAttendance(attendance_id, searchTerm, table, action) {
     const message = action == 'delete' ? 'delete this record?' : 'save this record?';
     if (!confirm('Are you sure you want to ' + message)) {
+        alert(document.getElementById('modalDate').value);
         return;
     } else {
             
@@ -123,6 +124,7 @@ function configAttendance(attendance_id, searchTerm, table, action) {
                 break;
             case 'update':
                 url = './Modules/update_attendance.php';
+                data.date = document.getElementById('modalDate').value;
                 data.clockIn = convert24HourTo12Hour(document.getElementById('modalClockIn').value);
                 data.clockInStatus = document.getElementById('modalClockInStatus').value;
                 data.clockOut = convert24HourTo12Hour(document.getElementById('modalClockOut').value);

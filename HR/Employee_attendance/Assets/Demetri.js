@@ -308,9 +308,24 @@ $(document).ready(function() {
             department: $(this).data('employee-department'),
             location: $(this).data('employee-location')
         };
-        populateModal(employeeData);
+        populateModalEmpInfo(employeeData);
         const dropdown = document.getElementById('employeeSuggestionDropdown');
         const input = document.getElementById('searchEmployeeInput');
+
+        if (dropdown) {
+            dropdown.classList.add('d-none');
+        }
+
+        if (input) {
+            input.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    $(document).on('click', '.employeeLocation-suggestion-item', function() {
+        const locationData = $(this).innertext || $(this).text();
+        populateModalLocInfo(locationData);
+        const dropdown = document.getElementById('locationSuggestionDropdown');
+        const input = document.getElementById('newModalLocation');
 
         if (dropdown) {
             dropdown.classList.add('d-none');
