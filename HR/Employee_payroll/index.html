@@ -94,7 +94,6 @@
     <div class="dropdown-container">
       <hr>
       <button onclick="showContent(this,'payslip')">Payslip</button>
-      <button onclick="showContent(this,'payroll_listing')">Payroll Listing</button>
       <button onclick="showContent(this,'13_month_listing')">13th Month Listing</button>
       <hr>
       <button class="dropdown-btn">Remittances
@@ -181,6 +180,12 @@
             <label for="deductionTypeName" class="form-label">Type of Deduction</label>
             <input type="text" id="deductionTypeName" class="form-control" required>
           </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="deductionTypeRecurring" checked>
+              <label class="form-check-label" for="deductionTypeRecurring">Recurring</label>
+            </div>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -215,6 +220,28 @@
               <label for="selectedDeductionCost" class="form-label">Cost</label>
               <input type="number" id="selectedDeductionCost" class="form-control" min="0" step="0.01" placeholder="0.00" required>
             </div>
+            <div class="col-md-2">
+              <label class="form-label">Apply Mode</label>
+              <div class="form-check income-recurring-check">
+                <input class="form-check-input" type="checkbox" id="selectedDeductionRecurring" disabled>
+                <label class="form-check-label" for="selectedDeductionRecurring">Recurring</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label for="selectedDeductionApplyMonth" class="form-label">Apply Month (for non-recurring)</label>
+              <input type="month" id="selectedDeductionApplyMonth" class="form-control">
+            </div>
+            <div class="col-md-3">
+              <label for="selectedDeductionApplyCutoff" class="form-label">Cutoff</label>
+              <select id="selectedDeductionApplyCutoff" class="form-select">
+                <option value="">Select cutoff</option>
+                <option value="1">1st cutoff</option>
+                <option value="2">2nd cutoff</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-text mt-2">
+            Non-recurring deduction can be limited to a specific month and cutoff. Recurring deduction applies every cutoff automatically.
           </div>
         </form>
       </div>
@@ -250,18 +277,42 @@
               <label for="selectedIncomeCost" class="form-label">Cost</label>
               <input type="number" id="selectedIncomeCost" class="form-control" min="0" step="0.01" placeholder="0.00" required>
             </div>
-            <div class="col-md-1 d-flex align-items-center">
-              <div class="form-check mt-3">
-                <input class="form-check-input" type="checkbox" id="selectedIncomeTaxable" disabled>
-                <label class="form-check-label" for="selectedIncomeTaxable">Taxable</label>
+            <div class="col-md-2">
+              <label class="form-label">Flags</label>
+              <div class="income-meta-flags">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="selectedIncomeTaxable" disabled>
+                  <label class="form-check-label" for="selectedIncomeTaxable">Taxable</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="selectedIncome13th" disabled>
+                  <label class="form-check-label" for="selectedIncome13th">13th</label>
+                </div>
               </div>
             </div>
-            <div class="col-md-1 d-flex align-items-center">
-              <div class="form-check mt-3">
-                <input class="form-check-input" type="checkbox" id="selectedIncome13th" disabled>
-                <label class="form-check-label" for="selectedIncome13th">13th</label>
+
+            <div class="col-md-3">
+              <label class="form-label">Apply Mode</label>
+              <div class="form-check income-recurring-check">
+                <input class="form-check-input" type="checkbox" id="selectedIncomeRecurring" disabled>
+                <label class="form-check-label" for="selectedIncomeRecurring">Recurring (every cutoff)</label>
               </div>
             </div>
+            <div class="col-md-5">
+              <label for="selectedIncomeApplyMonth" class="form-label">Apply Month (for non-recurring)</label>
+              <input type="month" id="selectedIncomeApplyMonth" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label for="selectedIncomeApplyCutoff" class="form-label">Cutoff</label>
+              <select id="selectedIncomeApplyCutoff" class="form-select">
+                <option value="">Select cutoff</option>
+                <option value="1">1st cutoff</option>
+                <option value="2">2nd cutoff</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-text mt-2">
+            Non-recurring income can be limited to a specific month and cutoff. Recurring income applies every cutoff automatically.
           </div>
         </form>
       </div>
@@ -533,6 +584,7 @@
               <thead class="table-dark">
                 <tr>
                   <th>Type of Deduction</th>
+                  <th>Recurring</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -628,6 +680,8 @@
                     <th>Employee</th>
                     <th>Deduction Type</th>
                     <th>Cost</th>
+                    <th>Recurring</th>
+                    <th>Cutoff Scope</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -709,6 +763,7 @@
                     <th>Taxable</th>
                     <th>13th Month</th>
                     <th>Recurring</th>
+                    <th>Cutoff Scope</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -1234,7 +1289,7 @@
               type="text"
               id="searchProcess13"
               class="form-control"
-              placeholder="Search by ID, name, annual, or 13th month pay..."
+              placeholder="Search by ID, name, basic salary earned, or 13th month pay..."
               onkeyup="filterProcess13()"
             >
           </div>
@@ -1245,7 +1300,7 @@
                   <th>ID</th>
                   <th>Name</th>
                   <th>Salary</th>
-                  <th>Annual</th>
+                  <th>Basic Salary Earned (Jan-Dec)</th>
                   <th>13th Month Pay</th>
                 </tr>
               </thead>
@@ -1256,6 +1311,61 @@
         </div>
       </div>`;
     loadEmployeesForProcess13();
+  }
+
+  else if (section === "13_month_listing") {
+    const currentYear = new Date().getFullYear();
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h2 class="mb-0">13th Month Listing</h2>
+          <div class="d-flex align-items-end gap-2 flex-wrap">
+            <div>
+              <label for="month13ListingYear" class="form-label mb-1">Year</label>
+              <input
+                type="number"
+                id="month13ListingYear"
+                class="form-control"
+                value="${currentYear}"
+                min="1900"
+                max="9999"
+              >
+            </div>
+            <button class="btn btn-primary" onclick="load13MonthListing()">Load</button>
+            <button class="btn btn-warning" id="process13ListingBtn" onclick="process13MonthListingYear()">Process Year</button>
+            <button class="btn btn-outline-success" onclick="export13MonthListingCsv()">Export CSV</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <input
+              type="text"
+              id="search13MonthListing"
+              class="form-control"
+              placeholder="Search by ID, name, year, salary, basic earned, or 13th month pay..."
+              onkeyup="filter13MonthListing()"
+            >
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover" id="month13ListingTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Year</th>
+                  <th>Salary</th>
+                  <th>Basic Salary Earned (Jan-Dec)</th>
+                  <th>13th Month Pay</th>
+                  <th>Computed At</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="month13ListingPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
+        </div>
+      </div>`;
+    load13MonthListing();
   }
 
   else if (section === "payslip") {
@@ -1309,13 +1419,13 @@
                   <th>Total OT</th>
                   <th>Legal Holiday</th>
                   <th>Special Holiday</th>
-                  <th>Rice Subsidy</th>
-                  <th>Electricity</th>
+                  <th>Taxable Additional Income</th>
+                  <th>Non-Taxable Additional Income</th>
                   <th>SSS</th>
                   <th>PHLTH</th>
                   <th>PAGIBIG</th>
                   <th>TAX</th>
-                  <th>Personal CA</th>
+                  <th>Additional Deductions</th>
                   <th>Total Ded.</th>
                   <th>Net Pay</th>
                 </tr>
@@ -1388,7 +1498,6 @@
         <h2>Reports</h2>
         <ul>
           <li>Payslip</li>
-          <li>Payroll Listing</li>
           <li>13th Month Listing</li>
           <li>Contributions (Tax, SSS, PhilHealth, Pag-IBIG)</li>
         </ul>
@@ -1448,6 +1557,7 @@ let employeesForPremiums = [];
 let employeesForSalary = [];
 let attendanceRows = [];
 let filteredAttendanceRows = [];
+let month13ListingRows = [];
 let attendanceCurrentPage = 1;
 const attendancePageSize = 10;
 const tablePageSize = 10;
@@ -1792,7 +1902,7 @@ async function loadDeductionTypes() {
   const tableBody = document.querySelector('#deductionTypeTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
 
   try {
     const response = await fetch('emp_deduc_type_api.php');
@@ -1803,16 +1913,18 @@ async function loadDeductionTypes() {
 
     const rows = result.data || [];
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="2" class="text-center">No deduction types found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No deduction types found.</td></tr>';
       paginateTable('deductionTypeTable', 'deductionTypePagination', true);
       return;
     }
 
     tableBody.innerHTML = '';
     rows.forEach(item => {
+      const isRecurring = Number(item.recurring) === 1;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item.type_of_deduction}</td>
+        <td>${isRecurring ? 'Yes' : 'No'}</td>
         <td>
           <button type="button" class="btn btn-sm btn-warning edit-deduction-type">Edit</button>
           <button type="button" class="btn btn-sm btn-danger delete-deduction-type">Delete</button>
@@ -1830,7 +1942,7 @@ async function loadDeductionTypes() {
     });
     paginateTable('deductionTypeTable', 'deductionTypePagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('deductionTypeTable', 'deductionTypePagination', true);
   }
 }
@@ -1840,6 +1952,7 @@ function openDeductionTypeForm(reset = true) {
   if (reset) {
     document.getElementById('deductionTypeId').value = '';
     document.getElementById('deductionTypeName').value = '';
+    document.getElementById('deductionTypeRecurring').checked = true;
   }
   
   // Show modal
@@ -1861,6 +1974,7 @@ function hideDeductionTypeForm() {
 async function saveDeductionType() {
   const id = document.getElementById('deductionTypeId').value;
   const typeOfDeduction = document.getElementById('deductionTypeName').value.trim();
+  const recurring = document.getElementById('deductionTypeRecurring').checked ? 1 : 0;
   const taxable = 1;
   const includedIn13 = 1;
 
@@ -1872,7 +1986,8 @@ async function saveDeductionType() {
   const payload = {
     type_of_deduction: typeOfDeduction,
     taxable,
-    included_in_13month: includedIn13
+    included_in_13month: includedIn13,
+    recurring
   };
 
   if (id) {
@@ -1909,6 +2024,7 @@ async function editDeductionType(id) {
     const item = result.data;
     document.getElementById('deductionTypeId').value = item.id;
     document.getElementById('deductionTypeName').value = item.type_of_deduction;
+    document.getElementById('deductionTypeRecurring').checked = Number(item.recurring) === 1;
     openDeductionTypeForm(false);
   } catch (error) {
     alert(error.message);
@@ -2161,6 +2277,7 @@ async function loadIncomeTypesForAssignments() {
       option.dataset.cost = item.cost;
       option.dataset.taxable = item.taxable;
       option.dataset.includedIn13 = item.included_in_13month;
+      option.dataset.recurring = item.recurring;
       select.appendChild(option);
     });
   } catch (error) {
@@ -2203,6 +2320,7 @@ async function loadDeductionTypesForAssignments() {
       option.textContent = item.type_of_deduction;
       option.dataset.taxable = item.taxable;
       option.dataset.includedIn13 = item.included_in_13month;
+      option.dataset.recurring = item.recurring;
       select.appendChild(option);
     });
   } catch (error) {
@@ -2216,7 +2334,12 @@ function openEmployeeDeductionForm(reset = true) {
     document.getElementById('deductionEmployeeSelect').value = '';
     document.getElementById('deductionTypeSelect').value = '';
     document.getElementById('selectedDeductionCost').value = '';
+    document.getElementById('selectedDeductionRecurring').checked = false;
+    document.getElementById('selectedDeductionApplyMonth').value = '';
+    document.getElementById('selectedDeductionApplyCutoff').value = '';
   }
+
+  toggleDeductionCutoffFieldsByRecurring();
 
   const modalElement = document.getElementById('employeeDeductionModal');
   const modal = new bootstrap.Modal(modalElement);
@@ -2240,11 +2363,34 @@ function openPremiumTypeForm() {
 function updateSelectedDeductionDetails() {
   const select = document.getElementById('deductionTypeSelect');
   const costInput = document.getElementById('selectedDeductionCost');
-  if (!select || !costInput) return;
+  const recurringCheckbox = document.getElementById('selectedDeductionRecurring');
+  if (!select || !costInput || !recurringCheckbox) return;
 
   const selectedOption = select.options[select.selectedIndex];
   if (!selectedOption || !selectedOption.value) {
     costInput.value = '';
+    recurringCheckbox.checked = false;
+    toggleDeductionCutoffFieldsByRecurring();
+    return;
+  }
+
+  recurringCheckbox.checked = selectedOption.dataset.recurring === '1';
+  toggleDeductionCutoffFieldsByRecurring();
+}
+
+function toggleDeductionCutoffFieldsByRecurring() {
+  const recurringCheckbox = document.getElementById('selectedDeductionRecurring');
+  const applyMonthInput = document.getElementById('selectedDeductionApplyMonth');
+  const applyCutoffSelect = document.getElementById('selectedDeductionApplyCutoff');
+  if (!recurringCheckbox || !applyMonthInput || !applyCutoffSelect) return;
+
+  const isRecurring = recurringCheckbox.checked;
+  applyMonthInput.disabled = isRecurring;
+  applyCutoffSelect.disabled = isRecurring;
+
+  if (isRecurring) {
+    applyMonthInput.value = '';
+    applyCutoffSelect.value = '';
   }
 }
 
@@ -2253,6 +2399,9 @@ function saveEmployeeDeductionAssignment() {
   const employeeSelect = document.getElementById('deductionEmployeeSelect');
   const deductionTypeSelect = document.getElementById('deductionTypeSelect');
   const costInput = document.getElementById('selectedDeductionCost');
+  const recurringCheckbox = document.getElementById('selectedDeductionRecurring');
+  const applyMonthInput = document.getElementById('selectedDeductionApplyMonth');
+  const applyCutoffSelect = document.getElementById('selectedDeductionApplyCutoff');
 
   if (!employeeSelect || !deductionTypeSelect) return;
   if (!employeeSelect.value || !deductionTypeSelect.value) {
@@ -2278,12 +2427,25 @@ function saveEmployeeDeductionAssignment() {
     return;
   }
 
+  const isRecurring = recurringCheckbox?.checked === true;
+  const applyYearMonth = (applyMonthInput?.value || '').trim();
+  const applyCutoffSlot = applyCutoffSelect?.value ? Number(applyCutoffSelect.value) : null;
+
+  if (!isRecurring) {
+    if (!applyYearMonth || !applyCutoffSlot) {
+      alert('Please select apply month and cutoff for non-recurring deduction.');
+      return;
+    }
+  }
+
   const payload = {
     name: employee.name,
     type_of_deduction: deductionType.type_of_deduction,
     cost: parsedCost,
     taxable: 0,
-    month_13th: 0
+    month_13th: 0,
+    apply_year_month: isRecurring ? null : applyYearMonth,
+    apply_cutoff_slot: isRecurring ? null : applyCutoffSlot
   };
 
   if (assignmentIdInput && assignmentIdInput.value) {
@@ -2314,18 +2476,26 @@ function renderEmployeeDeductionAssignments() {
   const tableBody = document.querySelector('#employeeDeductionAssignmentTable tbody');
   if (!tableBody) return;
   if (employeeDeductionAssignments.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No assigned deduction items yet.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No assigned deduction items yet.</td></tr>';
     paginateTable('employeeDeductionAssignmentTable', 'employeeDeductionAssignmentPagination', true);
     return;
   }
 
   tableBody.innerHTML = '';
   employeeDeductionAssignments.forEach(item => {
+    const isRecurring = Number(item.recurring) === 1;
+    const cutoffScopeText = isRecurring
+      ? 'Every cutoff'
+      : (item.applyYearMonth && Number(item.applyCutoffSlot) > 0
+        ? `${item.applyYearMonth} (${Number(item.applyCutoffSlot) === 1 ? '1st' : '2nd'} cutoff)`
+        : 'Any cutoff');
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${item.employeeName}</td>
       <td>${item.deductionType}</td>
       <td>₱${parseFloat(item.cost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      <td>${isRecurring ? 'Yes' : 'No'}</td>
+      <td>${cutoffScopeText}</td>
       <td>
         <button type="button" class="btn btn-sm btn-warning edit-employee-deduction">Edit</button>
         <button type="button" class="btn btn-sm btn-danger delete-employee-deduction">Delete</button>
@@ -2361,6 +2531,10 @@ function editEmployeeDeductionAssignment(id) {
   document.getElementById('deductionEmployeeSelect').value = employee ? String(employee.id) : '';
   document.getElementById('deductionTypeSelect').value = deductionType ? String(deductionType.id) : '';
   document.getElementById('selectedDeductionCost').value = Number(parseFloat(assignment.cost || 0).toFixed(2));
+  document.getElementById('selectedDeductionRecurring').checked = assignment.recurring == 1;
+  document.getElementById('selectedDeductionApplyMonth').value = assignment.applyYearMonth || '';
+  document.getElementById('selectedDeductionApplyCutoff').value = assignment.applyCutoffSlot ? String(assignment.applyCutoffSlot) : '';
+  toggleDeductionCutoffFieldsByRecurring();
 }
 
 async function deleteEmployeeDeductionAssignment(id) {
@@ -2729,22 +2903,48 @@ function filterEmployeesForDeductions() {
 
 async function fetchEmployeeDeductionAssignments() {
   try {
-    const response = await fetch('assigned_emp_deduc_api.php');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const [assignmentResponse, deductionTypeResponse] = await Promise.all([
+      fetch('assigned_emp_deduc_api.php'),
+      fetch('emp_deduc_type_api.php')
+    ]);
+
+    if (!assignmentResponse.ok) {
+      throw new Error(`HTTP error! status: ${assignmentResponse.status}`);
     }
-    const data = await response.json();
-    if (data.success) {
-      employeeDeductionAssignments = data.data.map(item => ({
+
+    const assignmentData = await assignmentResponse.json();
+    const deductionTypeData = deductionTypeResponse.ok ? await deductionTypeResponse.json() : { success: false, data: [] };
+
+    if (assignmentData.success) {
+      const deductionTypeMap = {};
+      if (deductionTypeData.success) {
+        (deductionTypeData.data || []).forEach(typeItem => {
+          const typeNameKey = String(typeItem.type_of_deduction || '').trim().toLowerCase();
+          if (!typeNameKey) {
+            return;
+          }
+          deductionTypeMap[typeNameKey] = typeItem;
+        });
+      }
+
+      employeeDeductionAssignments = assignmentData.data.map(item => {
+        const typeNameKey = String(item.type_of_deduction || '').trim().toLowerCase();
+        const latestType = deductionTypeMap[typeNameKey];
+
+        return {
         id: item.id,
         employeeName: item.name,
         deductionType: item.type_of_deduction,
-        cost: item.cost
-      }));
+        cost: item.cost,
+        recurring: latestType ? latestType.recurring : 0,
+        applyYearMonth: item.apply_year_month || null,
+        applyCutoffSlot: item.apply_cutoff_slot || null
+      };
+      });
       renderEmployeeDeductionAssignments();
     } else {
-      console.error('Failed to fetch assignments:', data.message);
-      alert(`Error: ${data.message}`);
+      console.error('Failed to fetch assignments:', assignmentData.message);
+      alert(`Error: ${assignmentData.message}`);
     }
   } catch (error) {
     console.error('Error fetching assignments:', error);
@@ -2760,7 +2960,12 @@ function openEmployeeIncomeForm(reset = true) {
     document.getElementById('selectedIncomeCost').value = '';
     document.getElementById('selectedIncomeTaxable').checked = false;
     document.getElementById('selectedIncome13th').checked = false;
+    document.getElementById('selectedIncomeRecurring').checked = false;
+    document.getElementById('selectedIncomeApplyMonth').value = '';
+    document.getElementById('selectedIncomeApplyCutoff').value = '';
   }
+
+  toggleIncomeCutoffFieldsByRecurring();
 
   const modalElement = document.getElementById('employeeIncomeModal');
   const modal = new bootstrap.Modal(modalElement);
@@ -2782,19 +2987,40 @@ function updateSelectedIncomeDetails() {
   const costInput = document.getElementById('selectedIncomeCost');
   const taxableCheckbox = document.getElementById('selectedIncomeTaxable');
   const included13Checkbox = document.getElementById('selectedIncome13th');
-  if (!select || !costInput || !taxableCheckbox || !included13Checkbox) return;
+  const recurringCheckbox = document.getElementById('selectedIncomeRecurring');
+  if (!select || !costInput || !taxableCheckbox || !included13Checkbox || !recurringCheckbox) return;
 
   const selectedOption = select.options[select.selectedIndex];
   if (!selectedOption || !selectedOption.value) {
     costInput.value = '';
     taxableCheckbox.checked = false;
     included13Checkbox.checked = false;
+    recurringCheckbox.checked = false;
+    toggleIncomeCutoffFieldsByRecurring();
     return;
   }
 
   costInput.value = Number(parseFloat(selectedOption.dataset.cost || 0).toFixed(2));
   taxableCheckbox.checked = selectedOption.dataset.taxable === '1';
   included13Checkbox.checked = selectedOption.dataset.includedIn13 === '1';
+  recurringCheckbox.checked = selectedOption.dataset.recurring === '1';
+  toggleIncomeCutoffFieldsByRecurring();
+}
+
+function toggleIncomeCutoffFieldsByRecurring() {
+  const recurringCheckbox = document.getElementById('selectedIncomeRecurring');
+  const applyMonthInput = document.getElementById('selectedIncomeApplyMonth');
+  const applyCutoffSelect = document.getElementById('selectedIncomeApplyCutoff');
+  if (!recurringCheckbox || !applyMonthInput || !applyCutoffSelect) return;
+
+  const isRecurring = recurringCheckbox.checked;
+  applyMonthInput.disabled = isRecurring;
+  applyCutoffSelect.disabled = isRecurring;
+
+  if (isRecurring) {
+    applyMonthInput.value = '';
+    applyCutoffSelect.value = '';
+  }
 }
 
 function saveEmployeeIncomeAssignment() {
@@ -2804,6 +3030,9 @@ function saveEmployeeIncomeAssignment() {
   const costInput = document.getElementById('selectedIncomeCost');
   const taxableCheckbox = document.getElementById('selectedIncomeTaxable');
   const included13Checkbox = document.getElementById('selectedIncome13th');
+  const recurringCheckbox = document.getElementById('selectedIncomeRecurring');
+  const applyMonthInput = document.getElementById('selectedIncomeApplyMonth');
+  const applyCutoffSelect = document.getElementById('selectedIncomeApplyCutoff');
 
   if (!employeeSelect || !incomeTypeSelect) return;
   if (!employeeSelect.value || !incomeTypeSelect.value) {
@@ -2829,13 +3058,26 @@ function saveEmployeeIncomeAssignment() {
     return;
   }
 
+  const isRecurring = recurringCheckbox?.checked === true;
+  const applyYearMonth = (applyMonthInput?.value || '').trim();
+  const applyCutoffSlot = applyCutoffSelect?.value ? Number(applyCutoffSelect.value) : null;
+
+  if (!isRecurring) {
+    if (!applyYearMonth || !applyCutoffSlot) {
+      alert('Please select apply month and cutoff for non-recurring income.');
+      return;
+    }
+  }
+
   // Push values into the assigned_emp_inc table using the assigned_emp_inc_api
   const payload = {
     name: employee.name,
     type_of_income: incomeType.type_of_income,
     cost: parsedCost,
     taxable: taxableCheckbox.checked ? 1 : 0,
-    month_13th: included13Checkbox.checked ? 1 : 0
+    month_13th: included13Checkbox.checked ? 1 : 0,
+    apply_year_month: isRecurring ? null : applyYearMonth,
+    apply_cutoff_slot: isRecurring ? null : applyCutoffSlot
   };
 
   if (assignmentIdInput && assignmentIdInput.value) {
@@ -2866,7 +3108,7 @@ function renderEmployeeIncomeAssignments() {
   const tableBody = document.querySelector('#employeeIncomeAssignmentTable tbody');
   if (!tableBody) return;
   if (employeeIncomeAssignments.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No assigned income items yet.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No assigned income items yet.</td></tr>';
     paginateTable('employeeIncomeAssignmentTable', 'employeeIncomeAssignmentPagination', true);
     return;
   }
@@ -2876,6 +3118,11 @@ function renderEmployeeIncomeAssignments() {
     const isTaxable = Number(item.taxable) === 1;
     const isIncludedIn13th = Number(item.included13) === 1;
     const isRecurring = Number(item.recurring) === 1;
+    const cutoffScopeText = isRecurring
+      ? 'Every cutoff'
+      : (item.applyYearMonth && Number(item.applyCutoffSlot) > 0
+        ? `${item.applyYearMonth} (${Number(item.applyCutoffSlot) === 1 ? '1st' : '2nd'} cutoff)`
+        : 'Any cutoff');
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${item.employeeName}</td>
@@ -2884,6 +3131,7 @@ function renderEmployeeIncomeAssignments() {
       <td>${isTaxable ? 'Yes' : 'No'}</td>
       <td>${isIncludedIn13th ? 'Yes' : 'No'}</td>
       <td>${isRecurring ? 'Yes' : 'No'}</td>
+      <td>${cutoffScopeText}</td>
       <td>
         <button type="button" class="btn btn-sm btn-warning edit-employee-income">Edit</button>
         <button type="button" class="btn btn-sm btn-danger delete-employee-income">Delete</button>
@@ -2922,6 +3170,10 @@ function editEmployeeIncomeAssignment(id) {
   document.getElementById('selectedIncomeCost').value = Number(parseFloat(assignment.cost || 0).toFixed(2));
   document.getElementById('selectedIncomeTaxable').checked = assignment.taxable == 1;
   document.getElementById('selectedIncome13th').checked = assignment.included13 == 1;
+  document.getElementById('selectedIncomeRecurring').checked = assignment.recurring == 1;
+  document.getElementById('selectedIncomeApplyMonth').value = assignment.applyYearMonth || '';
+  document.getElementById('selectedIncomeApplyCutoff').value = assignment.applyCutoffSlot ? String(assignment.applyCutoffSlot) : '';
+  toggleIncomeCutoffFieldsByRecurring();
 }
 
 async function deleteEmployeeIncomeAssignment(id) {
@@ -2955,6 +3207,12 @@ function filterProcess13() {
   const searchInput = document.getElementById('searchProcess13');
   if (!searchInput) return;
   searchPayrollDataTable('process13Table', searchInput.value);
+}
+
+function filter13MonthListing() {
+  const searchInput = document.getElementById('search13MonthListing');
+  if (!searchInput) return;
+  searchPayrollDataTable('month13ListingTable', searchInput.value);
 }
 
 function filterAttendance() {
@@ -3232,13 +3490,16 @@ async function loadEmployeesForProcess13() {
   tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading employees...</td></tr>';
 
   try {
-    const response = await fetch('../Employee_management/employees_api.php');
+    const currentYear = new Date().getFullYear();
+    const response = await fetch(`process_13th_api.php?year=${encodeURIComponent(currentYear)}`);
     const result = await response.json();
+
     if (!result.success) {
-      throw new Error(result.message || 'Unable to load employees.');
+      throw new Error(result.message || 'Unable to load 13th month data.');
     }
 
     const rows = result.data || [];
+
     if (rows.length === 0) {
       tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No employees found.</td></tr>';
       paginateTable('process13Table', 'process13Pagination', true);
@@ -3248,15 +3509,15 @@ async function loadEmployeesForProcess13() {
     tableBody.innerHTML = '';
     rows.forEach(emp => {
       const monthlySalary = Number(emp.salary || 0);
-      const annualSalary = monthlySalary * 12;
-      const month13Pay = annualSalary / 12;
+      const totalBasicSalaryEarned = Number(emp.total_basic_salary_earned || 0);
+      const month13Pay = Number(emp.month_13_pay || 0);
 
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${emp.id}</td>
         <td>${emp.name}</td>
         <td>${formatCurrency(monthlySalary)}</td>
-        <td>${formatCurrency(annualSalary)}</td>
+        <td>${formatCurrency(totalBasicSalaryEarned)}</td>
         <td>${formatCurrency(month13Pay)}</td>
       `;
       tableBody.appendChild(row);
@@ -3266,6 +3527,142 @@ async function loadEmployeesForProcess13() {
     tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('process13Table', 'process13Pagination', true);
   }
+}
+
+async function load13MonthListing() {
+  const tableBody = document.querySelector('#month13ListingTable tbody');
+  if (!tableBody) return;
+
+  const yearInput = document.getElementById('month13ListingYear');
+  const selectedYear = Number(yearInput?.value || new Date().getFullYear());
+  if (!Number.isInteger(selectedYear) || selectedYear < 1900 || selectedYear > 9999) {
+    alert('Please enter a valid year.');
+    return;
+  }
+
+  tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading 13th month listing...</td></tr>';
+
+  try {
+    const response = await fetch(`process_13th_api.php?year=${encodeURIComponent(selectedYear)}&stored=1`);
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load 13th month listing.');
+    }
+
+    const rows = result.data || [];
+    month13ListingRows = rows;
+
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No 13th month records found for the selected year.</td></tr>';
+      paginateTable('month13ListingTable', 'month13ListingPagination', true);
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    rows.forEach(item => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${item.id}</td>
+        <td>${item.name}</td>
+        <td>${item.process_year}</td>
+        <td>${formatCurrency(Number(item.salary || 0))}</td>
+        <td>${formatCurrency(Number(item.total_basic_salary_earned || 0))}</td>
+        <td>${formatCurrency(Number(item.month_13_pay || 0))}</td>
+        <td>${item.computed_at || ''}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+
+    paginateTable('month13ListingTable', 'month13ListingPagination', true);
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('month13ListingTable', 'month13ListingPagination', true);
+  }
+}
+
+async function process13MonthListingYear() {
+  const yearInput = document.getElementById('month13ListingYear');
+  const processButton = document.getElementById('process13ListingBtn');
+  const selectedYear = Number(yearInput?.value || new Date().getFullYear());
+
+  if (!Number.isInteger(selectedYear) || selectedYear < 1900 || selectedYear > 9999) {
+    alert('Please enter a valid year.');
+    return;
+  }
+
+  if (processButton) {
+    processButton.disabled = true;
+    processButton.textContent = 'Processing...';
+  }
+
+  try {
+    const response = await fetch(`process_13th_api.php?year=${encodeURIComponent(selectedYear)}`);
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to process 13th month data.');
+    }
+
+    await load13MonthListing();
+    alert(`13th month data for ${selectedYear} has been processed and refreshed.`);
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    if (processButton) {
+      processButton.disabled = false;
+      processButton.textContent = 'Process Year';
+    }
+  }
+}
+
+function export13MonthListingCsv() {
+  if (!Array.isArray(month13ListingRows) || month13ListingRows.length === 0) {
+    alert('No 13th month listing data to export.');
+    return;
+  }
+
+  const yearInput = document.getElementById('month13ListingYear');
+  const selectedYear = Number(yearInput?.value || new Date().getFullYear());
+  const headers = [
+    'Employee ID',
+    'Employee Name',
+    'Year',
+    'Monthly Salary',
+    'Total Basic Salary Earned (Jan-Dec)',
+    '13th Month Pay',
+    'Computed At'
+  ];
+
+  const escapeCsv = (value) => {
+    const text = String(value ?? '');
+    const escaped = text.replace(/"/g, '""');
+    return `"${escaped}"`;
+  };
+
+  const lines = [headers.map(escapeCsv).join(',')];
+  month13ListingRows.forEach(item => {
+    lines.push([
+      item.id,
+      item.name,
+      item.process_year,
+      Number(item.salary || 0).toFixed(2),
+      Number(item.total_basic_salary_earned || 0).toFixed(2),
+      Number(item.month_13_pay || 0).toFixed(2),
+      item.computed_at || ''
+    ].map(escapeCsv).join(','));
+  });
+
+  const csvContent = lines.join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `13th_month_listing_${selectedYear}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 async function loadEmployees() {
@@ -3354,14 +3751,10 @@ async function loadEmployeeSalary() {
     const attendanceRows = attendanceResult.success ? (attendanceResult.data || []) : [];
     const assignedIncomeData = assignedIncomeResult.success ? (assignedIncomeResult.data || []) : [];
     const incomeTypesData = incomeTypesResult.success ? (incomeTypesResult.data || []) : [];
+    const applicableAssignedIncomeData = filterAssignedIncomeByCutoff(assignedIncomeData, incomeTypesData, dateFrom, dateTo);
     
-    // Calculate total recurring income (all income types marked as recurring)
-    const recurringIncomeTotal = incomeTypesData
-      .filter(type => Number(type.recurring) === 1)
-      .reduce((sum, type) => sum + (Number(type.cost) || 0), 0);
-    
-    const nonTaxableCostByEmployee = buildNonTaxableIncomeMap(assignedIncomeData);
-    const totalIncomeByEmployee = buildTotalIncomeMap(assignedIncomeData);
+    const nonTaxableCostByEmployee = buildNonTaxableIncomeMap(applicableAssignedIncomeData);
+    const totalIncomeByEmployee = buildTotalIncomeMap(applicableAssignedIncomeData);
     const minutesByEmployee = new Map();
 
     attendanceRows.forEach(item => {
@@ -3407,8 +3800,7 @@ async function loadEmployeeSalary() {
       const biSalary = grossPayPerDay * totalHoursWorked;
       const employeeNameKey = String(emp.name || '').trim().toLowerCase();
       const assignedIncomeAllowance = (totalIncomeByEmployee[employeeNameKey] || 0) / 2;
-      // Add recurring income to the total allowance
-      const totalAllowance = assignedIncomeAllowance + (recurringIncomeTotal / 2);
+      const totalAllowance = assignedIncomeAllowance;
       const legalHoliday = 0;
       const specialHoliday = 0;
       const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
@@ -3737,14 +4129,82 @@ function buildIncomeByTypeMap(assignedIncomeData = []) {
   return incomeByEmployee;
 }
 
-function getIncomeAmountByKeyword(employeeIncomeByType = {}, keywordPattern) {
-  let total = 0;
-  Object.keys(employeeIncomeByType || {}).forEach(typeName => {
-    if (keywordPattern.test(typeName)) {
-      total += Number(employeeIncomeByType[typeName]) || 0;
+function buildAdditionalIncomeSummaryMap(assignedIncomeData = []) {
+  const summaryByEmployee = {};
+
+  (assignedIncomeData || []).forEach(item => {
+    const employeeNameKey = String(item.name || '').trim().toLowerCase();
+    const incomeType = String(item.type_of_income || '').trim().toLowerCase();
+    const cost = Number(item.cost);
+
+    if (!employeeNameKey || !incomeType || !Number.isFinite(cost)) {
+      return;
+    }
+
+    // Holiday pay is already represented in its own columns.
+    if (/legal\s*holiday/i.test(incomeType) || /special\s*holiday/i.test(incomeType)) {
+      return;
+    }
+
+    if (!summaryByEmployee[employeeNameKey]) {
+      summaryByEmployee[employeeNameKey] = { taxable: 0, nonTaxable: 0 };
+    }
+
+    if (Number(item.taxable) === 1) {
+      summaryByEmployee[employeeNameKey].taxable += cost;
+    } else {
+      summaryByEmployee[employeeNameKey].nonTaxable += cost;
     }
   });
-  return total;
+
+  return summaryByEmployee;
+}
+
+function getCutoffContext(dateFrom = null, dateTo = null) {
+  const referenceDate = dateFrom || dateTo || new Date();
+  const year = referenceDate.getFullYear();
+  const month = String(referenceDate.getMonth() + 1).padStart(2, '0');
+  const yearMonth = `${year}-${month}`;
+  const cutoffSlot = referenceDate.getDate() <= 15 ? 1 : 2;
+  return { yearMonth, cutoffSlot };
+}
+
+function buildRecurringMapByIncomeType(incomeTypesData = []) {
+  const recurringMap = {};
+
+  (incomeTypesData || []).forEach(item => {
+    const typeNameKey = String(item.type_of_income || '').trim().toLowerCase();
+    if (!typeNameKey) {
+      return;
+    }
+
+    recurringMap[typeNameKey] = Number(item.recurring) === 1 ? 1 : 0;
+  });
+
+  return recurringMap;
+}
+
+function filterAssignedIncomeByCutoff(assignedIncomeData = [], incomeTypesData = [], dateFrom = null, dateTo = null) {
+  const recurringMap = buildRecurringMapByIncomeType(incomeTypesData);
+  const cutoffContext = getCutoffContext(dateFrom, dateTo);
+
+  return (assignedIncomeData || []).filter(item => {
+    const typeNameKey = String(item.type_of_income || '').trim().toLowerCase();
+    const isRecurring = recurringMap[typeNameKey] === 1;
+    if (isRecurring) {
+      return true;
+    }
+
+    const applyYearMonth = String(item.apply_year_month || '').trim();
+    const applyCutoffSlot = Number(item.apply_cutoff_slot || 0);
+
+    // Backward compatibility for old rows that have no cutoff scope yet.
+    if (!applyYearMonth || !applyCutoffSlot) {
+      return true;
+    }
+
+    return applyYearMonth === cutoffContext.yearMonth && applyCutoffSlot === cutoffContext.cutoffSlot;
+  });
 }
 
 function getComputedIncomeAmountByKeyword(employeeIncomeByType = {}, keywordPattern, multiplier = 1) {
@@ -3775,6 +4235,44 @@ function buildPersonalCaMap(assignedDeductionData = []) {
   return personalCaByEmployee;
 }
 
+function buildRecurringDeductionTypeMap(deductionTypesData = []) {
+  const recurringMap = {};
+
+  (deductionTypesData || []).forEach(item => {
+    const typeNameKey = String(item.type_of_deduction || '').trim().toLowerCase();
+    if (!typeNameKey) {
+      return;
+    }
+
+    recurringMap[typeNameKey] = Number(item.recurring) === 1 ? 1 : 0;
+  });
+
+  return recurringMap;
+}
+
+function filterAssignedDeductionsByCutoff(assignedDeductionData = [], deductionTypesData = [], dateFrom = null, dateTo = null) {
+  const recurringMap = buildRecurringDeductionTypeMap(deductionTypesData);
+  const cutoffContext = getCutoffContext(dateFrom, dateTo);
+
+  return (assignedDeductionData || []).filter(item => {
+    const typeNameKey = String(item.type_of_deduction || '').trim().toLowerCase();
+    const isRecurring = recurringMap[typeNameKey] === 1;
+    if (isRecurring) {
+      return true;
+    }
+
+    const applyYearMonth = String(item.apply_year_month || '').trim();
+    const applyCutoffSlot = Number(item.apply_cutoff_slot || 0);
+
+    // Backward compatibility for old rows that have no cutoff scope yet.
+    if (!applyYearMonth || !applyCutoffSlot) {
+      return true;
+    }
+
+    return applyYearMonth === cutoffContext.yearMonth && applyCutoffSlot === cutoffContext.cutoffSlot;
+  });
+}
+
 async function loadPayslip() {
   const tableBody = document.querySelector('#payslipTable tbody');
   if (!tableBody) return;
@@ -3784,20 +4282,24 @@ async function loadPayslip() {
   const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
   const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
 
-  tableBody.innerHTML = '<tr><td colspan="19" class="text-center">Loading payslip...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="17" class="text-center">Loading payslip...</td></tr>';
 
   try {
-    const [employeeResponse, attendanceResponse, assignedIncomeResponse, assignedDeductionResponse] = await Promise.all([
+    const [employeeResponse, attendanceResponse, assignedIncomeResponse, assignedDeductionResponse, incomeTypeResponse, deductionTypeResponse] = await Promise.all([
       fetch('../Employee_management/employees_api.php'),
       fetch('attendance_api.php'),
       fetch('assigned_emp_inc_api.php'),
-      fetch('assigned_emp_deduc_api.php')
+      fetch('assigned_emp_deduc_api.php'),
+      fetch('emp_inc_type_api.php'),
+      fetch('emp_deduc_type_api.php')
     ]);
 
     const employeeResult = await employeeResponse.json();
     const attendanceResult = attendanceResponse.ok ? await attendanceResponse.json() : { success: false, data: [] };
     const assignedIncomeResult = assignedIncomeResponse.ok ? await assignedIncomeResponse.json() : { success: false, data: [] };
     const assignedDeductionResult = assignedDeductionResponse.ok ? await assignedDeductionResponse.json() : { success: false, data: [] };
+    const incomeTypeResult = incomeTypeResponse.ok ? await incomeTypeResponse.json() : { success: false, data: [] };
+    const deductionTypeResult = deductionTypeResponse.ok ? await deductionTypeResponse.json() : { success: false, data: [] };
 
     if (!employeeResult.success) {
       throw new Error(employeeResult.message || 'Unable to load employee data for payslip.');
@@ -3806,7 +4308,7 @@ async function loadPayslip() {
     const employees = employeeResult.data || [];
     allPayslipEmployees = employees;
     if (employees.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="19" class="text-center">No employees found.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="19" class="text-center">No employees found.</td></tr>';
       paginateTable('payslipTable', 'payslipPagination', true);
       return;
     }
@@ -3814,11 +4316,17 @@ async function loadPayslip() {
     const attendanceData = attendanceResult.success ? (attendanceResult.data || []) : [];
     const assignedIncomeData = assignedIncomeResult.success ? (assignedIncomeResult.data || []) : [];
     const assignedDeductionData = assignedDeductionResult.success ? (assignedDeductionResult.data || []) : [];
+    const incomeTypesData = incomeTypeResult.success ? (incomeTypeResult.data || []) : [];
+    const deductionTypesData = deductionTypeResult.success ? (deductionTypeResult.data || []) : [];
+
+    const applicableAssignedIncomeData = filterAssignedIncomeByCutoff(assignedIncomeData, incomeTypesData, dateFrom, dateTo);
+    const applicableAssignedDeductionData = filterAssignedDeductionsByCutoff(assignedDeductionData, deductionTypesData, dateFrom, dateTo);
 
     const attendanceByEmployee = buildAttendanceWorkMap(attendanceData, dateFrom, dateTo);
-    const incomeByType = buildIncomeByTypeMap(assignedIncomeData);
-    const nonTaxableIncomeByEmployee = buildNonTaxableIncomeMap(assignedIncomeData);
-    const personalCaByEmployee = buildPersonalCaMap(assignedDeductionData);
+    const incomeByType = buildIncomeByTypeMap(applicableAssignedIncomeData);
+    const additionalIncomeByEmployee = buildAdditionalIncomeSummaryMap(applicableAssignedIncomeData);
+    const nonTaxableIncomeByEmployee = buildNonTaxableIncomeMap(applicableAssignedIncomeData);
+    const personalCaByEmployee = buildPersonalCaMap(applicableAssignedDeductionData);
 
     tableBody.innerHTML = '';
     employees.forEach(emp => {
@@ -3833,13 +4341,14 @@ async function loadPayslip() {
       const totalOtPay = (work.overtimeMinutes / 60) * hourlyRate;
 
       const employeeIncomeByType = incomeByType[employeeNameKey] || {};
+      const additionalIncomeSummary = additionalIncomeByEmployee[employeeNameKey] || { taxable: 0, nonTaxable: 0 };
       // Legal holiday = double pay (2x). Special holiday = 1.3x
       const legalHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /legal\s*holiday/i, 2);
       const specialHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /special\s*holiday/i, 1.3);
-      const riceSubsidy = getIncomeAmountByKeyword(employeeIncomeByType, /rice/i);
-      const electricity = getIncomeAmountByKeyword(employeeIncomeByType, /electric/i);
+      const taxableAdditionalIncome = Number(additionalIncomeSummary.taxable) || 0;
+      const nonTaxableAdditionalIncome = Number(additionalIncomeSummary.nonTaxable) || 0;
 
-      const nonTaxableIncome = nonTaxableIncomeByEmployee[employeeNameKey] || 0;
+      const nonTaxableIncome = (nonTaxableIncomeByEmployee[employeeNameKey] || 0) + nonTaxableAdditionalIncome;
       const {
         sssContribution,
         pagibigContribution,
@@ -3855,7 +4364,7 @@ async function loadPayslip() {
       const totalDeduction = sss + phlth + pagibig + tax + personalCa;
 
       const grossRegularPay = regularDays * grossPayPerDay;
-      const netPay = grossRegularPay + totalOtPay + legalHoliday + specialHoliday + riceSubsidy + electricity - totalDeduction;
+      const netPay = grossRegularPay + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
 
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -3868,8 +4377,8 @@ async function loadPayslip() {
         <td>${formatCurrency(totalOtPay)}</td>
         <td>${formatCurrency(legalHoliday)}</td>
         <td>${formatCurrency(specialHoliday)}</td>
-        <td>${formatCurrency(riceSubsidy)}</td>
-        <td>${formatCurrency(electricity)}</td>
+        <td>${formatCurrency(taxableAdditionalIncome)}</td>
+        <td>${formatCurrency(nonTaxableAdditionalIncome)}</td>
         <td>${formatCurrency(sss)}</td>
         <td>${formatCurrency(phlth)}</td>
         <td>${formatCurrency(pagibig)}</td>
@@ -3923,11 +4432,12 @@ async function fetchEmployeeIncomeAssignments() {
           id: item.id,
           employeeName: item.name,
           incomeType: item.type_of_income,
-          // Show latest cost from income types table when available.
-          cost: latestType ? latestType.cost : item.cost,
+          cost: item.cost,
           taxable: latestType ? latestType.taxable : item.taxable,
           included13: latestType ? latestType.included_in_13month : item['month_13th'],
-          recurring: latestType ? latestType.recurring : 0
+          recurring: latestType ? latestType.recurring : 0,
+          applyYearMonth: item.apply_year_month || null,
+          applyCutoffSlot: item.apply_cutoff_slot || null
         };
       });
       renderEmployeeIncomeAssignments();
