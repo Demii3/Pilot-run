@@ -90,7 +90,7 @@
     $result1 = mysqli_query($dbc, $sql1);
 
     $sql2 = "UPDATE users
-             SET `Clockin_status` = 'Tapped-out'
+             SET `Clockin_status` = 'Tapped-out', `Work_Status` = 'Tapped-out'
              WHERE `User_id` = $empId";
     $result2 = mysqli_query($dbc, $sql2);
 

@@ -109,7 +109,7 @@ function applymap(querydata) {
         return;
     }
 
-    if (querydata.Work_Status == 'Tapped-out') {
+    if (querydata.Work_Status == 'Tapped-in') {
         drawGeofence(JSON.parse(querydata.Coordinates));
     }
 };
