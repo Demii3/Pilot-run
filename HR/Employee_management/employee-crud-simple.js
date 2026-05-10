@@ -8,12 +8,13 @@ function openAddForm() {
   document.getElementById('status').value = 'Active';
   document.getElementById('formTitle').textContent = 'Add New Employee';
   const modal = document.getElementById('employeeModal');
-  modal.style.display = 'flex';
+  modal.classList.add('show');
   document.body.classList.add('modal-open');
 }
 
 function closeModal() {
-  document.getElementById('employeeModal').style.display = 'none';
+  const modal = document.getElementById('employeeModal');
+  modal.classList.remove('show');
   document.body.classList.remove('modal-open');
 }
 
@@ -71,7 +72,7 @@ async function editEmployee(id) {
   document.getElementById('status').value = employee.status || 'Active';
   document.getElementById('formTitle').textContent = 'Edit Employee';
   const modal = document.getElementById('employeeModal');
-  modal.style.display = 'flex';
+  modal.classList.add('show');
   document.body.classList.add('modal-open');
 }
 

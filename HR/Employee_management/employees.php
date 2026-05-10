@@ -11,7 +11,7 @@
 
   <div class="card-body">
     <div class="table-responsive">
-      <table class="table table-hover" id="employeeTable">
+      <table class="table table-hover" id="employeeTable"></table>
     </div>
   </div>
 </div>
