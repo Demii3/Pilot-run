@@ -1,3 +1,29 @@
+<style>
+  #employeeTable {
+    font-size: 0.92rem;
+    width: auto;
+    min-width: 1000px;
+    table-layout: auto;
+  }
+
+  #employeeTable th {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  #employeeTable td {
+    white-space: nowrap;
+  }
+
+  #employeeTable_wrapper .dataTables_scroll {
+    overflow-x: auto;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+</style>
+
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
     <h2>Manage Employees</h2>

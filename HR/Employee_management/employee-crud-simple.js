@@ -248,23 +248,27 @@ async function displayEmployees() {
   // Initialize DataTable
   employeeTable = $('#employeeTable').DataTable({
     data: employeesData,
+    scrollX: true,
+    autoWidth: false,
     columns: [
-      { data: 'id' },
-      { data: 'name' },
-      { data: 'email' },
-      { data: 'username' },
-      { data: 'position' },
-      { data: 'department' },
+      { data: 'id', title: 'ID' },
+      { data: 'name', title: 'Name' },
+      { data: 'email', title: 'Email' },
+      { data: 'username', title: 'Username' },
+      { data: 'position', title: 'Position' },
+      { data: 'department', title: 'Department' },
       { 
         data: 'salary',
+        title: 'Salary',
         render: function(data) {
           return '₱' + parseFloat(data).toLocaleString();
         }
       },
-      { data: 'type' },
-      { data: 'status' },
+      { data: 'type', title: 'Type' },
+      { data: 'status', title: 'Status' },
       {
         data: null,
+        title: 'Actions',
         orderable: false,
         searchable: false,
         render: function(data, type, row) {

@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
   <link rel="stylesheet" href="../employee_module.css" />
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin ="anonymous"></script>
@@ -78,7 +79,8 @@
                   <option value="">-- choose employee --</option>
                 </select>
               </div>
-              <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer; width:100%;">Assign Employee</button>
+              <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer; width:100%; margin-bottom:10px;">Assign Employee</button>
+              <button type="button" id="viewAssignedBtn" style="background:#10b981; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer; width:100%;">View Assigned Employees</button>
             </form>
             <div id="assignMsg" style="margin-top:15px;"></div>
           </div>
@@ -86,6 +88,32 @@
           <!-- Right: Map Preview -->
           <div style="flex:1; min-width:300px; background:#f3f4f6; border-radius:6px; overflow:hidden; display:none;" id="mapContainer">
             <div id="assignMap" style="width:100%; height:100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal for Viewing Assigned Employees -->
+      <div id="assignedEmployeesModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center; padding:20px;">
+        <div style="background:white; border-radius:8px; width:100%; max-width:900px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 25px rgba(0,0,0,0.15);">
+          <div style="padding:20px; border-bottom:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:18px; font-weight:600;">Assigned Employees</h3>
+            <button id="closeAssignedModal" style="background:none; border:none; font-size:24px; cursor:pointer; color:#999;">&times;</button>
+          </div>
+          <div style="padding:20px;">
+            <div class="table-responsive">
+              <table id="assignedEmployeesTable" class="table table-sm table-bordered">
+                <thead style="background:#f3f4f6;">
+                  <tr>
+                    <th style="text-align:center; width:50px;">#</th>
+                    <th>Employee</th>
+                    <th>Site</th>
+                    <th style="text-align:center; width:180px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="assignedTableBody"></tbody>
+              </table>
+            </div>
+            <div id="assignedTableEmpty" style="color:#999; font-size:13px; margin-top:10px; text-align:center;">Loading assignments...</div>
           </div>
         </div>
       </div>
@@ -98,6 +126,8 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script>
     let savedGeofences = [];
     let geofencesForAssign = [];
@@ -529,6 +559,151 @@
     } else {
       loadSites();
     }
+
+    // View Assigned Employees Modal Functions
+    let editAssignmentId = null;
+    let assignedTable = null;
+
+    function openAssignedEmployeesModal() {
+      document.getElementById('assignedEmployeesModal').style.display = 'flex';
+      loadAssignedEmployees();
+    }
+
+    function closeAssignedEmployeesModal() {
+      document.getElementById('assignedEmployeesModal').style.display = 'none';
+      editAssignmentId = null;
+    }
+
+    function loadAssignedEmployees() {
+      // Use the local HR_features API for compatibility
+      const apiUrl = '../../../HR_features/api_assignments_list.php';
+      
+      fetch(apiUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (!data.success) {
+            alert(data.message || 'Unable to load assignments');
+            return;
+          }
+          
+          const assignments = data.data || [];
+          
+          // Destroy existing DataTable if it exists
+          if ($.fn.DataTable.isDataTable('#assignedEmployeesTable')) {
+            $('#assignedEmployeesTable').DataTable().destroy();
+          }
+          
+          // Clear table body
+          const $body = document.getElementById('assignedTableBody');
+          $body.innerHTML = '';
+          
+          if (assignments.length === 0) {
+            document.getElementById('assignedTableEmpty').textContent = 'No assignments found.';
+            document.getElementById('assignedTableEmpty').style.display = 'block';
+            return;
+          }
+          
+          document.getElementById('assignedTableEmpty').style.display = 'none';
+          
+          assignments.forEach(function(item, index) {
+            const employeeText = item.employee_name + (item.employee_username ? ' (' + item.employee_username + ')' : '');
+            const row = document.createElement('tr');
+            row.innerHTML = '<td style="text-align:center;">' + (index + 1) + '</td>' +
+              '<td>' + employeeText + '</td>' +
+              '<td>' + item.site_name + '</td>' +
+              '<td style="text-align:center;">' +
+              '<button type="button" class="btn btn-sm btn-outline-primary edit-assignment-btn" data-id="' + item.tb_id + '" data-employee="' + item.employee_id + '" data-site="' + item.site_id + '" style="margin-right:5px;">Edit</button>' +
+              '<button type="button" class="btn btn-sm btn-outline-danger delete-assignment-btn" data-id="' + item.tb_id + '">Delete</button>' +
+              '</td>';
+            $body.appendChild(row);
+          });
+          
+          // Initialize DataTable after DOM is updated
+          setTimeout(function() {
+            try {
+              assignedTable = $('#assignedEmployeesTable').DataTable({
+                paging: true,
+                pageLength: 10,
+                lengthMenu: [[5, 10, 25, -1], [5, 10, 25, "All"]],
+                searching: true,
+                ordering: true,
+                language: {
+                  search: 'Search:',
+                  lengthMenu: 'Show _MENU_ entries',
+                  info: 'Showing _START_ to _END_ of _TOTAL_ entries'
+                },
+                responsive: true,
+                columnDefs: [
+                  { orderable: false, targets: 3 }
+                ]
+              });
+              
+              // Attach event handlers after DataTable is initialized
+              attachAssignmentHandlers();
+            } catch (e) {
+              console.error('DataTable initialization error:', e);
+              attachAssignmentHandlers();
+            }
+          }, 50);
+        })
+        .catch(function(err) {
+          alert('Failed to load assignments: ' + err.message);
+          console.error('Error loading assignments:', err);
+        });
+    }
+    
+    function attachAssignmentHandlers() {
+          // Attach event handlers
+          document.querySelectorAll('.edit-assignment-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              editAssignmentId = parseInt(this.getAttribute('data-id'));
+              document.getElementById('employeeSelect').value = this.getAttribute('data-employee');
+              document.getElementById('siteSelect').value = this.getAttribute('data-site');
+              
+              // Highlight the select fields
+              document.getElementById('employeeSelect').style.borderColor = '#f59e0b';
+              document.getElementById('siteSelect').style.borderColor = '#f59e0b';
+              
+              document.getElementById('assignMsg').innerHTML = '<div style="background:#fef3c7; color:#92400e; padding:10px; border-radius:6px; font-size:13px;">Editing assignment. Update fields and click "Assign Employee" to save or refresh to cancel.</div>';
+              closeAssignedEmployeesModal();
+            });
+          });
+          
+          document.querySelectorAll('.delete-assignment-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              const assignmentId = parseInt(this.getAttribute('data-id'));
+              if (!confirm('Delete this assignment?')) return;
+              
+              fetch('../../../HR_features/api_assignment_delete.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'assignment_id=' + assignmentId
+              })
+              .then(function(res) { return res.json(); })
+              .then(function(data) {
+                if (data.success) {
+                  loadAssignedEmployees();
+                  alert(data.message || 'Assignment deleted');
+                } else {
+                  alert(data.message || 'Delete failed');
+                }
+              })
+              .catch(function(err) {
+                alert('Error: ' + err.message);
+              });
+            });
+          });
+    }
+
+    document.getElementById('viewAssignedBtn').addEventListener('click', openAssignedEmployeesModal);
+    document.getElementById('closeAssignedModal').addEventListener('click', closeAssignedEmployeesModal);
+    
+    // Close modal when clicking outside
+    document.getElementById('assignedEmployeesModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeAssignedEmployeesModal();
+      }
+    });
   </script>
 </body>
 </html>
