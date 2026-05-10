@@ -494,7 +494,17 @@
         },
         body: JSON.stringify(payload)
       })
-      .then(function(res) { return res.json(); })
+      .then(function(res) { return res.text(); })
+      .then(function(text) {
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          const preview = (text || '').trim().slice(0, 160);
+          throw new Error('Server returned non-JSON response' + (preview ? ': ' + preview : ''));
+        }
+        return data;
+      })
       .then(function(data) {
         console.log('API response:', data);
         if (data.success) {

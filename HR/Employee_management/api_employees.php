@@ -6,7 +6,8 @@ header('Content-Type: application/json');
 
 include __DIR__ . '/../../Modules/dbcon.php';
 
-$query = "SELECT id, name FROM employees WHERE status = 'Active' ORDER BY name";
+$query = "SELECT id, name FROM employees ORDER BY name";
+
 $result = mysqli_query($dbc, $query);
 
 if (!$result) {
