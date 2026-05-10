@@ -25,6 +25,13 @@ function normalizeMoneyInput($value) {
     return floatval($value);
 }
 
+function columnExists($dbc, $table, $column) {
+    $table = mysqli_real_escape_string($dbc, $table);
+    $column = mysqli_real_escape_string($dbc, $column);
+    $result = mysqli_query($dbc, "SHOW COLUMNS FROM `" . $table . "` LIKE '" . $column . "'");
+    return $result && mysqli_num_rows($result) > 0;
+}
+
 function ensureAssignedEmpIncTable($dbc) {
     $createSql = "CREATE TABLE IF NOT EXISTS `assigned_emp_inc` (
       `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -33,6 +40,8 @@ function ensureAssignedEmpIncTable($dbc) {
       `cost` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
       `taxable` TINYINT(1) NOT NULL DEFAULT 0,
       `month_13th` TINYINT(1) NOT NULL DEFAULT 0,
+            `apply_year_month` VARCHAR(7) DEFAULT NULL,
+            `apply_cutoff_slot` TINYINT(1) DEFAULT NULL,
       `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (`id`)
@@ -42,10 +51,24 @@ function ensureAssignedEmpIncTable($dbc) {
     if (mysqli_errno($dbc)) {
         respond(false, null, 'Database setup failed: ' . mysqli_error($dbc), 500);
     }
+
+    if (!columnExists($dbc, 'assigned_emp_inc', 'apply_year_month')) {
+        mysqli_query($dbc, "ALTER TABLE `assigned_emp_inc` ADD COLUMN `apply_year_month` VARCHAR(7) DEFAULT NULL AFTER `month_13th`");
+        if (mysqli_errno($dbc)) {
+            respond(false, null, 'Failed to add apply_year_month column: ' . mysqli_error($dbc), 500);
+        }
+    }
+
+    if (!columnExists($dbc, 'assigned_emp_inc', 'apply_cutoff_slot')) {
+        mysqli_query($dbc, "ALTER TABLE `assigned_emp_inc` ADD COLUMN `apply_cutoff_slot` TINYINT(1) DEFAULT NULL AFTER `apply_year_month`");
+        if (mysqli_errno($dbc)) {
+            respond(false, null, 'Failed to add apply_cutoff_slot column: ' . mysqli_error($dbc), 500);
+        }
+    }
 }
 
 function handleGetRequest($dbc) {
-    $query = "SELECT id, name, type_of_income, cost, taxable, month_13th FROM assigned_emp_inc ORDER BY id DESC";
+    $query = "SELECT id, name, type_of_income, cost, taxable, month_13th, apply_year_month, apply_cutoff_slot FROM assigned_emp_inc ORDER BY id DESC";
     $result = mysqli_query($dbc, $query);
 
     if (!$result) {
@@ -72,17 +95,32 @@ function handlePostRequest($dbc) {
     $cost = normalizeMoneyInput($input['cost']);
     $taxable = ($input['taxable'] == 1 || $input['taxable'] === true || $input['taxable'] === '1') ? 1 : 0;
     $month_13th = ($input['month_13th'] == 1 || $input['month_13th'] === true || $input['month_13th'] === '1') ? 1 : 0;
+    $apply_year_month = isset($input['apply_year_month']) ? trim((string) $input['apply_year_month']) : '';
+    $apply_cutoff_slot = isset($input['apply_cutoff_slot']) && is_numeric($input['apply_cutoff_slot']) ? intval($input['apply_cutoff_slot']) : null;
+
+    if ($apply_year_month !== '' && !preg_match('/^\d{4}-\d{2}$/', $apply_year_month)) {
+        respond(false, null, 'Invalid apply year-month format. Use YYYY-MM.', 400);
+    }
+
+    if ($apply_cutoff_slot !== null && $apply_cutoff_slot !== 1 && $apply_cutoff_slot !== 2) {
+        respond(false, null, 'Invalid cutoff slot. Use 1 or 2.', 400);
+    }
+
+    if ($apply_year_month === '' || $apply_cutoff_slot === null) {
+        $apply_year_month = null;
+        $apply_cutoff_slot = null;
+    }
 
     if ($name === '' || $type_of_income === '') {
         respond(false, null, 'Name and income type are required.', 400);
     }
 
     if ($id) {
-        $stmt = mysqli_prepare($dbc, "UPDATE assigned_emp_inc SET name = ?, type_of_income = ?, cost = ?, taxable = ?, month_13th = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, 'ssdiii', $name, $type_of_income, $cost, $taxable, $month_13th, $id);
+        $stmt = mysqli_prepare($dbc, "UPDATE assigned_emp_inc SET name = ?, type_of_income = ?, cost = ?, taxable = ?, month_13th = ?, apply_year_month = ?, apply_cutoff_slot = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'ssdiisii', $name, $type_of_income, $cost, $taxable, $month_13th, $apply_year_month, $apply_cutoff_slot, $id);
     } else {
-        $stmt = mysqli_prepare($dbc, "INSERT INTO assigned_emp_inc (name, type_of_income, cost, taxable, month_13th) VALUES (?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'ssdii', $name, $type_of_income, $cost, $taxable, $month_13th);
+        $stmt = mysqli_prepare($dbc, "INSERT INTO assigned_emp_inc (name, type_of_income, cost, taxable, month_13th, apply_year_month, apply_cutoff_slot) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, 'ssdiisi', $name, $type_of_income, $cost, $taxable, $month_13th, $apply_year_month, $apply_cutoff_slot);
     }
 
     if (!mysqli_stmt_execute($stmt)) {

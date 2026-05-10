@@ -5,6 +5,13 @@
         exit();
     };
 
+    // Prevent caching to avoid showing logged-in content on back button
+    header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0, private');
+    header('Cache-Control: post-check=0, pre-check=0', FALSE);
+    header('Pragma: no-cache');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+
     include '../Modules/dbcon.php';
 
     // Recent tap-in
@@ -49,6 +56,9 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="0">
         <title>HR Dashboard</title>
 
         <!-- Bootstrap -->

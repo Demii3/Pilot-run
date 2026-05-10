@@ -384,3 +384,25 @@ h2 {
     height: 50px;
   }
 }
+
+#employeeIncomeModal .income-meta-flags {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#employeeIncomeModal .income-meta-flags .form-check-inline {
+  margin-right: 0;
+}
+
+#employeeIncomeModal .income-recurring-check {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+#employeeIncomeModal .income-recurring-check .form-check-input {
+  margin-top: 0;
+}

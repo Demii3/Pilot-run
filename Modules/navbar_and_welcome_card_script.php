@@ -1,12 +1,14 @@
 <script>
-    const isAttendanceActive = <?php echo !empty($_SESSION['attendance_active']) ? 'true' : 'false'; ?>;
+    // Set global attendance active status for logout handler
+    window.isAttendanceActive = <?php echo !empty($_SESSION['attendance_active']) ? 'true' : 'false'; ?>;
 
     function toggleMenu() {
         document.getElementById("profileMenu").classList.toggle("active");
     }
 
+    // Logout handler - will be overridden by universal_logout_handler.js if included
     function handleLogout(event) {
-        if (isAttendanceActive) {
+        if (window.isAttendanceActive) {
             const shouldLogout = window.confirm('You are currently tapped in. Logging out will automatically tap you out first. Continue?');
 
             if (!shouldLogout) {

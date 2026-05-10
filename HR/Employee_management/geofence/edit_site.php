@@ -1,5 +1,20 @@
 <?php
-?><!DOCTYPE html>
+  session_start();
+  if (!isset($_SESSION['login']) || $_SESSION['type'] != "HR") {
+    header("location: ../../../");
+    exit();
+  }
+  
+  // Prevent caching to avoid showing logged-in content on back button
+  header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
+  header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0, private');
+  header('Cache-Control: post-check=0, pre-check=0', FALSE);
+  header('Pragma: no-cache');
+  header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+  
+  $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
+?>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -12,6 +27,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
   <link rel="stylesheet" href="../employee_module.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="../../../Modules/universal_logout_handler.js"></script>
 </head>
 <body class="geofence-app">
   <nav class="custom-navbar">
@@ -23,13 +39,16 @@
     </div>
     <div class="nav-right">
       <button class="avatar" onclick="toggleMenu()">
-        <img src="../../../Images/profilepic.jpg" alt="User">
+        <img src="<?php echo $baseUrl; ?>/Images/profilepic.jpg" alt="User">
       </button>
       <div id="profileMenu" class="dropdown-menu">
         <div class="profile-header">
-          <img src="../../../Images/profilepic.jpg" alt="User">
+          <img src="<?php echo $baseUrl; ?>/Images/profilepic.jpg" alt="User">
           <span>User</span>
         </div>
+        <a href="#" class="profile-item"> Settings & Privacy </a>
+        <a href="#" class="profile-item"> Help & Support </a>
+        <a href="<?php echo $baseUrl; ?>/Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
       </div>
     </div>
   </nav>
@@ -71,9 +90,20 @@
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <script>
+    // Set global attendance active status for logout handler
+    window.isAttendanceActive = false; // HR users don't have attendance active status
+    
     function toggleMenu() {
       document.getElementById('profileMenu').classList.toggle('active');
     }
+    
+    document.addEventListener("click", function(e) {
+      const menu = document.getElementById("profileMenu");
+      const avatar = document.querySelector(".avatar");
+      if (!avatar.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove("active");
+      }
+    });
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');

@@ -1,22 +1,20 @@
 <style>
   #employeeTable {
     font-size: 0.92rem;
-    width: auto;
-    min-width: 1000px;
-    table-layout: auto;
+    width: 100%;
+    min-width: 100%;
+    table-layout: fixed;
+  }
+
+  #employeeTable th,
+  #employeeTable td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   #employeeTable th {
-    white-space: normal;
-    word-break: break-word;
-  }
-
-  #employeeTable td {
-    white-space: nowrap;
-  }
-
-  #employeeTable_wrapper .dataTables_scroll {
-    overflow-x: auto;
+    background-color: #f8f9fa;
   }
 
   .table-responsive {
