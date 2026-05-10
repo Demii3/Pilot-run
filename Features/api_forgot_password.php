@@ -9,34 +9,69 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 include __DIR__ . '/../Modules/dbcon.php';
 
-$email = isset($_POST['email']) ? trim($_POST['email']) : '';
+$identifier = isset($_POST['email']) ? trim($_POST['email']) : '';
 
-if (!$email) {
+if (!$identifier) {
     echo json_encode(['success' => false, 'message' => 'Email/username required']);
     exit;
 }
 
-// Find user by email or username
-$query = "SELECT id, username FROM employees WHERE email = ? OR username = ? LIMIT 1";
-$stmt = mysqli_prepare($dbc, $query);
-if (!$stmt) {
-    echo json_encode(['success' => false, 'message' => 'DB error']);
-    exit;
+// Find user by login username first (same table used by login), then by profile email.
+$userId = null;
+$username = null;
+
+$stmt = mysqli_prepare($dbc, "SELECT User_id, Username FROM users WHERE Username = ? LIMIT 1");
+if ($stmt) {
+    mysqli_stmt_bind_param($stmt, 's', $identifier);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_bind_result($stmt, $userId, $username);
+    if (!mysqli_stmt_fetch($stmt)) {
+        $userId = null;
+        $username = null;
+    }
+    mysqli_stmt_close($stmt);
 }
 
-mysqli_stmt_bind_param($stmt, 'ss', $email, $email);
-mysqli_stmt_execute($stmt);
-mysqli_stmt_bind_result($stmt, $userId, $username);
+if ($userId === null) {
+    $stmt = mysqli_prepare($dbc, "SELECT id, name FROM employees WHERE email = ? LIMIT 1");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, 's', $identifier);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $userId, $username);
+        if (!mysqli_stmt_fetch($stmt)) {
+            $userId = null;
+            $username = null;
+        }
+        mysqli_stmt_close($stmt);
+    }
+}
 
-if (!mysqli_stmt_fetch($stmt)) {
+if ($userId === null) {
     echo json_encode(['success' => false, 'message' => 'Email/username not found']);
     exit;
 }
-mysqli_stmt_close($stmt);
 
 // Generate reset token
 $token = bin2hex(random_bytes(32));
 $expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+$createTableSql = "CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` INT UNSIGNED NOT NULL,
+    `token` VARCHAR(255) NOT NULL UNIQUE,
+    `expires_at` DATETIME NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_token` (`token`),
+    KEY `idx_expires` (`expires_at`),
+    CONSTRAINT `prt_fk_user` FOREIGN KEY (`user_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
+$createResult = mysqli_query($dbc, $createTableSql);
+if (!$createResult) {
+        echo json_encode(['success' => false, 'message' => 'Failed to initialize reset token storage']);
+        exit;
+}
 
 // Store token in DB
 $insertStmt = mysqli_prepare($dbc, "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)");

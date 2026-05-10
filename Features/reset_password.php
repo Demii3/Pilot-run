@@ -4,12 +4,30 @@
 
 include __DIR__ . '/../Modules/dbcon.php';
 
-$token = isset($_GET['token']) ? $_GET['token'] : '';
+$createTableSql = "CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` INT UNSIGNED NOT NULL,
+    `token` VARCHAR(255) NOT NULL UNIQUE,
+    `expires_at` DATETIME NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_token` (`token`),
+    KEY `idx_expires` (`expires_at`),
+    CONSTRAINT `prt_fk_user` FOREIGN KEY (`user_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
+$createResult = mysqli_query($dbc, $createTableSql);
 $error = '';
 $success = false;
 
+if (!$createResult) {
+        $error = 'Unable to initialize reset token storage';
+}
+
+$token = isset($_GET['token']) ? $_GET['token'] : '';
+
 // Validate token
-if ($token) {
+if (!$error && $token) {
     $stmt = mysqli_prepare($dbc, "SELECT user_id FROM password_reset_tokens WHERE token = ? AND expires_at > NOW() LIMIT 1");
     mysqli_stmt_bind_param($stmt, 's', $token);
     mysqli_stmt_execute($stmt);

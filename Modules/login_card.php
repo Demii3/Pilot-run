@@ -20,7 +20,7 @@
             <button type="button" id="loginBtn">LOGIN</button>
 
             <div class="forgot">
-                <a href="#">Forgot your password?</a>
+                <a href="Features/forgot_password.php">Forgot your password?</a>
             </div>
 
         </form>

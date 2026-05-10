@@ -11,54 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../Assets/login.css">
     <link rel="icon" type="image/png" href="../Images/logo.jpg"/>
-    <style>
-        .login-card input[type="email"] {
-            width: 100%;
-            margin-top: 5px;
-            margin-bottom: 15px;
-            padding: 8px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-family: 'Poppins', sans-serif;
-        }
-        .login-card input[type="email"]::placeholder {
-            color: rgba(255,255,255,0.6);
-        }
-        .login-card input[type="email"]:focus {
-            outline: none;
-            border-color: #3b82f6;
-        }
-        .alert {
-            padding: 10px;
-            border-radius: 6px;
-            margin-top: 15px;
-            font-size: 13px;
-        }
-        .alert-success {
-            background: rgba(34, 197, 94, 0.2);
-            color: #86efac;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-        .alert-danger {
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-        .forgot-link {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .forgot-link a {
-            color: white;
-            text-decoration: none;
-            font-size: 13px;
-        }
-        .forgot-link a:hover {
-            text-decoration: underline;
-        }
-    </style>
 </head>
 <body>
     <div class="bg-container">
@@ -69,15 +21,15 @@
     <div class="login-wrapper">
         <div class="login-card">
             <h1>Forgot Password</h1>
-            <p style="font-size: 13px; margin-bottom: 20px; color: rgba(255,255,255,0.8);">Enter your email to receive a password reset link (valid for 1 hour)</p>
+            <p style="font-size: 13px; margin-bottom: 20px; color: rgba(255,255,255,0.8);">Enter your email or username to receive a password reset link (valid for 1 hour)</p>
             
             <form id="forgotForm">
                 <label>Email or Username</label>
                 <input 
-                    type="email" 
+                    type="text" 
                     id="email" 
                     name="email" 
-                    placeholder="Enter your email"
+                    placeholder="Enter your email or username"
                     required
                 >
                 
@@ -86,7 +38,7 @@
             
             <div id="msg"></div>
             
-            <div class="forgot-link">
+            <div class="forgot">
                 <a href="../index.php">← Back to Login</a>
             </div>
         </div>
