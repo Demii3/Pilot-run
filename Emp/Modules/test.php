@@ -11,7 +11,7 @@
     $userId = $data['USER_ID'] ?? 0;
     $querydata = 'Unknown';
 
-    $sql = "SELECT Work_Status, employee_attendance.Location, employee_attendance.Coordinates FROM users
+    $sql = "SELECT Work_Status, employee_attendance.Attendance_id, employee_attendance.Location, employee_attendance.Coordinates FROM users
             JOIN employee_attendance ON users.User_id = employee_attendance.Emp_id
             WHERE users.User_id = $userId
             AND employee_attendance.Attendance_id = (SELECT MAX(Attendance_id) FROM employee_attendance WHERE Emp_id = $userId)";
@@ -22,5 +22,5 @@
     } 
 
 
-    echo json_encode(['workStatus' => $querydata, 'datafile' => $dataFile]);
+    echo json_encode(['querydata' => $querydata, 'datafile' => $dataFile]);
 ?>

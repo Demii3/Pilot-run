@@ -30,7 +30,7 @@ function loadAttendanceContent() {
         return getUserLocation().then(() => data);
     })
     .then((data) => {
-        applymap(); // Call the function to initialize the map after loading the content
+        applymap(data.querydata); // Call the function to initialize the map after loading the content
         setAttendanceModuleProperties(data.querydata); // Set properties for attendance module buttons
     })
     .catch(error => {
@@ -81,7 +81,7 @@ function getUserLocation() {
     });
 }
 
-function applymap() {
+function applymap(querydata) {
     const MapContainer = document.getElementById('Map-container');
     if (!MapContainer || typeof L === 'undefined') return;
 
@@ -105,8 +105,12 @@ function applymap() {
 
     const workStatus = document.getElementById('workStatus');
 
-    if (workStatus == 'Tapped-out') {
+    if (querydata == 0) {
         return;
+    }
+
+    if (querydata.Work_Status == 'Tapped-out') {
+        drawGeofence(JSON.parse(querydata.Coordinates));
     }
 };
 
@@ -128,12 +132,14 @@ function drawGeofence(coords) {
     map.fitBounds(geofenceLayer.getBounds());
 }
 
-function setAttendanceModuleProperties(workStatus) {
-    console.log('Setting attendance module properties with workStatus:', workStatus);
+function setAttendanceModuleProperties(querydata) {
+    console.log('Setting attendance module properties with querydata:', querydata);
     const returnToHomeButton = document.getElementById('returnToHome');
     const refreshLocationButton = document.getElementById('refreshLocation');
     const tapInButton = document.getElementById('tapIn');
     const locationSelect = document.getElementById('locationSelect');
+    const attendanceIdInput = document.getElementById('attendanceId');
+    attendanceIdInput.value = querydata.Attendance_id || '';
 
     function parseJsonList(rawValue) {
         if (!rawValue) {
@@ -168,10 +174,9 @@ function setAttendanceModuleProperties(workStatus) {
             locationSelect.appendChild(option);
         });
 
-        if (workStatus == 'Tapped-in') {
+        if (querydata.Work_Status == 'Tapped-in') {
             locationSelect.value = document.getElementById('locationSelect').options[1].value; // Set to the first location if already tapped in
             locationSelect.disabled = true;
-
         }
     }
 
@@ -186,7 +191,7 @@ function setAttendanceModuleProperties(workStatus) {
     if(tapInButton) {
         tapInButton.addEventListener('click', TapIn);
 
-            if (workStatus == 'Tapped-in') {
+            if (querydata.Work_Status == 'Tapped-in') {
                 tapInButton.innerText = 'Tapped Out';
                 tapInButton.classList.remove('btn-success');
                 tapInButton.removeEventListener('click', TapIn);
@@ -199,7 +204,7 @@ function setAttendanceModuleProperties(workStatus) {
         refreshLocationButton.addEventListener('click', function() {
             getUserLocation().then(() => {
                 markers.clearLayers(); // Clear existing markers
-                applymap(); // Re-apply the map to update the marker position
+                applymap(querydata = 0); // Re-apply the map to update the marker position
             });
         });
     }
@@ -225,6 +230,6 @@ function TapOut() {
     const locationName = selectedOption.value;
     const coordinates = selectedOption.getAttribute('data-coordinates');
     if (locationName && coordinates) {
-            saveInfotoDatabase();
+            saveTimeOut();
     };
 }

@@ -10,16 +10,16 @@
         exit();
     }
 
-    if (!isset($_SESSION['id'], $_POST['clockout_time'], $_POST['clockout_status'])) {
+    if (!isset($_POST['userId'], $_POST['timeOut'], $_POST['timeOutStatus'])) {
         echo $msg;
         exit();
     }
 
     /** @var mysqli $dbc */
 
-    $empId = (int) $_SESSION['id'];
-    $clockoutTime = mysqli_real_escape_string($dbc, $_POST['clockout_time']);
-    $clockoutStatus = mysqli_real_escape_string($dbc, $_POST['clockout_status']);
+    $empId = (int) $_POST['userId'];
+    $clockoutTime = mysqli_real_escape_string($dbc, $_POST['timeOut']);
+    $clockoutStatus = mysqli_real_escape_string($dbc, $_POST['timeOutStatus']);
     $attendanceId = isset($_SESSION['Attendance_id']) ? (int) $_SESSION['Attendance_id'] : 0;
 
     if ($attendanceId <= 0) {
@@ -71,7 +71,7 @@
     }
 
     $clockInMinutes = parseAttendanceTimeToMinutes($clockInTime);
-    $clockOutMinutes = parseAttendanceTimeToMinutes($_POST['clockout_time']);
+    $clockOutMinutes = parseAttendanceTimeToMinutes($_POST['timeOut']);
     $duration = 0;
 
     if ($clockInMinutes !== null && $clockOutMinutes !== null) {
@@ -95,7 +95,7 @@
     $result2 = mysqli_query($dbc, $sql2);
 
     if ($result1 && $result2) {
-        $_SESSION['Clockout-status'] = $_POST['clockout_status'];
+        $_SESSION['Clockout-status'] = $_POST['timeOutStatus'];
         $_SESSION['attendance_active'] = false;
         unset($_SESSION['Clock-in']);
         unset($_SESSION['selectedLocation']);
