@@ -1,9 +1,9 @@
-﻿-- phpMyAdmin SQL Dump
+-- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 09, 2026 at 03:02 PM
+-- Generation Time: May 10, 2026 at 04:03 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -99,8 +99,7 @@ INSERT INTO `employees` (`id`, `name`, `email`, `username`, `password`, `type`, 
 (8, 'Jeremiah Guarino', 'palemlem@gmail.com', 'Jeremiah', '123', 'Emp', 'Doggy', 'CpE', 123456.00, '2026-04-09', 'Active'),
 (9, 'Joseph Mayor', 'joseph@yahoo.com', 'Joseph', '123', 'Emp', 'asdfgsdfa', 'adfs', 1234.00, '2001-12-31', 'Active'),
 (10, 'Simone Factor', 'factor@simone.com', 'Simone', '123', 'Emp', 'Super Adik', 'PDEA', 1236.00, '2001-03-31', 'Active'),
-(11, 'Ken Axel Quanico', '12343556kenaxelquanico@gmail.com', 'Ken', '123', 'Emp', 'Yearner', 'CpE', 676767.00, '2003-12-31', 'Active'),
-(12, 'Eron De La Cruz', 'eronski@gmail.com', 'Erin', '123', 'Emp', 'Bully', 'CpE', 124245.00, '2026-04-09', 'Active');
+(11, 'Ken Axel Quanico', '12343556kenaxelquanico@gmail.com', 'Ken', '123', 'Emp', 'Yearner', 'CpE', 676767.00, '2003-12-31', 'Active');
 
 -- --------------------------------------------------------
 
@@ -156,7 +155,11 @@ CREATE TABLE `employee_location` (
 
 INSERT INTO `employee_location` (`tb_id`, `User_Id`, `loc_id`) VALUES
 (1, 4, 1),
-(2, 4, 2);
+(2, 4, 2),
+(4, 3, 4),
+(5, 11, 1),
+(6, 9, 1),
+(7, 7, 1);
 
 -- --------------------------------------------------------
 
@@ -167,7 +170,6 @@ INSERT INTO `employee_location` (`tb_id`, `User_Id`, `loc_id`) VALUES
 CREATE TABLE `emp_deduc_type` (
   `id` int(10) UNSIGNED NOT NULL,
   `type_of_deduction` varchar(255) NOT NULL,
-  `cost` decimal(15,2) NOT NULL DEFAULT 0.00,
   `taxable` tinyint(1) NOT NULL DEFAULT 1,
   `included_in_13month` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -186,7 +188,6 @@ CREATE TABLE `emp_inc_type` (
   `cost` decimal(15,2) NOT NULL DEFAULT 0.00,
   `taxable` tinyint(1) NOT NULL DEFAULT 1,
   `included_in_13month` tinyint(1) NOT NULL DEFAULT 1,
-  `recurring` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -212,7 +213,9 @@ CREATE TABLE `geofences` (
 INSERT INTO `geofences` (`id`, `name`, `coordinates`, `created_at`, `updated_at`) VALUES
 (1, 'Adamson OZ', '[[14.586672425819803,120.98653078079224],[14.586205189341426,120.98669171333314],[14.586257104554646,120.9868633747101],[14.586324594313552,120.98682582378389],[14.586511488922529,120.98669171333314],[14.586636085240368,120.98710477352144],[14.587290214752265,120.98689019680025],[14.587269448765882,120.98681509494783],[14.58708255480032,120.98672389984132],[14.586765872996489,120.98683655261995],[14.586672425819803,120.98653078079224]]', '2026-04-04 15:49:22', NULL),
 (2, 'SM', '[[14.652350801029067,120.99225997924806],[14.643880624522094,120.99123001098634],[14.645375385333589,121.0001564025879],[14.65334727086327,120.99998474121095],[14.652350801029067,120.99225997924806]]', '2026-04-06 11:25:49', NULL),
-(3, 'BahayniAno', '[[14.620233524081927,121.08998746908762],[14.620103839130735,121.09050236979236],[14.620643328024464,121.09065791271361],[14.620627765863413,121.09074909304674],[14.620715951428197,121.09077591079175],[14.620570704596721,121.09140880957469],[14.621514807284294,121.09165553282902],[14.621628929312259,121.09102799759515],[14.62134362413116,121.09093681726203],[14.621359186241513,121.09060964077251],[14.62092344673508,121.09047018849832],[14.62098569528893,121.09018592040093],[14.620233524081927,121.08998746908762]]', '2026-04-12 07:15:05', NULL);
+(3, 'BahayniAno', '[[14.620233524081927,121.08998746908762],[14.620103839130735,121.09050236979236],[14.620643328024464,121.09065791271361],[14.620627765863413,121.09074909304674],[14.620715951428197,121.09077591079175],[14.620570704596721,121.09140880957469],[14.621514807284294,121.09165553282902],[14.621628929312259,121.09102799759515],[14.62134362413116,121.09093681726203],[14.621359186241513,121.09060964077251],[14.62092344673508,121.09047018849832],[14.62098569528893,121.09018592040093],[14.620233524081927,121.08998746908762]]', '2026-04-12 07:15:05', NULL),
+(4, 'JAPAN', '[[36.70451976337016,138.57330322265628],[36.682496478209124,138.49914550781253],[36.634023050101284,138.54309082031253],[36.634023050101284,138.60076904296878],[36.6604668854353,138.63372802734378],[36.66707642548053,138.66943359375003],[36.71773070621055,138.65295410156253],[36.70451976337016,138.57330322265628]]', '2026-05-10 09:53:08', NULL),
+(5, 'SV', '[[14.585584233771892,120.98531842231752],[14.585412912998242,120.98493218421937],[14.585267549813043,120.98500728607179],[14.585397338375856,120.9853881597519],[14.585584233771892,120.98531842231752]]', '2026-05-10 09:55:01', NULL);
 
 -- --------------------------------------------------------
 
@@ -243,6 +246,43 @@ CREATE TABLE `hr_attendance_settings` (
 
 INSERT INTO `hr_attendance_settings` (`id`, `Manual_mode`, `Hide_attendance_id`, `Hide_employee_id`, `Hide_name`, `Hide_department`, `Hide_date`, `Hide_locations`, `Hide_clockin`, `Hide_clockinstatus`, `Hide_clockout`, `Hide_clockoutstatus`, `Hide_duration`, `Hide_AO`) VALUES
 (1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pagibig_table`
+--
+
+CREATE TABLE `pagibig_table` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `year` int(11) NOT NULL,
+  `salary_from` decimal(15,2) NOT NULL,
+  `salary_to` decimal(15,2) DEFAULT NULL,
+  `contribution_rate` decimal(5,4) NOT NULL,
+  `maximum_contribution` decimal(10,2) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `philhealth_table`
+--
+
+CREATE TABLE `philhealth_table` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `year` int(11) NOT NULL,
+  `salary_from` decimal(15,2) NOT NULL,
+  `salary_to` decimal(15,2) DEFAULT NULL,
+  `contribution_rate` decimal(5,4) NOT NULL,
+  `maximum_contribution` decimal(10,2) NOT NULL,
+  `fixed_amount` decimal(10,2) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -284,6 +324,41 @@ INSERT INTO `premiums` (`id`, `employee_id`, `employee_name`, `sss`, `philhealth
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `sss_table`
+--
+
+CREATE TABLE `sss_table` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `year` int(11) NOT NULL,
+  `salary_from` decimal(15,2) NOT NULL,
+  `salary_to` decimal(15,2) DEFAULT NULL,
+  `monthly_contribution` decimal(10,2) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tax_table`
+--
+
+CREATE TABLE `tax_table` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `year` int(11) NOT NULL,
+  `income_from` decimal(15,2) NOT NULL,
+  `income_to` decimal(15,2) DEFAULT NULL,
+  `tax_rate` decimal(5,2) NOT NULL,
+  `base_tax` decimal(15,2) DEFAULT 0.00,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -308,8 +383,7 @@ INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`, `Clockin_status`
 (8, 'Jeremiah', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
 (9, 'Joseph', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
 (10, 'Simone', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
-(11, 'Ken', '123', 'Emp', 'Tapped-out', 'Tapped-out'),
-(12, 'Erin', '123', 'Emp', 'Tapped-out', 'Tapped-out');
+(11, 'Ken', '123', 'Emp', 'Tapped-out', 'Tapped-out');
 
 --
 -- Indexes for dumped tables
@@ -379,11 +453,39 @@ ALTER TABLE `hr_attendance_settings`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `pagibig_table`
+--
+ALTER TABLE `pagibig_table`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_year` (`year`);
+
+--
+-- Indexes for table `philhealth_table`
+--
+ALTER TABLE `philhealth_table`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_year` (`year`);
+
+--
 -- Indexes for table `premiums`
 --
 ALTER TABLE `premiums`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uniq_employee_id` (`employee_id`);
+
+--
+-- Indexes for table `sss_table`
+--
+ALTER TABLE `sss_table`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_year` (`year`);
+
+--
+-- Indexes for table `tax_table`
+--
+ALTER TABLE `tax_table`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_year` (`year`);
 
 --
 -- Indexes for table `users`
@@ -411,7 +513,7 @@ ALTER TABLE `assigned_emp_inc`
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `employee_attendance`
@@ -423,7 +525,7 @@ ALTER TABLE `employee_attendance`
 -- AUTO_INCREMENT for table `employee_location`
 --
 ALTER TABLE `employee_location`
-  MODIFY `tb_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `tb_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `emp_deduc_type`
@@ -441,7 +543,7 @@ ALTER TABLE `emp_inc_type`
 -- AUTO_INCREMENT for table `geofences`
 --
 ALTER TABLE `geofences`
-  MODIFY `id` bigint(255) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(255) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `hr_attendance_settings`
@@ -450,10 +552,34 @@ ALTER TABLE `hr_attendance_settings`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `pagibig_table`
+--
+ALTER TABLE `pagibig_table`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `philhealth_table`
+--
+ALTER TABLE `philhealth_table`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `premiums`
 --
 ALTER TABLE `premiums`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+
+--
+-- AUTO_INCREMENT for table `sss_table`
+--
+ALTER TABLE `sss_table`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `tax_table`
+--
+ALTER TABLE `tax_table`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
