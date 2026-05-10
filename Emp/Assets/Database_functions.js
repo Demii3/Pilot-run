@@ -13,21 +13,11 @@ function saveTimein () {
         timeInStatus: checkTimeInStatus([timeIn.split(' ')[0], timeIn.split(' ')[1]])
     }, function(response) {
         console.log('Server response:', response);
-        if (response === 'success') {
-            document.getElementById('tapIn').innerText = 'Tap Out';
-            document.getElementById('tapIn').classList.remove('btn-success');
-            document.getElementById('tapIn').classList.add('btn-danger');
-            document.getElementById('locationSelect').disabled = true;
-            return;
-        }
-
-        if (response === 'vpn_detected') {
-            alert('VPN or proxy connection detected. Please turn off VPN/proxy before tapping in.');
-            return;
-        }
-
-        alert('Tap In failed. Please try again.');
     });
+    document.getElementById('tapIn').innerText = 'Tap Out';
+    document.getElementById('tapIn').classList.remove('btn-success');
+    document.getElementById('tapIn').classList.add('btn-danger');
+    document.getElementById('locationSelect').disabled = true; // Disable location select after tapping in
 }
 
 function saveTimeOut () {
