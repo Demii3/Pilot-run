@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="../employee_module.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin ="anonymous"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 <body class="geofence-app">
   <nav class="custom-navbar">
@@ -471,9 +473,12 @@
 
     document.getElementById('assignForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      const geofenceId = document.getElementById('siteSelect').value;
-      const employeeId = document.getElementById('employeeSelect').value;
+      const geofenceId = document.getElementById('siteSelect').options[document.getElementById('siteSelect').selectedIndex].getAttribute('value');
+      const employeeId = document.getElementById('employeeSelect').options[document.getElementById('employeeSelect').selectedIndex].getAttribute('value');
       const msgDiv = document.getElementById('assignMsg');
+      const payload = { geofence_id: geofenceId, employee_id: employeeId };
+      console.log('Selected geofence ID:', geofenceId);
+      console.log('Selected employee ID:', employeeId);
 
       if (!geofenceId || !employeeId) {
         msgDiv.innerHTML = '<div style="background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px; font-size:13px;">Please select both site and employee</div>';
@@ -485,12 +490,13 @@
       fetch('../api_assign_employee.php', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/json'
         },
-        body: 'geofence_id=' + geofenceId + '&employee_id=' + employeeId
+        body: JSON.stringify(payload)
       })
       .then(function(res) { return res.json(); })
       .then(function(data) {
+        console.log('API response:', data);
         if (data.success) {
           msgDiv.innerHTML = '<div style="background:#d1fae5; color:#065f46; padding:10px; border-radius:6px; font-size:13px;">Employee assigned successfully!</div>';
           document.getElementById('assignForm').reset();
@@ -498,7 +504,7 @@
             msgDiv.innerHTML = '';
           }, 3000);
         } else {
-          msgDiv.innerHTML = '<div style="background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px; font-size:13px;">' + (data.message || 'Failed to assign employee') + '</div>';
+          msgDiv.innerHTML = '<div style="background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px; font-size:13px;">' + (data.message) + '</div>';
         }
       })
       .catch(function(err) {

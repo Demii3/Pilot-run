@@ -1,23 +1,25 @@
 <?php
+session_start();
 // API to assign employee to geofence
 // Validates and stores assignment
 
 /** @var mysqli $dbc */
 header('Content-Type: application/json');
 
-session_start();
 if (!isset($_SESSION['login']) || $_SESSION['type'] != "HR") {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
 include __DIR__ . '/../../Modules/dbcon.php';
+$input = file_get_contents('php://input');
+$data = json_decode($input, true) ?? [];
 
-$geofenceId = isset($_POST['geofence_id']) ? intval($_POST['geofence_id']) : 0;
-$employeeId = isset($_POST['employee_id']) ? intval($_POST['employee_id']) : 0;
+$geofenceId = isset($data['geofence_id']) ? intval($data['geofence_id']) : 0;
+$employeeId = isset($data['employee_id']) ? intval($data['employee_id']) : 0;
 
 if (!$geofenceId || !$employeeId) {
-    echo json_encode(['success' => false, 'message' => $geofenceId]);
+    echo json_encode(['success' => false, 'message' => $data]);
     exit;
 }
 
