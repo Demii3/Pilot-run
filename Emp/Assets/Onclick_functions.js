@@ -199,19 +199,6 @@ function isUserWithinGeofence(rawCoordinates) {
     return isPointInPolygon([userLat, userLng], polygon);
 }
 
-function checkVpnStatus() {
-    return fetch('./Modules/check_vpn.php', {
-        method: 'GET',
-        cache: 'no-store'
-    })
-        .then((response) => response.json())
-        .catch(() => ({
-            success: false,
-            vpnDetected: false,
-            msg: 'Unable to verify VPN status right now.'
-        }));
-}
-
 
 function setAttendanceModuleProperties(querydata) {
     console.log('Setting attendance module properties with querydata:', querydata);
@@ -309,12 +296,6 @@ async function TapIn() {
     const selectedOption = locationSelect.options[locationSelect.selectedIndex];
     if (!selectedOption) {
         alert('Please select a location before tapping in.');
-        return;
-    }
-
-    const vpnStatus = await checkVpnStatus();
-    if (vpnStatus.success && vpnStatus.vpnDetected) {
-        alert(vpnStatus.msg || 'VPN or proxy detected. Please turn it off before tapping in.');
         return;
     }
 
