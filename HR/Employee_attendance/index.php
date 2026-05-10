@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Attendance List</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -52,7 +55,7 @@
 
       <a href="#" class="profile-item"> Settings & Privacy </a>
       <a href="#" class="profile-item"> Help & Support </a>
-      <a href="#" class="profile-item"> Logout </a>
+      <a href="../../Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
 
     </div>
 

@@ -5,18 +5,6 @@ $(document).ready(function(){
         }
     });
 
-    const params = new URLSearchParams(window.location.search);
-    const paramValue = params.get('logout');
-
-    if(paramValue === 'logout') {
-        $.post('./Modules/logout.php', function(response){
-            if(response === 'success') {
-                window.location = '../';
-            } else {
-                console.error('Logout failed');
-            }
-        }).fail(function() {
-            console.error('Error during logout request');
-        });
+    // Logout handling is now done via direct links to logout_process.php
     };
 });

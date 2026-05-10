@@ -19,6 +19,7 @@ if (!$identifier) {
 // Find user by login username first (same table used by login), then by profile email.
 $userId = null;
 $username = null;
+$userEmail = null;
 
 $stmt = mysqli_prepare($dbc, "SELECT User_id, Username FROM users WHERE Username = ? LIMIT 1");
 if ($stmt) {
@@ -33,14 +34,15 @@ if ($stmt) {
 }
 
 if ($userId === null) {
-    $stmt = mysqli_prepare($dbc, "SELECT id, name FROM employees WHERE email = ? LIMIT 1");
+    $stmt = mysqli_prepare($dbc, "SELECT id, name, email FROM employees WHERE email = ? LIMIT 1");
     if ($stmt) {
         mysqli_stmt_bind_param($stmt, 's', $identifier);
         mysqli_stmt_execute($stmt);
-        mysqli_stmt_bind_result($stmt, $userId, $username);
+        mysqli_stmt_bind_result($stmt, $userId, $username, $userEmail);
         if (!mysqli_stmt_fetch($stmt)) {
             $userId = null;
             $username = null;
+            $userEmail = null;
         }
         mysqli_stmt_close($stmt);
     }
@@ -48,6 +50,23 @@ if ($userId === null) {
 
 if ($userId === null) {
     echo json_encode(['success' => false, 'message' => 'Email/username not found']);
+    exit;
+}
+
+// Get email if not already fetched
+if ($userEmail === null) {
+    $emailStmt = mysqli_prepare($dbc, "SELECT email FROM employees WHERE id = ?");
+    if ($emailStmt) {
+        mysqli_stmt_bind_param($emailStmt, 'i', $userId);
+        mysqli_stmt_execute($emailStmt);
+        mysqli_stmt_bind_result($emailStmt, $userEmail);
+        mysqli_stmt_fetch($emailStmt);
+        mysqli_stmt_close($emailStmt);
+    }
+}
+
+if ($userEmail === null) {
+    echo json_encode(['success' => false, 'message' => 'User email not found in system']);
     exit;
 }
 
@@ -69,8 +88,8 @@ $createTableSql = "CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
 $createResult = mysqli_query($dbc, $createTableSql);
 if (!$createResult) {
-        echo json_encode(['success' => false, 'message' => 'Failed to initialize reset token storage']);
-        exit;
+    echo json_encode(['success' => false, 'message' => 'Failed to initialize reset token storage']);
+    exit;
 }
 
 // Store token in DB
@@ -88,34 +107,68 @@ if (!mysqli_stmt_execute($insertStmt)) {
 mysqli_stmt_close($insertStmt);
 
 // Build reset link
-$resetLink = 'http://localhost/geofence_test/Features/reset_password.php?token=' . urlencode($token);
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
+$resetLink = $protocol . $host . '/Pilot-run/Features/reset_password.php?token=' . urlencode($token);
 
-// Send email (configure mail settings as needed)
-$subject = 'Password Reset Request';
+// Prepare email
+$subject = 'Password Reset Request - Chengshi Construction Corp';
 $body = "Hi $username,\n\n";
 $body .= "You requested a password reset. Click the link below to reset your password:\n\n";
 $body .= "$resetLink\n\n";
 $body .= "This link expires in 1 hour.\n\n";
 $body .= "If you did not request this, please ignore this email.\n";
 
-// For local testing, just return success (email sending requires SMTP config)
-// In production, configure mail() or use a library like PHPMailer
+// Send email
+$emailSent = false;
+$emailError = '';
+
 if (function_exists('mail')) {
-    // Get email from db
-    $emailStmt = mysqli_prepare($dbc, "SELECT email FROM employees WHERE id = ?");
-    mysqli_stmt_bind_param($emailStmt, 'i', $userId);
-    mysqli_stmt_execute($emailStmt);
-    mysqli_stmt_bind_result($emailStmt, $toEmail);
-    if (mysqli_stmt_fetch($emailStmt) && $toEmail !== null) {
-        @mail($toEmail, $subject, $body);
+    $headers = "From: noreply@chengshi-construction.com\r\n";
+    $headers .= "Reply-To: support@chengshi-construction.com\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    
+    $emailSent = @mail($userEmail, $subject, $body, $headers);
+    
+    if (!$emailSent) {
+        $emailError = "XAMPP mail() function failed. SMTP not configured.";
+        error_log("Failed to send password reset email to: $userEmail for user_id: $userId");
     }
-    mysqli_stmt_close($emailStmt);
+} else {
+    $emailError = "mail() function not available on this server.";
+    error_log("mail() function not available for password reset to user_id: $userId");
 }
 
-// Return success (email may not actually send if mail() not configured)
-echo json_encode([
-    'success' => true,
-    'message' => 'Check your email for password reset link (valid for 1 hour)',
-    'debug_reset_link' => $resetLink  // Remove in production
-]);
+// Check if running in development/localhost
+$isDevelopment = ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === 'localhost:80' || 
+                  $_SERVER['HTTP_HOST'] === '127.0.0.1' || $_SERVER['HTTP_HOST'] === '127.0.0.1:80');
+
+// Return response
+if ($emailSent) {
+    echo json_encode([
+        'success' => true,
+        'message' => 'Password reset link sent to your email (valid for 1 hour)'
+    ]);
+} else {
+    // In development, show the link for testing
+    if ($isDevelopment) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Development Mode: Email service not configured. Reset link created.',
+            'dev_mode' => true,
+            'dev_notice' => 'Click the link below to reset password (valid for 1 hour):',
+            'reset_link' => $resetLink,
+            'token' => $token,
+            'debug_email' => $userEmail
+        ]);
+    } else {
+        // In production, don't reveal the link
+        error_log("Password reset token created but email failed to send. User: $userId, Error: $emailError, Link: $resetLink");
+        echo json_encode([
+            'success' => true,
+            'message' => 'Reset link created but email service unavailable. Contact administrator.',
+            'token' => $token
+        ]);
+    }
+}
 ?>

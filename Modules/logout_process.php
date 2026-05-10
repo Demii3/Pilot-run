@@ -1,6 +1,12 @@
 <?php
     session_start();
 
+    // Prevent browser caching to stop users from logging back in via back button
+    header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Cache-Control: post-check=0, pre-check=0', FALSE);
+    header('Pragma: no-cache');
+
     include './dbcon.php';
 
     function parseAttendanceTimeToMinutes($timeValue) {
@@ -90,6 +96,7 @@
 
     session_destroy();
     $_SESSION = [];
-    header('Location: ../');
+    // Force browser to not cache the login page after logout
+    header('Location: ../?nocache=' . time());
     exit();
 ?>

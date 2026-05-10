@@ -25,6 +25,9 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="0">
 	<title>Employee Dashboard</title>
 
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -63,7 +66,7 @@
 	</div>
 
 	<div class="nav-right">
-		<button class="avatar" type="button" aria-label="User profile">
+		<button class="avatar" onclick="toggleMenu()" type="button" aria-label="User profile">
 			<img src="./Images/profilepic.jpg" alt="User">
 		</button>
 
@@ -75,7 +78,7 @@
 
 			<a href="#" class="profile-item"> Settings & Privacy </a>
 			<a href="#" class="profile-item"> Help & Support </a>
-			<a id="logout" href="./?logout=logout" class="profile-item"> Logout </a>
+			<a href="../Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
 		</div>
 	</div>
 </nav>
@@ -142,6 +145,34 @@
 
 	fillspans();
 	
+	const isAttendanceActive = <?php echo !empty($_SESSION['attendance_active']) ? 'true' : 'false'; ?>;
+
+	function toggleMenu() {
+		document.getElementById("profileMenu").classList.toggle("active");
+	}
+
+	function handleLogout(event) {
+		if (isAttendanceActive) {
+			const shouldLogout = window.confirm('You are currently tapped in. Logging out will automatically tap you out first. Continue?');
+
+			if (!shouldLogout) {
+				event.preventDefault();
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	document.addEventListener("click", function(e) {
+		const menu = document.getElementById("profileMenu");
+		const avatar = document.querySelector(".avatar");
+
+		if (!avatar.contains(e.target) && !menu.contains(e.target)) {
+			menu.classList.remove("active");
+		}
+	});
+
 	// Update date and time
 	function updateDateTime() {
 		const now = new Date();

@@ -55,16 +55,27 @@
                 try {
                     const j = typeof resp === 'object' ? resp : JSON.parse(resp);
                     if (j.success) {
-                        $('#msg').addClass('alert alert-success').html(j.message || 'Check your email for reset link');
+                        let message = j.message || 'Check your email for reset link';
+                        
+                        // Development mode
+                        if (j.dev_mode) {
+                            message += '<br><br><strong style="color: #ffc107;">⚠️ Development Mode</strong><br>';
+                            message += j.dev_notice + '<br><br>';
+                            message += '<div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 4px; margin: 10px 0; word-break: break-all;">';
+                            message += '<strong>Reset Link:</strong><br>' + j.reset_link + '</div>';
+                            message += '<small style="color: #aaa;">This link is valid for 1 hour</small>';
+                        }
+                        
+                        $('#msg').addClass('alert alert-success').html(message);
                         $('#forgotForm')[0].reset();
                     } else {
                         $('#msg').addClass('alert alert-danger').html(j.message || 'Failed to send reset link');
                     }
                 } catch(e) {
-                    $('#msg').addClass('alert alert-danger').html('Unexpected response');
+                    $('#msg').addClass('alert alert-danger').html('Unexpected response: ' + e.message);
                 }
-            }).fail(function(){
-                $('#msg').addClass('alert alert-danger').html('Request failed');
+            }).fail(function(xhr, status, error){
+                $('#msg').addClass('alert alert-danger').html('Request failed: ' + error);
             });
         });
     </script>

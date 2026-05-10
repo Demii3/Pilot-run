@@ -249,26 +249,30 @@ async function displayEmployees() {
   employeeTable = $('#employeeTable').DataTable({
     data: employeesData,
     scrollX: true,
-    autoWidth: false,
+    scrollCollapse: true,
+    autoWidth: true,
+    responsive: false,
     columns: [
-      { data: 'id', title: 'ID' },
-      { data: 'name', title: 'Name' },
-      { data: 'email', title: 'Email' },
-      { data: 'username', title: 'Username' },
-      { data: 'position', title: 'Position' },
-      { data: 'department', title: 'Department' },
+      { data: 'id', title: 'ID', width: '60px' },
+      { data: 'name', title: 'Name', width: '180px' },
+      { data: 'email', title: 'Email', width: '240px' },
+      { data: 'username', title: 'Username', width: '150px' },
+      { data: 'position', title: 'Position', width: '170px' },
+      { data: 'department', title: 'Department', width: '160px' },
       { 
         data: 'salary',
         title: 'Salary',
+        width: '120px',
         render: function(data) {
           return '₱' + parseFloat(data).toLocaleString();
         }
       },
-      { data: 'type', title: 'Type' },
-      { data: 'status', title: 'Status' },
+      { data: 'type', title: 'Type', width: '90px' },
+      { data: 'status', title: 'Status', width: '90px' },
       {
         data: null,
         title: 'Actions',
+        width: '140px',
         orderable: false,
         searchable: false,
         render: function(data, type, row) {
@@ -281,7 +285,6 @@ async function displayEmployees() {
     ],
     pageLength: 10,
     lengthMenu: [5, 10, 25, 50],
-    responsive: true,
     language: {
       search: "Search employees:",
       lengthMenu: "Show _MENU_ employees per page",
