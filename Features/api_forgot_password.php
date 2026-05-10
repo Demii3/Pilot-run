@@ -1,5 +1,9 @@
 <?php
 /** @var mysqli $dbc */
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -7,7 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-include __DIR__ . '/../Modules/dbcon.php';
+@include __DIR__ . '/../Modules/dbcon.php';
+@include __DIR__ . '/../Modules/MailHelper.php';
 
 $identifier = isset($_POST['email']) ? trim($_POST['email']) : '';
 
@@ -16,32 +21,31 @@ if (!$identifier) {
     exit;
 }
 
-// Find user by login username first (same table used by login), then by profile email.
+// Find user by username or email
 $userId = null;
-$username = null;
 $userEmail = null;
 
-$stmt = mysqli_prepare($dbc, "SELECT User_id, Username FROM users WHERE Username = ? LIMIT 1");
+// First, try to find by username in users table
+$stmt = mysqli_prepare($dbc, "SELECT User_id FROM users WHERE Username = ? LIMIT 1");
 if ($stmt) {
     mysqli_stmt_bind_param($stmt, 's', $identifier);
     mysqli_stmt_execute($stmt);
-    mysqli_stmt_bind_result($stmt, $userId, $username);
+    mysqli_stmt_bind_result($stmt, $userId);
     if (!mysqli_stmt_fetch($stmt)) {
         $userId = null;
-        $username = null;
     }
     mysqli_stmt_close($stmt);
 }
 
+// If not found, try by email in employees table
 if ($userId === null) {
-    $stmt = mysqli_prepare($dbc, "SELECT id, name, email FROM employees WHERE email = ? LIMIT 1");
+    $stmt = mysqli_prepare($dbc, "SELECT id, email FROM employees WHERE email = ? OR name = ? LIMIT 1");
     if ($stmt) {
-        mysqli_stmt_bind_param($stmt, 's', $identifier);
+        mysqli_stmt_bind_param($stmt, 'ss', $identifier, $identifier);
         mysqli_stmt_execute($stmt);
-        mysqli_stmt_bind_result($stmt, $userId, $username, $userEmail);
+        mysqli_stmt_bind_result($stmt, $userId, $userEmail);
         if (!mysqli_stmt_fetch($stmt)) {
             $userId = null;
-            $username = null;
             $userEmail = null;
         }
         mysqli_stmt_close($stmt);
@@ -70,105 +74,165 @@ if ($userEmail === null) {
     exit;
 }
 
-// Generate reset token
-$token = bin2hex(random_bytes(32));
-$expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour'));
-
-$createTableSql = "CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+// Create OTP tokens table if it doesn't exist
+$createTableSql = "CREATE TABLE IF NOT EXISTS `otp_tokens` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` INT UNSIGNED NOT NULL,
-    `token` VARCHAR(255) NOT NULL UNIQUE,
+    `user_email` VARCHAR(255) NOT NULL,
+    `otp_code` VARCHAR(10) NOT NULL,
+    `is_verified` TINYINT(1) DEFAULT 0,
     `expires_at` DATETIME NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `verified_at` DATETIME NULL,
     PRIMARY KEY (`id`),
     KEY `idx_user_id` (`user_id`),
-    KEY `idx_token` (`token`),
+    KEY `idx_email` (`user_email`),
+    KEY `idx_otp_code` (`otp_code`),
     KEY `idx_expires` (`expires_at`),
-    CONSTRAINT `prt_fk_user` FOREIGN KEY (`user_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE
+    CONSTRAINT `otp_fk_user` FOREIGN KEY (`user_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
-$createResult = mysqli_query($dbc, $createTableSql);
-if (!$createResult) {
-    echo json_encode(['success' => false, 'message' => 'Failed to initialize reset token storage']);
+
+if (!mysqli_query($dbc, $createTableSql)) {
+    echo json_encode(['success' => false, 'message' => 'Failed to initialize OTP storage']);
     exit;
 }
 
-// Store token in DB
-$insertStmt = mysqli_prepare($dbc, "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)");
+// Delete any existing unexpired OTP for this user (to prevent multiple codes)
+$deleteStmt = mysqli_prepare($dbc, "DELETE FROM otp_tokens WHERE LOWER(user_email) = LOWER(?) AND is_verified = 0");
+if ($deleteStmt) {
+    mysqli_stmt_bind_param($deleteStmt, 's', $userEmail);
+    mysqli_stmt_execute($deleteStmt);
+    mysqli_stmt_close($deleteStmt);
+}
+
+// Generate 6-digit OTP
+$otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+// Store OTP in database - use MySQL NOW() function for consistency
+$insertStmt = mysqli_prepare($dbc, "INSERT INTO otp_tokens (user_id, user_email, otp_code, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))");
 if (!$insertStmt) {
-    echo json_encode(['success' => false, 'message' => 'Failed to generate token']);
+    echo json_encode(['success' => false, 'message' => 'Failed to generate OTP']);
     exit;
 }
 
-mysqli_stmt_bind_param($insertStmt, 'iss', $userId, $token, $expiresAt);
+mysqli_stmt_bind_param($insertStmt, 'iss', $userId, $userEmail, $otp);
 if (!mysqli_stmt_execute($insertStmt)) {
-    echo json_encode(['success' => false, 'message' => 'Failed to save token']);
+    echo json_encode(['success' => false, 'message' => 'Failed to save OTP']);
     exit;
 }
 mysqli_stmt_close($insertStmt);
 
-// Build reset link
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
-$host = $_SERVER['HTTP_HOST'];
-$resetLink = $protocol . $host . '/Pilot-run/Features/reset_password.php?token=' . urlencode($token);
-
-// Prepare email
-$subject = 'Password Reset Request - Chengshi Construction Corp';
-$body = "Hi $username,\n\n";
-$body .= "You requested a password reset. Click the link below to reset your password:\n\n";
-$body .= "$resetLink\n\n";
-$body .= "This link expires in 1 hour.\n\n";
-$body .= "If you did not request this, please ignore this email.\n";
-
-// Send email
-$emailSent = false;
-$emailError = '';
-
-if (function_exists('mail')) {
-    $headers = "From: noreply@chengshi-construction.com\r\n";
-    $headers .= "Reply-To: support@chengshi-construction.com\r\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    
-    $emailSent = @mail($userEmail, $subject, $body, $headers);
-    
-    if (!$emailSent) {
-        $emailError = "XAMPP mail() function failed. SMTP not configured.";
-        error_log("Failed to send password reset email to: $userEmail for user_id: $userId");
+// Get employee name for email
+$nameStmt = mysqli_prepare($dbc, "SELECT name FROM employees WHERE id = ? LIMIT 1");
+$employeeName = 'User';
+if ($nameStmt) {
+    mysqli_stmt_bind_param($nameStmt, 'i', $userId);
+    mysqli_stmt_execute($nameStmt);
+    mysqli_stmt_bind_result($nameStmt, $name);
+    if (mysqli_stmt_fetch($nameStmt)) {
+        $employeeName = $name;
     }
-} else {
-    $emailError = "mail() function not available on this server.";
-    error_log("mail() function not available for password reset to user_id: $userId");
+    mysqli_stmt_close($nameStmt);
+}
+
+// Prepare OTP email
+$subject = 'Password Reset OTP - Chengshi Construction Corp';
+$htmlBody = '
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { background: #f5f5f5; padding: 20px; border-radius: 0 0 5px 5px; }
+        .otp-code { 
+            background: white; 
+            padding: 20px; 
+            text-align: center; 
+            margin: 20px 0; 
+            border: 2px solid #4CAF50; 
+            border-radius: 5px; 
+        }
+        .otp-code strong { font-size: 32px; letter-spacing: 5px; color: #4CAF50; }
+        .warning { color: #f44336; font-size: 12px; margin-top: 10px; }
+        .footer { text-align: center; color: #999; font-size: 12px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Password Reset Request</h2>
+        </div>
+        <div class="content">
+            <p>Hi <strong>' . htmlspecialchars($employeeName) . '</strong>,</p>
+            
+            <p>You requested a password reset for your Chengshi Construction Corp account.</p>
+            
+            <p>Use the following One-Time Password (OTP) to reset your password:</p>
+            
+            <div class="otp-code">
+                <strong>' . htmlspecialchars($otp) . '</strong>
+            </div>
+            
+            <p><strong>OTP Validity:</strong> This code is valid for <strong>10 minutes</strong> only.</p>
+            
+            <p class="warning">
+                <strong>⚠️ Security Warning:</strong><br>
+                - Never share this OTP with anyone<br>
+                - We will never ask for this code via email or phone<br>
+                - If you did not request this, please ignore this email
+            </p>
+            
+            <div class="footer">
+                <p>© 2024 Chengshi Construction Corp. All rights reserved.</p>
+                <p>This is an automated message, please do not reply.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+';
+
+// Send email using MailHelper
+$emailSent = false;
+try {
+    $mailHelper = new MailHelper();
+    $emailSent = $mailHelper->send($userEmail, $subject, $htmlBody, []);
+} catch (Exception $e) {
+    error_log("MailHelper Error: " . $e->getMessage());
 }
 
 // Check if running in development/localhost
-$isDevelopment = ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === 'localhost:80' || 
-                  $_SERVER['HTTP_HOST'] === '127.0.0.1' || $_SERVER['HTTP_HOST'] === '127.0.0.1:80');
+$isDevelopment = ($_SERVER['HTTP_HOST'] === 'localhost' || strpos($_SERVER['HTTP_HOST'], 'localhost:') === 0 || 
+                  $_SERVER['HTTP_HOST'] === '127.0.0.1' || strpos($_SERVER['HTTP_HOST'], '127.0.0.1:') === 0);
 
-// Return response
-if ($emailSent) {
+// If email failed in development, show OTP for testing
+if (!$emailSent && $isDevelopment) {
+    $logFile = __DIR__ . '/../logs/otp_log.txt';
+    $logDir = dirname($logFile);
+    
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0755, true);
+    }
+    
+    $logMessage = date('Y-m-d H:i:s') . " | OTP: $otp | Email: $userEmail | User ID: $userId\n";
+    @file_put_contents($logFile, $logMessage, FILE_APPEND);
+    
     echo json_encode([
         'success' => true,
-        'message' => 'Password reset link sent to your email (valid for 1 hour)'
+        'message' => 'OTP sent to your email (valid for 10 minutes)',
+        'dev_mode' => true,
+        'dev_otp' => $otp,
+        'dev_notice' => '📧 Development Mode: Email service not configured. OTP shown below for testing.',
+        'actual_email' => $userEmail
     ]);
-} else {
-    // In development, show the link for testing
-    if ($isDevelopment) {
-        echo json_encode([
-            'success' => true,
-            'message' => 'Development Mode: Email service not configured. Reset link created.',
-            'dev_mode' => true,
-            'dev_notice' => 'Click the link below to reset password (valid for 1 hour):',
-            'reset_link' => $resetLink,
-            'token' => $token,
-            'debug_email' => $userEmail
-        ]);
-    } else {
-        // In production, don't reveal the link
-        error_log("Password reset token created but email failed to send. User: $userId, Error: $emailError, Link: $resetLink");
-        echo json_encode([
-            'success' => true,
-            'message' => 'Reset link created but email service unavailable. Contact administrator.',
-            'token' => $token
-        ]);
-    }
+    exit;
 }
+
+// Return success response
+echo json_encode([
+    'success' => true,
+    'message' => 'OTP sent to your email (valid for 10 minutes)',
+    'actual_email' => $userEmail
+]);
 ?>
