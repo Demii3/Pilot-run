@@ -71,6 +71,42 @@
                                 $_SESSION['locations'][] = $row2['name'];
                                 $_SESSION['coordinates'][] = $row2['coordinates'];
                             }
+                            // If remember-me requested, create a persistent login token
+                            if(!empty($_POST['remember'])){
+                                // Create selector and validator
+                                $selector = bin2hex(random_bytes(8));
+                                $validator = bin2hex(random_bytes(32));
+                                $token_hash = hash('sha256', $validator);
+                                $expires = date('Y-m-d H:i:s', time() + (30*24*60*60)); // 30 days
+
+                                // Ensure remember_tokens table exists (fallback if migration wasn't run)
+                                $create_table_sql = "CREATE TABLE IF NOT EXISTS remember_tokens (
+                                    id INT AUTO_INCREMENT PRIMARY KEY,
+                                    user_id INT NOT NULL,
+                                    selector VARCHAR(64) NOT NULL,
+                                    token_hash VARCHAR(128) NOT NULL,
+                                    expires DATETIME NOT NULL,
+                                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                    INDEX(selector),
+                                    INDEX(user_id)
+                                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+                                @mysqli_query($dbc, $create_table_sql);
+
+                                // Remove expired tokens and insert new token
+                                mysqli_query($dbc, "DELETE FROM remember_tokens WHERE expires < NOW() OR user_id = '".mysqli_real_escape_string($dbc, $row['id'])."'");
+                                $ins = "INSERT INTO remember_tokens (user_id, selector, token_hash, expires) VALUES ('".
+                                    mysqli_real_escape_string($dbc, $row['id'])."', '".
+                                    mysqli_real_escape_string($dbc, $selector)."', '".
+                                    mysqli_real_escape_string($dbc, $token_hash)."', '".
+                                    mysqli_real_escape_string($dbc, $expires)."')";
+                                mysqli_query($dbc, $ins);
+
+                                // Set cookie
+                                $cookie_value = $selector . ':' . $validator;
+                                $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443;
+                                setcookie('rememberme', $cookie_value, time() + (30*24*60*60), '/', '', $secure, true);
+                            }
+
                             $msg = 'success';
                         }
         } else {
