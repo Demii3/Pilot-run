@@ -219,14 +219,14 @@
             </div>
           </div>
           <div class="col-md-6">
-                <label class="form-label">Work Classification</label>
-                <select id="modalWorkClassification" class="form-select">
-                  <option value="R">Regular Day</option>
-                  <option value="SH">Special Holiday</option>
-                  <option value="LH">Legal Holiday</option>
-                  <option value="Custom">Custom</option>
-                </select>
-              </div>
+              <label class="form-label">Work Classification</label>
+              <select id="modalWorkClassification" class="form-select">
+                <option value="R">Regular Day</option>
+                <option value="SH">Special Holiday</option>
+                <option value="LH">Legal Holiday</option>
+                <option value="Custom">Custom</option>
+              </select>
+          </div>
           <!-- <div class="col-md-6">
               <label class="form-label">Duration</label>
               <input id="modalDuration" type="text" class="form-control" readonly>
@@ -398,6 +398,16 @@
               <label class="form-check-label" for="newAllowOvertime">Allow Over-time</label>
             </div>
           </div>
+          
+          <div class="col-md-6">
+              <label class="form-label">Work Classification</label>
+              <select id="newModalWorkClassification" class="form-select">
+                <option value="R">Regular Day</option>
+                <option value="SH">Special Holiday</option>
+                <option value="LH">Legal Holiday</option>
+                <option value="Custom">Custom</option>
+              </select>
+          </div>
 
           <div class="modal-footer col-md-12 row g-3 justify-content-between">
             <div class= "col-md-6 d-flex justify-content-start gap-2">
@@ -405,7 +415,7 @@
             </div>
             <div class= "col-md-5 d-flex justify-content-end gap-2">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button id="newSaveButton" class="btn btn-primary">Save</button>
+              <button id="newSaveButton" class="btn btn-primary" onclick="saveAttendance()">Save</button>
             </div>
           </div>
 
@@ -483,6 +493,8 @@
     </div>
   </div>
 </div>
+
+
 
 <!-- Background -->
 <div class="bg-container">

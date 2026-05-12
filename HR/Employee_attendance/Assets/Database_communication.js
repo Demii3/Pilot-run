@@ -102,17 +102,6 @@ function searchEmployeeLocation() {
     });
 };
 
-function saveCreatedAttendance() {
-    const employeeId = document.getElementById('newModalEmployeeId').value;
-    const date = document.getElementById('newModalDate').value;
-    const location = document.getElementById('newModalLocation').value;
-    const clockIn = convert24HourTo12Hour(document.getElementById('newModalClockIn').value);
-    const clockInStatus = document.getElementById('newModalClockInStatus').value;
-    const clockOut = convert24HourTo12Hour(document.getElementById('newModalClockOut').value);
-    const clockOutStatus = document.getElementById('newModalClockOutStatus').value;
-    const allowOvertime = document.getElementById('allowOvertime').checked ? 1 : 0;
-};
-
 function configAttendance(attendance_id, searchTerm, table, action) {
     const message = action == 'delete' ? 'delete this record?' : 'save this record?';
     if (!confirm('Are you sure you want to ' + message)) {
@@ -167,6 +156,76 @@ function configAttendance(attendance_id, searchTerm, table, action) {
             }
         });
     }
+};
+
+function saveAttendance() {
+    const requiredFields = [
+        { id: 'newModalId', label: 'Employee ID' },
+        { id: 'newModalName', label: 'Employee name' },
+        { id: 'newModalDepartment', label: 'Department' },
+        { id: 'newModalDate', label: 'Date' },
+        { id: 'newModalLocation', label: 'Location' },
+        { id: 'newModalLocationCoordinates', label: 'Location coordinates' },
+        { id: 'newModalClockIn', label: 'Clock In' },
+        { id: 'newModalClockInStatus', label: 'Clock In Status' },
+        { id: 'newModalClockOut', label: 'Clock Out' },
+        { id: 'newModalClockOutStatus', label: 'Clock Out Status' }
+    ];
+
+    for (const field of requiredFields) {
+        const element = document.getElementById(field.id);
+        const value = element ? String(element.value || '').trim() : '';
+
+        if (!value || value === '--:--' || value === '--:-- --') {
+            alert(field.label + ' is required before saving attendance.');
+            if (element && typeof element.focus === 'function') {
+                element.focus();
+            }
+            return;
+        }
+    }
+
+    const employeeId = document.getElementById('newModalId').value.trim();
+    const date = document.getElementById('newModalDate').value.trim();
+    const location = document.getElementById('newModalLocation').value.trim();
+    const locationCoordinates = document.getElementById('newModalLocationCoordinates').value.trim();
+    const clockIn = convert24HourTo12Hour(document.getElementById('newModalClockIn').value);
+    const clockInStatus = document.getElementById('newModalClockInStatus').value;
+    const clockOut = convert24HourTo12Hour(document.getElementById('newModalClockOut').value);
+    const clockOutStatus = document.getElementById('newModalClockOutStatus').value;
+    const allowOvertime = document.getElementById('newAllowOvertime').checked ? 1 : 0;
+    const workClassification = document.getElementById('newModalWorkClassification').value;
+
+    fetch('./Modules/save_attendance.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            employeeId: employeeId,
+            date: date,
+            location: location,
+            locationCoordinates: locationCoordinates,
+            clockIn: clockIn,
+            clockInStatus: clockInStatus,
+            clockOut: clockOut,
+            clockOutStatus: clockOutStatus,
+            allowOvertime: allowOvertime,
+            workClassification: workClassification
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const message = data.message || data.msg || 'Request completed.';
+        alert(message);
+        if (data.success) {
+            document.getElementById('createAttendanceModal').querySelector('.btn-close').click();
+            searchAttendance('', $('#searchDate').val(), $('#attendanceTable').DataTable());
+        }
+    })
+    .catch(error => {
+        console.error('Error saving attendance:', error);
+    });
 };
 
 function saveOptions() {
