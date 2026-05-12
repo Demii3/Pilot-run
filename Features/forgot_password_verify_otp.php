@@ -52,7 +52,7 @@
         }
         .timer {
             font-size: 12px;
-            color: rgba(255,255,255,0.7);
+            color: black;
         }
     </style>
 </head>
@@ -104,8 +104,6 @@
             
             <div class="forgot">
                 <a href="forgot_password.php">← Back</a>
-                &nbsp; | &nbsp;
-                <a href="debug_otp.php" target="_blank" style="color: #ffc107; font-size: 12px;">Debug OTP DB</a>
             </div>
         </div>
     </div>
