@@ -600,6 +600,24 @@ h2 {
   color: #6c757d;
 }
 
+#attendanceModal .modal-content,
+#createAttendanceModal .modal-content {
+  max-height: 720px;
+  height: 100%;
+}
+
+#attendanceModal .modal-body,
+#createAttendanceModal .modal-body {
+  overflow-y: auto;
+}
+
+#attendanceModal #absentButton,
+#attendanceModal #onLeaveButton {
+  width: 90px;
+  height: 40px;
+  padding: 0;
+}
+
 /* DataTables Toolbar - Display buttons, search, info, and paging inline */
 .dt-container {
     display: flex;

@@ -9,6 +9,20 @@ let map; // Declare map variable in a scope accessible to all functions
 let markers; // Declare marker variable to manage the marker on the map
 let geofenceLayer;
 
+function showLocationErrorModal(message) {
+    const modalElement = document.getElementById('locationErrorModal');
+    const modalBody = document.getElementById('locationErrorMessage');
+    
+    if (modalBody) {
+        modalBody.textContent = message;
+    }
+    
+    if (modalElement && window.bootstrap && bootstrap.Modal) {
+        const modal = new bootstrap.Modal(modalElement, { backdrop: false, keyboard: true });
+        modal.show();
+    }
+}
+
 function loadAttendanceContent() {
     const content = document.getElementById('content-area');
     const payload = { TEST: 'This is a string', USER_ID: document.getElementById('userId').value };
@@ -78,11 +92,13 @@ function populateEmpInfo(querydata) {
     const department = document.getElementById('department');
     const email = document.getElementById('email');
     const username = document.getElementById('Username');
+    const Username = document.getElementById('userName');
 
     if (name) name.value = querydata.name || '';
     if (department) department.value = querydata.department || '';
     if (email) email.value = querydata.email || '';
     if (username) username.value = querydata.username || '';
+    if (Username) Username.textContent = querydata.name || 'User';
 }
 
 if (attendanceBtn) {
@@ -339,7 +355,7 @@ function setAttendanceModuleProperties(querydata) {
 async function TapIn() {
     const selectedOption = locationSelect.options[locationSelect.selectedIndex];
     if (!selectedOption) {
-        alert('Please select a location before tapping in.');
+        showLocationErrorModal('Please select a location first');
         return;
     }
 
@@ -356,14 +372,14 @@ async function TapIn() {
 
         saveTimeIn();
     } else {
-        alert('Please select a location before tapping in.');
+        showLocationErrorModal('Please select a location first');
     };
 }
 
 async function TapOut() {
     const selectedOption = locationSelect.options[locationSelect.selectedIndex];
     if (!selectedOption) {
-        alert('Please select a location before tapping out.');
+        showLocationErrorModal('Please select a location first');
         return;
     }
 

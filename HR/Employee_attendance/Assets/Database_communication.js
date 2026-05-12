@@ -23,7 +23,8 @@ function searchAttendance(searchTerm, searchDate, table) {
                         row.Clock_out,
                         row.Clockout_status_html,
                         row.Duration,
-                        row.AO
+                        row.AO,
+                        row.Work_day_status
                     ]).draw();
                 });
             }
@@ -91,6 +92,7 @@ function searchEmployeeLocation() {
                 btn.setAttribute('role', 'option');
                 btn.textContent = location.name;
                 btn.setAttribute('data-location-name', location.name || '');
+                btn.setAttribute('data-location-coordinates', location.coordinates || '');
                 locationSuggestionDropdown.appendChild(btn);
             });
         },
@@ -98,6 +100,17 @@ function searchEmployeeLocation() {
             console.error('Location search request failed ', response);
         }   
     });
+};
+
+function saveCreatedAttendance() {
+    const employeeId = document.getElementById('newModalEmployeeId').value;
+    const date = document.getElementById('newModalDate').value;
+    const location = document.getElementById('newModalLocation').value;
+    const clockIn = convert24HourTo12Hour(document.getElementById('newModalClockIn').value);
+    const clockInStatus = document.getElementById('newModalClockInStatus').value;
+    const clockOut = convert24HourTo12Hour(document.getElementById('newModalClockOut').value);
+    const clockOutStatus = document.getElementById('newModalClockOutStatus').value;
+    const allowOvertime = document.getElementById('allowOvertime').checked ? 1 : 0;
 };
 
 function configAttendance(attendance_id, searchTerm, table, action) {
@@ -131,6 +144,7 @@ function configAttendance(attendance_id, searchTerm, table, action) {
                 data.clockOutStatus = document.getElementById('modalClockOutStatus').value;
                 data.duration = excludeLunchBreak(document.getElementById('modalClockIn').value, document.getElementById('modalClockOut').value);
                 data.allowOvertime = document.getElementById('allowOvertime').checked ? 1 : 0;
+                data.workClassification = document.getElementById('modalWorkClassification').value;
                 break;
             default:
                 console.error('Invalid action specified');

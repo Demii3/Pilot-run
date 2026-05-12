@@ -2,7 +2,7 @@
     <h1>Employee Dashboard</h1>
     <div class="card">
         <h2>Attendance Module</h2>
-        <p>Hello <span class="userName">User</span>!, you are currently <span class="userTapStatus">#</span></p>
+        <p>Hello <span id="userName" class="userName">User</span>!, you may change your account details here</p>
     </div>
 </div>
 
@@ -44,7 +44,8 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Confirm Password</label>
-                    <input id="confirmPassword" type="password" class="form-control">    
+                    <input id="confirmPassword" type="password" class="form-control">
+                    <label id="passwordError" class="form-label text-danger d-none">Passwords do not match.</label>
                 </div>
             </div>
 
@@ -61,4 +62,18 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="notification" tabindex="-1" aria-labelledby="notificationLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="notificationLabel">Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3">Hello</div>
+        </div>
+    </div>
+</div>
+
+
 

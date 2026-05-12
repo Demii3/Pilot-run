@@ -699,3 +699,36 @@ h2 {
     font-size: 13px;
   }
 }
+
+/* Input Error Styling */
+.input-error {
+  border: 2px solid #ff4444 !important;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.6) !important;
+  background-color: rgba(255, 68, 68, 0.05) !important;
+}
+
+/* Notification modal overrides to ensure readability and centering */
+#notification .modal-dialog {
+  display: flex;
+  align-items: center; /* vertical center */
+  justify-content: center; /* horizontal center */
+}
+
+#notification .modal-content {
+  background: #ffffff; /* white background for contrast */
+  color: #111111; /* dark text */
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+#notification .modal-body {
+  color: #111111;
+  text-align: center;
+  padding: 1rem 1.25rem;
+}
+
+/* Small modal sizing */
+#notification .modal-dialog.modal-sm {
+  max-width: 360px;
+  margin: 0 auto;
+}
