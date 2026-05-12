@@ -166,12 +166,6 @@
               <label class="form-check-label" for="incomeType13th">Included in 13th Month</label>
             </div>
           </div>
-          <div class="mb-3">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="incomeTypeRecurring" checked>
-              <label class="form-check-label" for="incomeTypeRecurring">Recurring</label>
-            </div>
-          </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -196,12 +190,6 @@
           <div class="mb-3">
             <label for="deductionTypeName" class="form-label">Type of Deduction</label>
             <input type="text" id="deductionTypeName" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="deductionTypeRecurring" checked>
-              <label class="form-check-label" for="deductionTypeRecurring">Recurring</label>
-            </div>
           </div>
         </form>
       </div>
@@ -240,7 +228,7 @@
             <div class="col-md-2">
               <label class="form-label">Apply Mode</label>
               <div class="form-check income-recurring-check">
-                <input class="form-check-input" type="checkbox" id="selectedDeductionRecurring" disabled>
+                <input class="form-check-input" type="checkbox" id="selectedDeductionRecurring" onchange="toggleDeductionCutoffFieldsByRecurring()">
                 <label class="form-check-label" for="selectedDeductionRecurring">Recurring</label>
               </div>
             </div>
@@ -311,7 +299,7 @@
             <div class="col-md-3">
               <label class="form-label">Apply Mode</label>
               <div class="form-check income-recurring-check">
-                <input class="form-check-input" type="checkbox" id="selectedIncomeRecurring" disabled>
+                <input class="form-check-input" type="checkbox" id="selectedIncomeRecurring" onchange="toggleIncomeCutoffFieldsByRecurring()">
                 <label class="form-check-label" for="selectedIncomeRecurring">Recurring (every cutoff)</label>
               </div>
             </div>
@@ -604,7 +592,6 @@
               <thead class="table-dark">
                 <tr>
                   <th>Type of Deduction</th>
-                  <th>Recurring</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -642,7 +629,6 @@
                     <th>Type of Income</th>
                     <th>Taxable / Non-Taxable</th>
                     <th>Included in 13th Month</th>
-                    <th>Recurring</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -741,7 +727,7 @@
             <div class="col-md-3">
               <label for="employeeIncomeDateFrom" class="form-label mb-1">From</label>
               <input
-                type="date"
+                type="text"
                 id="employeeIncomeDateFrom"
                 class="form-control"
               >
@@ -749,7 +735,7 @@
             <div class="col-md-3">
               <label for="employeeIncomeDateTo" class="form-label mb-1">To</label>
               <input
-                type="date"
+                type="text"
                 id="employeeIncomeDateTo"
                 class="form-control"
               >
@@ -794,6 +780,7 @@
           </div>
         </div>
       </div>`;
+    initBiMonthlyRanges();
     loadEmployees();
     loadIncomeTypesForAssignments();
     fetchEmployeeIncomeAssignments();
@@ -819,7 +806,7 @@
             <div class="col-md-3">
               <label for="attendanceDateFrom" class="form-label mb-1">From</label>
               <input
-                type="date"
+                type="text"
                 id="attendanceDateFrom"
                 class="form-control"
                 onchange="filterAttendance()"
@@ -828,7 +815,7 @@
             <div class="col-md-3">
               <label for="attendanceDateTo" class="form-label mb-1">To</label>
               <input
-                type="date"
+                type="text"
                 id="attendanceDateTo"
                 class="form-control"
                 onchange="filterAttendance()"
@@ -873,6 +860,7 @@
           </div>
         </div>
       </div>`;
+    initBiMonthlyRanges();
     loadAttendance();
   }
 
@@ -899,7 +887,7 @@
             <div class="col-md-3">
               <label for="premiumDateFrom" class="form-label mb-1">From</label>
               <input
-                type="date"
+                type="text"
                 id="premiumDateFrom"
                 class="form-control"
                 onchange="filterEmployeesForPremiums()"
@@ -908,7 +896,7 @@
             <div class="col-md-3">
               <label for="premiumDateTo" class="form-label mb-1">To</label>
               <input
-                type="date"
+                type="text"
                 id="premiumDateTo"
                 class="form-control"
                 onchange="filterEmployeesForPremiums()"
@@ -934,6 +922,7 @@
           <div id="employeePremiumSearchPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
         </div>
       </div>`;
+    initBiMonthlyRanges();
     loadEmployeesForPremiums();
   }
 
@@ -1256,7 +1245,7 @@
             <div class="col-md-3">
               <label for="employeeSalaryDateFrom" class="form-label mb-1">From</label>
               <input
-                type="date"
+                type="text"
                 id="employeeSalaryDateFrom"
                 class="form-control"
                 onchange="loadEmployeeSalary()"
@@ -1265,7 +1254,7 @@
             <div class="col-md-3">
               <label for="employeeSalaryDateTo" class="form-label mb-1">To</label>
               <input
-                type="date"
+                type="text"
                 id="employeeSalaryDateTo"
                 class="form-control"
                 onchange="loadEmployeeSalary()"
@@ -1294,6 +1283,7 @@
           <div id="employeeSalaryPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
         </div>
       </div>`;
+    initBiMonthlyRanges();
     loadEmployeeSalary();
   }
 
@@ -1409,7 +1399,7 @@
             <div class="col-md-3">
               <label for="payslipDateFrom" class="form-label mb-1">From</label>
               <input
-                type="date"
+                type="text"
                 id="payslipDateFrom"
                 class="form-control"
                 onchange="loadPayslip()"
@@ -1418,7 +1408,7 @@
             <div class="col-md-3">
               <label for="payslipDateTo" class="form-label mb-1">To</label>
               <input
-                type="date"
+                type="text"
                 id="payslipDateTo"
                 class="form-control"
                 onchange="loadPayslip()"
@@ -1509,6 +1499,7 @@
           </div>
         </div>
       </div>`;
+    initBiMonthlyRanges();
     loadPayslip();
   }
 
@@ -1548,21 +1539,167 @@ function setBiMonthlyRangeForInputs(fromId, toId, referenceDate = new Date()) {
     toDate = new Date(year, month + 1, 0);
   }
 
-  const pad = n => String(n).padStart(2, '0');
-  const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  fromInput.value = fromDate.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  toInput.value = toDate.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
 
-  fromInput.value = isoDate(fromDate);
-  toInput.value = isoDate(toDate);
+function parseDateInputValue(value, endOfDay = false) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+
+  let parsedDate = null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [year, month, day] = raw.split('-').map(Number);
+    parsedDate = new Date(year, month - 1, day);
+  } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+    const [partA, partB, year] = raw.split('/').map(Number);
+    let day = partA;
+    let month = partB;
+
+    if (partA <= 12 && partB > 12) {
+      month = partA;
+      day = partB;
+    }
+
+    parsedDate = new Date(year, month - 1, day);
+  } else {
+    const fallback = new Date(raw);
+    if (!Number.isNaN(fallback.getTime())) {
+      parsedDate = fallback;
+    }
+  }
+
+  if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  if (endOfDay) {
+    parsedDate.setHours(23, 59, 59, 999);
+  } else {
+    parsedDate.setHours(0, 0, 0, 0);
+  }
+
+  return parsedDate;
+}
+
+function formatIsoDateToWords(isoDateValue) {
+  if (!isoDateValue) {
+    return '';
+  }
+
+  const raw = String(isoDateValue).trim();
+  let date = null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const parts = raw.split('-');
+    const year = Number(parts[0]);
+    const monthIndex = Number(parts[1]) - 1;
+    const day = Number(parts[2]);
+    date = new Date(year, monthIndex, day);
+  } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+    const parts = raw.split('/');
+    // UI is in day/month/year form.
+    const day = Number(parts[0]);
+    const monthIndex = Number(parts[1]) - 1;
+    const year = Number(parts[2]);
+    date = new Date(year, monthIndex, day);
+  } else {
+    const parsed = new Date(raw);
+    date = Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
+function updateDateRangeText(fromId, toId, outputId) {
+  const fromInput = document.getElementById(fromId);
+  const toInput = document.getElementById(toId);
+  if (!fromInput || !toInput) return;
+
+  let output = document.getElementById(outputId);
+  if (!output) {
+    output = document.createElement('div');
+    output.id = outputId;
+    output.className = 'small text-muted mt-1 fw-semibold';
+
+    const row = fromInput.closest('.row');
+    if (row && row.parentNode) {
+      row.parentNode.insertBefore(output, row.nextSibling);
+    } else {
+      toInput.parentNode.appendChild(output);
+    }
+  }
+
+  const fromText = formatIsoDateToWords(fromInput.value);
+  const toText = formatIsoDateToWords(toInput.value);
+
+  if (fromText && toText) {
+    output.textContent = `From ${fromText} to ${toText}`;
+    return;
+  }
+
+  if (fromText) {
+    output.textContent = `From ${fromText}`;
+    return;
+  }
+
+  if (toText) {
+    output.textContent = `To ${toText}`;
+    return;
+  }
+
+  output.textContent = '';
+}
+
+function attachDateRangeFormatter(fromId, toId, outputId) {
+  const fromInput = document.getElementById(fromId);
+  const toInput = document.getElementById(toId);
+  if (!fromInput || !toInput) return;
+
+  const sync = () => updateDateRangeText(fromId, toId, outputId);
+  fromInput.removeEventListener('change', sync);
+  toInput.removeEventListener('change', sync);
+  fromInput.addEventListener('change', sync);
+  toInput.addEventListener('change', sync);
+  sync();
 }
 
 function initBiMonthlyRanges() {
   const pairs = [
+    ['employeeIncomeDateFrom', 'employeeIncomeDateTo'],
     ['attendanceDateFrom', 'attendanceDateTo'],
     ['premiumDateFrom', 'premiumDateTo'],
     ['employeeSalaryDateFrom', 'employeeSalaryDateTo'],
     ['payslipDateFrom', 'payslipDateTo']
   ];
   pairs.forEach(p => setBiMonthlyRangeForInputs(p[0], p[1]));
+
+  attachDateRangeFormatter('employeeIncomeDateFrom', 'employeeIncomeDateTo', 'employeeIncomeDateRangeText');
+  attachDateRangeFormatter('attendanceDateFrom', 'attendanceDateTo', 'attendanceDateRangeText');
+  attachDateRangeFormatter('premiumDateFrom', 'premiumDateTo', 'premiumDateRangeText');
+  attachDateRangeFormatter('employeeSalaryDateFrom', 'employeeSalaryDateTo', 'employeeSalaryDateRangeText');
+  attachDateRangeFormatter('payslipDateFrom', 'payslipDateTo', 'payslipDateRangeText');
 }
 
 document.addEventListener('DOMContentLoaded', initBiMonthlyRanges);
@@ -1701,8 +1838,8 @@ if (typeof DataTable !== 'undefined') {
       const searchTerm = (document.getElementById('searchAttendance')?.value || '').toLowerCase();
       const dateFromInput = document.getElementById('attendanceDateFrom');
       const dateToInput = document.getElementById('attendanceDateTo');
-      const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
-      const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
+      const dateFrom = parseDateInputValue(dateFromInput?.value, false);
+      const dateTo = parseDateInputValue(dateToInput?.value, true);
 
       const rowText = data.join(' ').toLowerCase();
       const textMatches = !searchTerm || rowText.includes(searchTerm);
@@ -1734,8 +1871,8 @@ if (typeof DataTable !== 'undefined') {
       const searchTerm = (document.getElementById('searchPremiumEmployees')?.value || '').toLowerCase();
       const dateFromInput = document.getElementById('premiumDateFrom');
       const dateToInput = document.getElementById('premiumDateTo');
-      const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
-      const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
+      const dateFrom = parseDateInputValue(dateFromInput?.value, false);
+      const dateTo = parseDateInputValue(dateToInput?.value, true);
 
       const rowText = data.join(' ').toLowerCase();
       const textMatches = !searchTerm || rowText.includes(searchTerm);
@@ -1922,7 +2059,7 @@ async function loadDeductionTypes() {
   const tableBody = document.querySelector('#deductionTypeTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
 
   try {
     const response = await fetch('emp_deduc_type_api.php');
@@ -1933,18 +2070,16 @@ async function loadDeductionTypes() {
 
     const rows = result.data || [];
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No deduction types found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="2" class="text-center">No deduction types found.</td></tr>';
       paginateTable('deductionTypeTable', 'deductionTypePagination', true);
       return;
     }
 
     tableBody.innerHTML = '';
     rows.forEach(item => {
-      const isRecurring = Number(item.recurring) === 1;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item.type_of_deduction}</td>
-        <td>${isRecurring ? 'Yes' : 'No'}</td>
         <td>
           <button type="button" class="btn btn-sm btn-warning edit-deduction-type">Edit</button>
           <button type="button" class="btn btn-sm btn-danger delete-deduction-type">Delete</button>
@@ -1962,7 +2097,7 @@ async function loadDeductionTypes() {
     });
     paginateTable('deductionTypeTable', 'deductionTypePagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('deductionTypeTable', 'deductionTypePagination', true);
   }
 }
@@ -1972,7 +2107,6 @@ function openDeductionTypeForm(reset = true) {
   if (reset) {
     document.getElementById('deductionTypeId').value = '';
     document.getElementById('deductionTypeName').value = '';
-    document.getElementById('deductionTypeRecurring').checked = true;
   }
   
   // Show modal
@@ -1994,7 +2128,6 @@ function hideDeductionTypeForm() {
 async function saveDeductionType() {
   const id = document.getElementById('deductionTypeId').value;
   const typeOfDeduction = document.getElementById('deductionTypeName').value.trim();
-  const recurring = document.getElementById('deductionTypeRecurring').checked ? 1 : 0;
   const taxable = 1;
   const includedIn13 = 1;
 
@@ -2006,8 +2139,7 @@ async function saveDeductionType() {
   const payload = {
     type_of_deduction: typeOfDeduction,
     taxable,
-    included_in_13month: includedIn13,
-    recurring
+    included_in_13month: includedIn13
   };
 
   if (id) {
@@ -2044,7 +2176,6 @@ async function editDeductionType(id) {
     const item = result.data;
     document.getElementById('deductionTypeId').value = item.id;
     document.getElementById('deductionTypeName').value = item.type_of_deduction;
-    document.getElementById('deductionTypeRecurring').checked = Number(item.recurring) === 1;
     openDeductionTypeForm(false);
   } catch (error) {
     alert(error.message);
@@ -2082,7 +2213,7 @@ async function loadIncomeTypes() {
   const tableBody = document.querySelector('#incomeTypeTable tbody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
+tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
 
   try {
     const response = await fetch('emp_inc_type_api.php');
@@ -2094,7 +2225,7 @@ async function loadIncomeTypes() {
 
     const rows = result.data || [];
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No income types found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No income types found.</td></tr>';
       paginateTable('incomeTypeTable', 'incomeTypePagination', true);
       return;
     }
@@ -2103,13 +2234,11 @@ async function loadIncomeTypes() {
     rows.forEach(item => {
       const isTaxable = Number(item.taxable) === 1;
       const isIncludedIn13th = Number(item.included_in_13month) === 1;
-      const isRecurring = Number(item.recurring) === 1;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item.type_of_income}</td>
         <td>${isTaxable ? 'Taxable' : 'Non-Taxable'}</td>
         <td>${isIncludedIn13th ? 'Yes' : 'No'}</td>
-        <td>${isRecurring ? 'Yes' : 'No'}</td>
         <td>
           <button class="btn btn-primary edit-income-type" data-id="${item.id}">Edit</button>
           <button class="btn btn-danger delete-income-type" data-id="${item.id}">Delete</button>
@@ -2140,7 +2269,6 @@ function openIncomeTypeForm(reset = true) {
     document.getElementById('incomeTypeCost').value = '';
     document.getElementById('incomeTypeTaxable').checked = true;
     document.getElementById('incomeType13th').checked = true;
-    document.getElementById('incomeTypeRecurring').checked = true;
   }
   
   // Show modal
@@ -2165,7 +2293,6 @@ async function saveIncomeType() {
   const cost = document.getElementById('incomeTypeCost').value || '0';
   const taxable = document.getElementById('incomeTypeTaxable').checked ? 1 : 0;
   const includedIn13 = document.getElementById('incomeType13th').checked ? 1 : 0;
-  const recurring = document.getElementById('incomeTypeRecurring').checked ? 1 : 0;
 
   if (!typeOfIncome) {
     alert('Please fill in the income type.');
@@ -2176,8 +2303,7 @@ async function saveIncomeType() {
     type_of_income: typeOfIncome,
     cost: parseFloat(cost),
     taxable,
-    included_in_13month: includedIn13,
-    recurring
+    included_in_13month: includedIn13
   };
 
   if (id) {
@@ -2233,7 +2359,6 @@ async function editIncomeType(id) {
     document.getElementById('incomeTypeCost').value = parseFloat(item.cost || 0).toFixed(2);
     document.getElementById('incomeTypeTaxable').checked = item.taxable == 1;
     document.getElementById('incomeType13th').checked = item.included_in_13month == 1;
-    document.getElementById('incomeTypeRecurring').checked = item.recurring == 1;
     openIncomeTypeForm(false);
   } catch (error) {
     alert(error.message);
@@ -2462,8 +2587,7 @@ function saveEmployeeDeductionAssignment() {
     name: employee.name,
     type_of_deduction: deductionType.type_of_deduction,
     cost: parsedCost,
-    taxable: 0,
-    month_13th: 0,
+    recurring: isRecurring ? 1 : 0,
     apply_year_month: isRecurring ? null : applyYearMonth,
     apply_cutoff_slot: isRecurring ? null : applyCutoffSlot
   };
@@ -2715,8 +2839,8 @@ function filterEmployeesForPremiums() {
   const tableBody = document.querySelector('#employeePremiumSearchTable tbody');
   if (!tableBody) return;
   const rows = tableBody.getElementsByTagName('tr');
-  const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
-  const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
+  const dateFrom = parseDateInputValue(dateFromInput?.value, false);
+  const dateTo = parseDateInputValue(dateToInput?.value, true);
 
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].getElementsByTagName('td');
@@ -2956,7 +3080,7 @@ async function fetchEmployeeDeductionAssignments() {
         employeeName: item.name,
         deductionType: item.type_of_deduction,
         cost: item.cost,
-        recurring: latestType ? latestType.recurring : 0,
+        recurring: Number(item.recurring) === 1 ? 1 : 0,
         applyYearMonth: item.apply_year_month || null,
         applyCutoffSlot: item.apply_cutoff_slot || null
       };
@@ -3096,6 +3220,7 @@ function saveEmployeeIncomeAssignment() {
     cost: parsedCost,
     taxable: taxableCheckbox.checked ? 1 : 0,
     month_13th: included13Checkbox.checked ? 1 : 0,
+    recurring: isRecurring ? 1 : 0,
     apply_year_month: isRecurring ? null : applyYearMonth,
     apply_cutoff_slot: isRecurring ? null : applyCutoffSlot
   };
@@ -3242,8 +3367,8 @@ function filterAttendance() {
   if (!searchInput) return;
 
   const filter = searchInput.value.toLowerCase();
-  const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
-  const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
+  const dateFrom = parseDateInputValue(dateFromInput?.value, false);
+  const dateTo = parseDateInputValue(dateToInput?.value, true);
 
   filteredAttendanceRows = attendanceRows.filter(item => {
     const id = String(item.id ?? '').toLowerCase();
@@ -3743,8 +3868,8 @@ async function loadEmployeeSalary() {
 
   const dateFromInput = document.getElementById('employeeSalaryDateFrom');
   const dateToInput = document.getElementById('employeeSalaryDateTo');
-  const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
-  const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
+  const dateFrom = parseDateInputValue(dateFromInput?.value, false);
+  const dateTo = parseDateInputValue(dateToInput?.value, true);
 
   tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading employees...</td></tr>';
 
@@ -4210,7 +4335,7 @@ function filterAssignedIncomeByCutoff(assignedIncomeData = [], incomeTypesData =
 
   return (assignedIncomeData || []).filter(item => {
     const typeNameKey = String(item.type_of_income || '').trim().toLowerCase();
-    const isRecurring = recurringMap[typeNameKey] === 1;
+    const isRecurring = Number(item.recurring) === 1 || recurringMap[typeNameKey] === 1;
     if (isRecurring) {
       return true;
     }
@@ -4276,7 +4401,7 @@ function filterAssignedDeductionsByCutoff(assignedDeductionData = [], deductionT
 
   return (assignedDeductionData || []).filter(item => {
     const typeNameKey = String(item.type_of_deduction || '').trim().toLowerCase();
-    const isRecurring = recurringMap[typeNameKey] === 1;
+    const isRecurring = Number(item.recurring) === 1 || recurringMap[typeNameKey] === 1;
     if (isRecurring) {
       return true;
     }
@@ -4299,8 +4424,8 @@ async function loadPayslip() {
 
   const dateFromInput = document.getElementById('payslipDateFrom');
   const dateToInput = document.getElementById('payslipDateTo');
-  const dateFrom = dateFromInput?.value ? new Date(`${dateFromInput.value}T00:00:00`) : null;
-  const dateTo = dateToInput?.value ? new Date(`${dateToInput.value}T23:59:59`) : null;
+  const dateFrom = parseDateInputValue(dateFromInput?.value, false);
+  const dateTo = parseDateInputValue(dateToInput?.value, true);
 
   tableBody.innerHTML = '<tr><td colspan="17" class="text-center">Loading payslip...</td></tr>';
 
@@ -4455,7 +4580,7 @@ async function fetchEmployeeIncomeAssignments() {
           cost: item.cost,
           taxable: latestType ? latestType.taxable : item.taxable,
           included13: latestType ? latestType.included_in_13month : item['month_13th'],
-          recurring: latestType ? latestType.recurring : 0,
+          recurring: Number(item.recurring) === 1 ? 1 : 0,
           applyYearMonth: item.apply_year_month || null,
           applyCutoffSlot: item.apply_cutoff_slot || null
         };

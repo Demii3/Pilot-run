@@ -40,8 +40,9 @@ function ensureAssignedEmpIncTable($dbc) {
       `cost` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
       `taxable` TINYINT(1) NOT NULL DEFAULT 0,
       `month_13th` TINYINT(1) NOT NULL DEFAULT 0,
-            `apply_year_month` VARCHAR(7) DEFAULT NULL,
-            `apply_cutoff_slot` TINYINT(1) DEFAULT NULL,
+      `recurring` TINYINT(1) NOT NULL DEFAULT 0,
+      `apply_year_month` VARCHAR(7) DEFAULT NULL,
+      `apply_cutoff_slot` TINYINT(1) DEFAULT NULL,
       `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (`id`)
@@ -65,10 +66,17 @@ function ensureAssignedEmpIncTable($dbc) {
             respond(false, null, 'Failed to add apply_cutoff_slot column: ' . mysqli_error($dbc), 500);
         }
     }
+
+    if (!columnExists($dbc, 'assigned_emp_inc', 'recurring')) {
+        mysqli_query($dbc, "ALTER TABLE `assigned_emp_inc` ADD COLUMN `recurring` TINYINT(1) NOT NULL DEFAULT 0 AFTER `month_13th`");
+        if (mysqli_errno($dbc)) {
+            respond(false, null, 'Failed to add recurring column: ' . mysqli_error($dbc), 500);
+        }
+    }
 }
 
 function handleGetRequest($dbc) {
-    $query = "SELECT id, name, type_of_income, cost, taxable, month_13th, apply_year_month, apply_cutoff_slot FROM assigned_emp_inc ORDER BY id DESC";
+    $query = "SELECT id, name, type_of_income, cost, taxable, month_13th, recurring, apply_year_month, apply_cutoff_slot FROM assigned_emp_inc ORDER BY id DESC";
     $result = mysqli_query($dbc, $query);
 
     if (!$result) {
@@ -85,7 +93,7 @@ function handlePostRequest($dbc) {
         $input = $_POST;
     }
 
-    if (!isset($input['name'], $input['type_of_income'], $input['cost'], $input['taxable'], $input['month_13th'])) {
+    if (!isset($input['name'], $input['type_of_income'], $input['cost'], $input['taxable'], $input['month_13th'], $input['recurring'])) {
         respond(false, null, 'Invalid input.', 400);
     }
 
@@ -95,6 +103,7 @@ function handlePostRequest($dbc) {
     $cost = normalizeMoneyInput($input['cost']);
     $taxable = ($input['taxable'] == 1 || $input['taxable'] === true || $input['taxable'] === '1') ? 1 : 0;
     $month_13th = ($input['month_13th'] == 1 || $input['month_13th'] === true || $input['month_13th'] === '1') ? 1 : 0;
+    $recurring = ($input['recurring'] == 1 || $input['recurring'] === true || $input['recurring'] === '1') ? 1 : 0;
     $apply_year_month = isset($input['apply_year_month']) ? trim((string) $input['apply_year_month']) : '';
     $apply_cutoff_slot = isset($input['apply_cutoff_slot']) && is_numeric($input['apply_cutoff_slot']) ? intval($input['apply_cutoff_slot']) : null;
 
@@ -116,11 +125,11 @@ function handlePostRequest($dbc) {
     }
 
     if ($id) {
-        $stmt = mysqli_prepare($dbc, "UPDATE assigned_emp_inc SET name = ?, type_of_income = ?, cost = ?, taxable = ?, month_13th = ?, apply_year_month = ?, apply_cutoff_slot = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, 'ssdiisii', $name, $type_of_income, $cost, $taxable, $month_13th, $apply_year_month, $apply_cutoff_slot, $id);
+        $stmt = mysqli_prepare($dbc, "UPDATE assigned_emp_inc SET name = ?, type_of_income = ?, cost = ?, taxable = ?, month_13th = ?, recurring = ?, apply_year_month = ?, apply_cutoff_slot = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'ssdiiisii', $name, $type_of_income, $cost, $taxable, $month_13th, $recurring, $apply_year_month, $apply_cutoff_slot, $id);
     } else {
-        $stmt = mysqli_prepare($dbc, "INSERT INTO assigned_emp_inc (name, type_of_income, cost, taxable, month_13th, apply_year_month, apply_cutoff_slot) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'ssdiisi', $name, $type_of_income, $cost, $taxable, $month_13th, $apply_year_month, $apply_cutoff_slot);
+        $stmt = mysqli_prepare($dbc, "INSERT INTO assigned_emp_inc (name, type_of_income, cost, taxable, month_13th, recurring, apply_year_month, apply_cutoff_slot) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, 'ssdiiisi', $name, $type_of_income, $cost, $taxable, $month_13th, $recurring, $apply_year_month, $apply_cutoff_slot);
     }
 
     if (!mysqli_stmt_execute($stmt)) {

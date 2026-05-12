@@ -16,7 +16,6 @@ function getEmpDeducTypeTableSql() {
         type_of_deduction VARCHAR(255) NOT NULL,
         taxable TINYINT(1) NOT NULL DEFAULT 1,
         included_in_13month TINYINT(1) NOT NULL DEFAULT 1,
-        recurring TINYINT(1) NOT NULL DEFAULT 0,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;";
@@ -48,14 +47,6 @@ if (mysqli_errno($dbc)) {
 
 dropLegacyCostColumn($dbc);
 
-if (!columnExists($dbc, 'emp_deduc_type', 'recurring')) {
-    mysqli_query($dbc, "ALTER TABLE emp_deduc_type ADD COLUMN recurring TINYINT(1) NOT NULL DEFAULT 0");
-    if (mysqli_errno($dbc)) {
-        echo json_encode(['success' => false, 'message' => 'Database migration error: ' . mysqli_error($dbc)]);
-        exit;
-    }
-}
-
 function respond($success, $data = null, $message = '') {
     echo json_encode(['success' => $success, 'data' => $data, 'message' => $message]);
     exit;
@@ -75,7 +66,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 if ($method === 'GET') {
     if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $id = intval($_GET['id']);
-        $stmt = mysqli_prepare($dbc, "SELECT id, type_of_deduction, taxable, included_in_13month, recurring FROM emp_deduc_type WHERE id = ?");
+        $stmt = mysqli_prepare($dbc, "SELECT id, type_of_deduction, taxable, included_in_13month FROM emp_deduc_type WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'i', $id);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
@@ -84,7 +75,7 @@ if ($method === 'GET') {
     }
 
     // Fetch all rows from the emp_deduc_type table
-    $query = "SELECT * FROM emp_deduc_type";
+    $query = "SELECT id, type_of_deduction, taxable, included_in_13month, created_at, updated_at FROM emp_deduc_type";
     $result = mysqli_query($dbc, $query);
 
     if (!$result) {
@@ -111,29 +102,28 @@ if ($method === 'POST') {
     $typeOfDeduction = trim($input['type_of_deduction'] ?? '');
     $taxable = isset($input['taxable']) && ($input['taxable'] == 1 || $input['taxable'] === true || $input['taxable'] === '1') ? 1 : 0;
     $includedIn13 = isset($input['included_in_13month']) && ($input['included_in_13month'] == 1 || $input['included_in_13month'] === true || $input['included_in_13month'] === '1') ? 1 : 0;
-    $recurring = isset($input['recurring']) && ($input['recurring'] == 1 || $input['recurring'] === true || $input['recurring'] === '1') ? 1 : 0;
 
     if ($typeOfDeduction === '') {
         respond(false, null, 'Missing required fields.');
     }
 
     if ($id) {
-        $stmt = mysqli_prepare($dbc, "UPDATE emp_deduc_type SET type_of_deduction = ?, taxable = ?, included_in_13month = ?, recurring = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, 'siiii', $typeOfDeduction, $taxable, $includedIn13, $recurring, $id);
+        $stmt = mysqli_prepare($dbc, "UPDATE emp_deduc_type SET type_of_deduction = ?, taxable = ?, included_in_13month = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'siii', $typeOfDeduction, $taxable, $includedIn13, $id);
         if (!mysqli_stmt_execute($stmt)) {
             respond(false, null, 'Update failed: ' . mysqli_error($dbc));
         }
-        respond(true, ['id' => $id, 'type_of_deduction' => $typeOfDeduction, 'taxable' => $taxable, 'included_in_13month' => $includedIn13, 'recurring' => $recurring], 'Deduction type updated.');
+        respond(true, ['id' => $id, 'type_of_deduction' => $typeOfDeduction, 'taxable' => $taxable, 'included_in_13month' => $includedIn13], 'Deduction type updated.');
     }
 
-    $stmt = mysqli_prepare($dbc, "INSERT INTO emp_deduc_type (type_of_deduction, taxable, included_in_13month, recurring) VALUES (?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, 'siii', $typeOfDeduction, $taxable, $includedIn13, $recurring);
+    $stmt = mysqli_prepare($dbc, "INSERT INTO emp_deduc_type (type_of_deduction, taxable, included_in_13month) VALUES (?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, 'sii', $typeOfDeduction, $taxable, $includedIn13);
     if (!mysqli_stmt_execute($stmt)) {
         respond(false, null, 'Insert failed: ' . mysqli_error($dbc));
     }
 
     $insertedId = mysqli_insert_id($dbc);
-    respond(true, ['id' => $insertedId, 'type_of_deduction' => $typeOfDeduction, 'taxable' => $taxable, 'included_in_13month' => $includedIn13, 'recurring' => $recurring], 'Deduction type created.');
+    respond(true, ['id' => $insertedId, 'type_of_deduction' => $typeOfDeduction, 'taxable' => $taxable, 'included_in_13month' => $includedIn13], 'Deduction type created.');
 }
 
 if ($method === 'DELETE') {

@@ -42,7 +42,6 @@ function ensureEmpIncTypeTable($dbc)
       `cost` DECIMAL(10,2) NOT NULL DEFAULT '0.00',
       `taxable` TINYINT(1) NOT NULL DEFAULT 1,
       `included_in_13month` TINYINT(1) NOT NULL DEFAULT 1,
-      `recurring` TINYINT(1) NOT NULL DEFAULT 0,
       PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
@@ -55,13 +54,6 @@ function ensureEmpIncTypeTable($dbc)
         mysqli_query($dbc, "ALTER TABLE `emp_inc_type` ADD COLUMN `included_in_13month` TINYINT(1) NOT NULL DEFAULT 1");
         if (mysqli_errno($dbc)) {
             respond(false, null, 'Failed to add included_in_13month column: ' . mysqli_error($dbc), 500);
-        }
-    }
-
-    if (!columnExists($dbc, 'emp_inc_type', 'recurring')) {
-        mysqli_query($dbc, "ALTER TABLE `emp_inc_type` ADD COLUMN `recurring` TINYINT(1) NOT NULL DEFAULT 0");
-        if (mysqli_errno($dbc)) {
-            respond(false, null, 'Failed to add recurring column: ' . mysqli_error($dbc), 500);
         }
     }
 }
@@ -79,7 +71,7 @@ function handleGetRequest($dbc)
 {
     if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $id = intval($_GET['id']);
-        $stmt = mysqli_prepare($dbc, "SELECT id, type_of_income, cost, taxable, included_in_13month, recurring FROM emp_inc_type WHERE id = ?");
+        $stmt = mysqli_prepare($dbc, "SELECT id, type_of_income, cost, taxable, included_in_13month FROM emp_inc_type WHERE id = ?");
         if (!$stmt) {
             respond(false, null, 'Failed to prepare query: ' . mysqli_error($dbc), 500);
         }
@@ -95,7 +87,7 @@ function handleGetRequest($dbc)
         respond(true, $row ?? null);
     }
 
-    $query = "SELECT id, type_of_income, cost, taxable, included_in_13month, recurring FROM emp_inc_type ORDER BY id DESC";
+    $query = "SELECT id, type_of_income, cost, taxable, included_in_13month FROM emp_inc_type ORDER BY id DESC";
     $result = mysqli_query($dbc, $query);
     if (!$result) {
         respond(false, null, 'Failed to fetch income types: ' . mysqli_error($dbc), 500);
@@ -117,19 +109,18 @@ function handlePostRequest($dbc)
     $cost = isset($input['cost']) && $input['cost'] !== '' ? floatval($input['cost']) : 0.0;
     $taxable = asBoolInt($input['taxable'] ?? null, 1);
     $includedIn13 = asBoolInt($input['included_in_13month'] ?? null, 1);
-    $recurring = asBoolInt($input['recurring'] ?? null, 0);
 
     if ($typeOfIncome === '') {
         respond(false, null, 'Type of income is required.', 400);
     }
 
     if ($id) {
-        $stmt = mysqli_prepare($dbc, "UPDATE emp_inc_type SET type_of_income = ?, cost = ?, taxable = ?, included_in_13month = ?, recurring = ? WHERE id = ?");
+        $stmt = mysqli_prepare($dbc, "UPDATE emp_inc_type SET type_of_income = ?, cost = ?, taxable = ?, included_in_13month = ? WHERE id = ?");
         if (!$stmt) {
             respond(false, null, 'Failed to prepare update: ' . mysqli_error($dbc), 500);
         }
 
-        mysqli_stmt_bind_param($stmt, 'sdiiii', $typeOfIncome, $cost, $taxable, $includedIn13, $recurring, $id);
+        mysqli_stmt_bind_param($stmt, 'sdiii', $typeOfIncome, $cost, $taxable, $includedIn13, $id);
         if (!mysqli_stmt_execute($stmt)) {
             respond(false, null, 'Update failed: ' . mysqli_error($dbc), 500);
         }
@@ -140,17 +131,16 @@ function handlePostRequest($dbc)
             'type_of_income' => $typeOfIncome,
             'cost' => $cost,
             'taxable' => $taxable,
-            'included_in_13month' => $includedIn13,
-            'recurring' => $recurring
+            'included_in_13month' => $includedIn13
         ], 'Income type updated.');
     }
 
-    $stmt = mysqli_prepare($dbc, "INSERT INTO emp_inc_type (type_of_income, cost, taxable, included_in_13month, recurring) VALUES (?, ?, ?, ?, ?)");
+    $stmt = mysqli_prepare($dbc, "INSERT INTO emp_inc_type (type_of_income, cost, taxable, included_in_13month) VALUES (?, ?, ?, ?)");
     if (!$stmt) {
         respond(false, null, 'Failed to prepare insert: ' . mysqli_error($dbc), 500);
     }
 
-    mysqli_stmt_bind_param($stmt, 'sdiii', $typeOfIncome, $cost, $taxable, $includedIn13, $recurring);
+    mysqli_stmt_bind_param($stmt, 'sdii', $typeOfIncome, $cost, $taxable, $includedIn13);
     if (!mysqli_stmt_execute($stmt)) {
         respond(false, null, 'Insert failed: ' . mysqli_error($dbc), 500);
     }
@@ -162,8 +152,7 @@ function handlePostRequest($dbc)
         'type_of_income' => $typeOfIncome,
         'cost' => $cost,
         'taxable' => $taxable,
-        'included_in_13month' => $includedIn13,
-        'recurring' => $recurring
+        'included_in_13month' => $includedIn13
     ], 'Income type created.');
 }
 
