@@ -7,7 +7,7 @@
     $searchTerm = isset($_POST['search']) ? mysqli_real_escape_string($dbc, $_POST['search']) : '';
     $id = isset($_POST['id']) ? mysqli_real_escape_string($dbc, $_POST['id']) : '';
 
-    $sql = "SELECT `name` 
+    $sql = "SELECT `name`, `coordinates` 
             FROM geofences
             JOIN employee_location ON geofences.id = employee_location.loc_id ";
 

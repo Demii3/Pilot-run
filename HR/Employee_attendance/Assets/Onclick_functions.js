@@ -187,8 +187,10 @@ function populateModalEmpInfo(data) {
 
 function populateModalLocInfo(data) {
     const newModalLocation = document.getElementById('newModalLocation');
+    const newModalLocationCoordinates = document.getElementById('newModalLocationCoordinates');
 
-    newModalLocation.value = data || '';
+    newModalLocation.value = data.name || '';
+    newModalLocationCoordinates.value = data.coordinates || '';
 
     updateReadonlyEmptyState('#createAttendanceModal input[readonly]');
 

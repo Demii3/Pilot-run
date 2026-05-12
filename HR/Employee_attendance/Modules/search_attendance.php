@@ -60,6 +60,21 @@ if ($result && mysqli_num_rows($result) > 0) {
             }
         }
         $clockoutStatusHtml = "<span class='" . $outStatusClass . "'>" . $row['Clockout_status'] . "</span>";
+        $WorkClassification = '';
+
+        switch (strtolower($row['Work_Classification'])) {
+            case 'r':
+                $WorkClassification = 'Regular Day';
+                break;
+            case 'sh':
+                $WorkClassification = 'Special Holiday';
+                break;
+            case 'lh':
+                $WorkClassification = 'Legal Holiday';
+                break;
+            default:
+                $WorkClassification = $row['Work_Classification'];
+        }
 
         $data[] = array(
             'Attendance_id' => $row['Attendance_id'],
@@ -75,7 +90,8 @@ if ($result && mysqli_num_rows($result) > 0) {
             'Clockout_status' => $row['Clockout_status'],
             'Clockout_status_html' => $clockoutStatusHtml,
             'Duration' => $row['Duration'],
-            'AO' => $row['AO']
+            'AO' => $row['AO'],
+            'Work_day_status' => $WorkClassification
         );
     }
 }

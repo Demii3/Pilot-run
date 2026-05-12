@@ -141,6 +141,7 @@ $(document).ready(function() {
             $('#modalClockOut').val(convert12HourTo24Hour(rowData[8]));
             $('#modalClockOutStatus').val($('<div>').html(rowData[9]).text());
             $('#allowOvertime').prop('checked', rowData[11] == 1);
+            $('#modalDuration').val(rowData[10]);
             $('#Manual-modify').prop('checked', columnsToHide.includes(-1) ? true: false);
             manualMode();
 
@@ -180,12 +181,14 @@ $(document).ready(function() {
         else if (convert12HourTimetoMin(clockInTime) > convert12HourTimetoMin('8:00 AM')) {
             $('#modalClockInStatus').val('Late');
         }
+        $('#modalDuration').val(excludeLunchBreak($('#modalClockIn').val(), $('#modalClockOut').val()));
     });
 
     $('#modalClockOut').on('change', function() {
         if ($('#Manual-modify').is(':checked')) {
             return;
         };
+        $('#modalDuration').val(excludeLunchBreak($('#modalClockIn').val(), $('#modalClockOut').val()));
 
         const clockOutTime = $(this).val();
         if (convert12HourTimetoMin(clockOutTime) < convert12HourTimetoMin('5:00 PM')) {
@@ -197,6 +200,7 @@ $(document).ready(function() {
             $('#modalClockOutStatus').val('Present');
 
         }
+        $('#modalDuration').val(excludeLunchBreak($('#modalClockIn').val(), $('#modalClockOut').val()));
     });
 
     $('#modalClockInStatus').on('change', function() {
@@ -322,8 +326,11 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.employeeLocation-suggestion-item', function() {
-        const locationData = $(this).innertext || $(this).text();
-        populateModalLocInfo(locationData);
+        const payload = {
+            name: $(this).data('location-name'),
+            coordinates: $(this).data('location-coordinates')
+        };
+        populateModalLocInfo(payload);
         const dropdown = document.getElementById('locationSuggestionDropdown');
         const input = document.getElementById('newModalLocation');
 

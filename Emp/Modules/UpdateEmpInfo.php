@@ -12,6 +12,7 @@
     $newPassword = $data['confirmNewPassword'] ?? '';
     $proceed = false;
     $testingvar = '';
+    $testingvar2 = true;
 
     if ($purpose === 'updateInfoAndPassword') {
         $sql1 = mysqli_prepare($dbc, "SELECT DISTINCT employees.password
@@ -24,9 +25,10 @@
         if (mysqli_num_rows($result) > 0) {
             $querydata = mysqli_fetch_assoc($result);
             $proceed = password_verify($oldPassword, $querydata['password']);
+            $testingvar2 = $proceed ? true : false;
         } else {
             $error = mysqli_error($dbc);
-            $testingvar = 'Old password verification failed';
+            $testingvar = 'Password is incorrect';
             echo json_encode(['error' => $error, 'testingvar' => $testingvar]);
             exit();
         };
@@ -56,20 +58,26 @@
         mysqli_stmt_close($sql1);
     }
 
+    if (!$testingvar2) {
+        $testingvar = 'Current password is incorrect';
+        echo json_encode(['error' => $error, 'testingvar' => $testingvar]);
+        exit();
+    }
+
     $sql = mysqli_prepare($dbc, "UPDATE employees
             SET `email` = ?, `username` = ?
             WHERE id = ?");
     mysqli_stmt_bind_param($sql, 'ssi', $data['email'], $data['username'], $userId);
     mysqli_stmt_execute($sql);
     if (mysqli_stmt_affected_rows($sql) > 0) {
-        $testingvar = 'Employee information updated successfully';
+        $testingvar = $proceed ? 'Employee information and password updated successfully' : 'Employee information updated successfully';
     } else {
         $error = mysqli_error($dbc);
-        $testingvar = 'Failed to update employee information';
+        $testingvar = 'Updated succesfully.';
         echo json_encode(['error' => $error, 'testingvar' => $testingvar]);
         exit();
     };
     mysqli_stmt_close($sql);
 
-    echo json_encode(['error' => $error, 'testingvar' => $testingvar]);
+    echo json_encode(['error' => $error, 'testingvar' => $testingvar, 'proceed' => $proceed]);
 ?>

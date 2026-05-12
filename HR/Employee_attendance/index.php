@@ -149,6 +149,7 @@
                   <th>Clock Out Status</th>
                   <th>Duration</th>
                   <th>AO</th>
+                  <th>Work Day Status</th>
               </tr>
           </thead>
           <tbody>
@@ -218,23 +219,35 @@
             </div>
           </div>
           <div class="col-md-6">
-            <button id="editButton" class="btn btn-warning" onclick = "editAttendance()">Edit</button>
-            <button id="deleteButton" class="btn btn-danger d-none">Delete</button>
-            <button id="moreButton" class="btn btn-warning d-none" onclick="moreAttendance()">More</button>
-          </div>
-          <div class="col-md-6" id="statusButtons">
+                <label class="form-label">Work Classification</label>
+                <select id="modalWorkClassification" class="form-select">
+                  <option value="R">Regular Day</option>
+                  <option value="SH">Special Holiday</option>
+                  <option value="LH">Legal Holiday</option>
+                  <option value="Custom">Custom</option>
+                </select>
+              </div>
+          <!-- <div class="col-md-6">
+              <label class="form-label">Duration</label>
+              <input id="modalDuration" type="text" class="form-control" readonly>
+              <div class="form-check mt-2" id="allowOvertimeContainer">
+                <input class="form-check-input" type="checkbox" id="allowDurationConfig">
+                <label class="form-check-label" for="allowOvertime">Manually Set Duration</label>
+              </div>
+          </div> -->
+          <div class="col-md-6 d-flex justify-content-end gap-2" id="statusButtons">
             <button id="absentButton" class="btn btn-danger d-none" onclick="setAttendanceStatus('Absent')">Absent</button>
             <button id="onLeaveButton" class="btn btn-info d-none" onclick="setAttendanceStatus('On-Leave')">On Leave</button>
           </div>
           <div class="col-md-12 d-none" id="additionalSettings">
             <span><hr></span>
             <h5>Additional Settings</h5>
-            <div class="d-flex align-items-center gap-3 mt-3">
+            <div class="d-flex align-items-center gap-2 mt-3">
               <div class="toggle-switch">
                 <input type="checkbox" id="Manual-modify" class="toggle-input">
                 <label for="Manual-modify" class="toggle-label"></label>
               </div>
-              <label class="form-check-label mb-0" for="Manual-modify">Modify the current attendance manually</label>
+              <label class="form-check-label mb-0" for="Manual-modify">Custom Attendance Edit</label>
               <span class="help-badge" tabindex="0" aria-label="Help about Override All Preset Functions">
                 ?
                 <span class="help-badge-tooltip" style="text-align: center;">
@@ -244,19 +257,23 @@
               </span>
             </div>
 
-            <div class="d-flex align-items-center gap-3 mt-3">
-              <div class="toggle-switch">
-                <input type="checkbox" id="Include-lunchbreak" class="toggle-input">
-                <label for="Include-lunchbreak" class="toggle-label"></label>
-              </div>
-              <label class="form-check-label mb-0" for="Include-lunchbreak">Include Lunch Break</label>
-              <span class="help-badge" tabindex="0" aria-label="Help about Include Lunch Break">
-                ?
-                <span class="help-badge-tooltip" style="text-align: center;">
-                  This is will include the lunch break duration in the total duration calculation.
+            <div class="row g-3 mt-2">
+
+              <div class="col-md-6 d-flex align-items-center gap-2">
+                <div class="toggle-switch">
+                  <input type="checkbox" id="Include-lunchbreak" class="toggle-input">
+                  <label for="Include-lunchbreak" class="toggle-label"></label>
+                </div>
+                <label class="form-check-label mb-0" for="Include-lunchbreak">Include Lunch Break</label>
+                <span class="help-badge" tabindex="0" aria-label="Help about Include Lunch Break">
+                  ?
+                  <span class="help-badge-tooltip" style="text-align: center;">
+                    This is will include the lunch break duration in the total duration calculation.
+                  </span>
                 </span>
-              </span>
+              </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -276,9 +293,16 @@
           </div>
         </div>
       </div> -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="editAttendance()">Close</button>
-        <button id="saveButton" class="btn btn-primary">Save changes</button>
+      <div class="modal-footer d-flex justify-content-between">
+        <div class="col-md-6 d-flex justify-content-start gap-2">
+          <button id="editButton" class="btn btn-warning" onclick = "editAttendance()">Edit</button>
+          <button id="deleteButton" class="btn btn-danger d-none">Delete</button>
+          <button id="moreButton" class="btn btn-warning d-none" onclick="moreAttendance()">More</button>
+        </div>
+        <div class="col-md-5 d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="editAttendance()">Close</button>
+          <button id="saveButton" class="btn btn-primary d-none">Save changes</button>
+        </div>
       </div>
     </div>
   </div>
@@ -334,10 +358,11 @@
               <div id="locationSuggestionDropdown" class="employee-suggestion-dropdown d-none" role="listbox" aria-label="Location suggestions">#</div>
             </div>
           </div>
-          <!-- <div class="col-md-6">
-            <label class="form-label">Location</label>
-            <input id="newModalLocation" type="text" class="form-control">
-          </div> -->
+
+          <div class="col-md-6 d-none">
+            <label class="form-label">Location Coordinates</label>
+            <input id="newModalLocationCoordinates" type="text" class="form-control">
+          </div>
 
           <div class="col-md-6">
             <label class="form-label">Clock In</label>
