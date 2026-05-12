@@ -60,8 +60,12 @@
         $('#forgotForm').on('submit', function(e){
             e.preventDefault();
             const email = $('#email').val();
+            const $submitBtn = $(this).find('button[type="submit"]');
             devEmail = email;
             $('#msg').html('').removeClass();
+            
+            // Disable button and show loading state
+            $submitBtn.prop('disabled', true).text('Sending OTP...');
             
             $.post('api_forgot_password.php', { email: email }, function(resp){
                 try {
@@ -95,14 +99,17 @@
                         }
                     } else {
                         $('#msg').addClass('alert alert-danger').html(j.message || 'Failed to send OTP');
+                        $submitBtn.prop('disabled', false).text('Send OTP');
                     }
                 } catch(e) {
                     console.error('Error:', e);
                     $('#msg').addClass('alert alert-danger').html('Unexpected response: ' + e.message);
+                    $submitBtn.prop('disabled', false).text('Send OTP');
                 }
             }).fail(function(xhr, status, error){
                 console.error('Request failed:', error);
                 $('#msg').addClass('alert alert-danger').html('Request failed: ' + error);
+                $submitBtn.prop('disabled', false).text('Send OTP');
             });
         });
         

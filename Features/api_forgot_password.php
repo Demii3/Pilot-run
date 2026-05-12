@@ -12,7 +12,117 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 @include __DIR__ . '/../Modules/dbcon.php';
-@include __DIR__ . '/../Modules/MailHelper.php';
+
+function load_email_config() {
+    $configPath = __DIR__ . '/../HR/Employee_payroll/email_config.php';
+    if (!file_exists($configPath)) {
+        return null;
+    }
+
+    $config = include $configPath;
+    return is_array($config) ? $config : null;
+}
+
+function smtp_read_response($socket) {
+    $response = '';
+    while (!feof($socket)) {
+        $line = fgets($socket, 515);
+        if ($line === false) {
+            break;
+        }
+
+        $response .= $line;
+        if (strlen($line) < 4 || $line[3] === ' ') {
+            break;
+        }
+    }
+
+    return $response;
+}
+
+function smtp_expect($socket, $expectedCode) {
+    $response = smtp_read_response($socket);
+    if (substr($response, 0, 3) !== (string)$expectedCode) {
+        throw new Exception('SMTP expected ' . $expectedCode . ' but got: ' . trim($response));
+    }
+}
+
+function smtp_send_command($socket, $command, $expectedCode) {
+    fwrite($socket, $command . "\r\n");
+    smtp_expect($socket, $expectedCode);
+}
+
+function send_reset_email($toEmail, $subject, $htmlBody, $plainBody) {
+    $config = load_email_config();
+    if (!$config) {
+        return [false, 'Email configuration not found'];
+    }
+
+    $transport = strtolower((string)($config['transport'] ?? 'smtp'));
+    $fromEmail = trim((string)($config['from_email'] ?? ''));
+    $fromName = trim((string)($config['from_name'] ?? 'Chengshi Construction Corp'));
+
+    if ($transport !== 'smtp') {
+        return [false, 'SMTP transport is required'];
+    }
+
+    $host = trim((string)($config['smtp_host'] ?? ''));
+    $port = (int)($config['smtp_port'] ?? 587);
+    $encryption = strtolower(trim((string)($config['smtp_encryption'] ?? 'tls')));
+    $username = trim((string)($config['smtp_username'] ?? ''));
+    $password = (string)($config['smtp_password'] ?? '');
+
+    if ($host === '' || $port <= 0 || $username === '' || $password === '' || $fromEmail === '') {
+        return [false, 'SMTP is not fully configured'];
+    }
+
+    $remoteHost = ($encryption === 'ssl' ? 'ssl://' : '') . $host;
+    $socket = @stream_socket_client($remoteHost . ':' . $port, $errno, $errstr, 20);
+    if (!$socket) {
+        return [false, 'SMTP connection failed: ' . $errstr . ' (' . $errno . ')'];
+    }
+
+    stream_set_timeout($socket, 20);
+
+    try {
+        smtp_expect($socket, 220);
+        smtp_send_command($socket, 'EHLO localhost', 250);
+
+        if ($encryption === 'tls') {
+            smtp_send_command($socket, 'STARTTLS', 220);
+            $tlsEnabled = @stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+            if (!$tlsEnabled) {
+                throw new Exception('Unable to establish TLS on SMTP connection');
+            }
+            smtp_send_command($socket, 'EHLO localhost', 250);
+        }
+
+        smtp_send_command($socket, 'AUTH LOGIN', 334);
+        smtp_send_command($socket, base64_encode($username), 334);
+        smtp_send_command($socket, base64_encode($password), 235);
+        smtp_send_command($socket, 'MAIL FROM:<' . $fromEmail . '>', 250);
+        smtp_send_command($socket, 'RCPT TO:<' . $toEmail . '>', 250);
+        smtp_send_command($socket, 'DATA', 354);
+
+        $headers = [];
+        $headers[] = 'From: ' . $fromName . ' <' . $fromEmail . '>';
+        $headers[] = 'To: <' . $toEmail . '>';
+        $headers[] = 'Subject: ' . $subject;
+        $headers[] = 'MIME-Version: 1.0';
+        $headers[] = 'Content-Type: text/html; charset=UTF-8';
+
+        fwrite($socket, implode("\r\n", $headers) . "\r\n\r\n" . $htmlBody . "\r\n.\r\n");
+        smtp_expect($socket, 250);
+        smtp_send_command($socket, 'QUIT', 221);
+
+        return [true, null];
+    } catch (Exception $e) {
+        error_log('SMTP Error: ' . $e->getMessage());
+        return [false, $e->getMessage()];
+    } finally {
+        fclose($socket);
+    }
+}
 
 $identifier = isset($_POST['email']) ? trim($_POST['email']) : '';
 // Normalize identifier for case-insensitive matching
@@ -169,6 +279,7 @@ if ($nameStmt) {
 
 // Prepare OTP email
 $subject = 'Password Reset OTP - Chengshi Construction Corp';
+$plainBody = "Hi {$employeeName},\n\nYou requested a password reset for your Chengshi Construction Corp account.\n\nUse the following One-Time Password (OTP) to reset your password:\n\n{$otp}\n\nThis code is valid for 10 minutes only.\n\nIf you did not request this, please ignore this email.";
 $htmlBody = '
 <html>
 <head>
@@ -225,43 +336,17 @@ $htmlBody = '
 </html>
 ';
 
-// Send email using MailHelper
-$emailSent = false;
-try {
-    $mailHelper = new MailHelper();
-    $emailSent = $mailHelper->send($userEmail, $subject, $htmlBody, []);
-} catch (Exception $e) {
-    error_log("MailHelper Error: " . $e->getMessage());
-}
+[$emailSent, $emailError] = send_reset_email($userEmail, $subject, $htmlBody, $plainBody);
 
-// Check if running in development/localhost
-$isDevelopment = ($_SERVER['HTTP_HOST'] === 'localhost' || strpos($_SERVER['HTTP_HOST'], 'localhost:') === 0 || 
-                  $_SERVER['HTTP_HOST'] === '127.0.0.1' || strpos($_SERVER['HTTP_HOST'], '127.0.0.1:') === 0);
-
-// If email failed in development, show OTP for testing
-if (!$emailSent && $isDevelopment) {
-    $logFile = __DIR__ . '/../logs/otp_log.txt';
-    $logDir = dirname($logFile);
-    
-    if (!is_dir($logDir)) {
-        @mkdir($logDir, 0755, true);
-    }
-    
-    $logMessage = date('Y-m-d H:i:s') . " | OTP: $otp | Email: $userEmail | User ID: $userId\n";
-    @file_put_contents($logFile, $logMessage, FILE_APPEND);
-    
+if (!$emailSent) {
+    error_log("Forgot Password email send failed for {$userEmail}: {$emailError}");
     echo json_encode([
-        'success' => true,
-        'message' => 'OTP sent to your email (valid for 10 minutes)',
-        'dev_mode' => true,
-        'dev_otp' => $otp,
-        'dev_notice' => '📧 Development Mode: Email service not configured. OTP shown below for testing.',
-        'actual_email' => $userEmail
+        'success' => false,
+        'message' => 'Failed to send OTP email: ' . $emailError
     ]);
     exit;
 }
 
-// Return success response
 echo json_encode([
     'success' => true,
     'message' => 'OTP sent to your email (valid for 10 minutes)',
