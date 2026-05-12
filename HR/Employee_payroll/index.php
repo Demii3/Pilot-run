@@ -4347,6 +4347,7 @@ async function loadPayslip() {
     const additionalIncomeByEmployee = buildAdditionalIncomeSummaryMap(applicableAssignedIncomeData);
     const nonTaxableIncomeByEmployee = buildNonTaxableIncomeMap(applicableAssignedIncomeData);
     const personalCaByEmployee = buildPersonalCaMap(applicableAssignedDeductionData);
+    const enrichedPayslipEmployees = [];
 
     tableBody.innerHTML = '';
     employees.forEach(emp => {
@@ -4386,6 +4387,25 @@ async function loadPayslip() {
       const grossRegularPay = regularDays * grossPayPerDay;
       const netPay = grossRegularPay + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
 
+      enrichedPayslipEmployees.push({
+        ...emp,
+        grossPayPerMonth: salary,
+        grossPayPerDay,
+        regularDays,
+        totalOt: totalOtPay,
+        legalHoliday,
+        specialHoliday,
+        riceSubsidy: nonTaxableAdditionalIncome,
+        electricity: taxableAdditionalIncome,
+        sss,
+        phlth,
+        pagibig,
+        tax,
+        personalCa,
+        totalDeduction,
+        netPay
+      });
+
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${emp.id || ''}</td>
@@ -4410,6 +4430,8 @@ async function loadPayslip() {
 
       tableBody.appendChild(row);
     });
+
+    allPayslipEmployees = enrichedPayslipEmployees;
 
     paginateTable('payslipTable', 'payslipPagination', true);
   } catch (error) {
