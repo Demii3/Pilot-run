@@ -30,15 +30,29 @@
 
 <script>
     $(document).ready(function(){
+        // Restore remembered credentials if present
+        if(localStorage.getItem('remember') === 'true'){
+            $('#username').val(localStorage.getItem('remember_username') || '');
+            $('#password').val(localStorage.getItem('remember_password') || '');
+            $('input[name="remember"]').prop('checked', true);
+        }
+
         $("#loginBtn").click(function(){
             $.post("Modules/login_process.php",$("form#formlogin").serialize(),function(d){
                 if(d=='success'){
-                    alert(d);
+                    if($('input[name="remember"]').is(':checked')){
+                        localStorage.setItem('remember','true');
+                        localStorage.setItem('remember_username',$('#username').val());
+                        localStorage.setItem('remember_password',$('#password').val());
+                    } else {
+                        localStorage.removeItem('remember');
+                        localStorage.removeItem('remember_username');
+                        localStorage.removeItem('remember_password');
+                    }
                     document.location = "./";
                 } else if(d=='Inactive'){
                     alert('Your account is inactive. Please contact the administrator.');
-                }
-                 else {
+                } else {
                     alert(d);
                 }
             });

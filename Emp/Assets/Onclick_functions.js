@@ -4,6 +4,7 @@ const attendanceBtn = document.getElementById('attendanceBtn');
 const logoutButton = document.getElementById('logout');
 const empLocationLat = document.getElementById('empLocationLat');
 const empLocationLng = document.getElementById('empLocationLng');
+const settings = document.getElementById('settingsLink');
 let map; // Declare map variable in a scope accessible to all functions
 let markers; // Declare marker variable to manage the marker on the map
 let geofenceLayer;
@@ -45,6 +46,45 @@ function loadAttendanceContent() {
     });
 }
 
+function loadEmpInfoContent() {
+    const content = document.getElementById('content-area');
+    const payload = { TEST: 'This is a string', USER_ID: document.getElementById('userId').value };
+
+    fetch('./Modules/test2.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to load content');
+        if (response.error) throw new Error(response.error); // Handle no content response
+        return response.json();
+    })
+    .then(data => { 
+        console.log('Received data:', data);
+        content.innerHTML = data.datafile; // Assuming the response contains a property 'datafile' with the HTML content
+        populateEmpInfo(data.querydata); // Call the function to populate employee info after loading the content
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        content.innerHTML = '<p style="color: red;">Failed to load content. Please try again later.</p>';
+    });
+}
+
+function populateEmpInfo(querydata) {
+    const name = document.getElementById('name');
+    const department = document.getElementById('department');
+    const email = document.getElementById('email');
+    const username = document.getElementById('Username');
+
+    if (name) name.value = querydata.name || '';
+    if (department) department.value = querydata.department || '';
+    if (email) email.value = querydata.email || '';
+    if (username) username.value = querydata.username || '';
+}
+
 if (attendanceBtn) {
     attendanceBtn.addEventListener('click', loadAttendanceContent);
 };
@@ -52,6 +92,10 @@ if (attendanceBtn) {
 if (proceedButton) {
     proceedButton.addEventListener('click', loadAttendanceContent);
 };
+
+if (settings) {
+    settings.addEventListener('click', loadEmpInfoContent);
+}
 
 
 function getUserLocation() {

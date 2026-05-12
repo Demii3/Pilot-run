@@ -6,5 +6,4 @@ $(document).ready(function(){
     });
 
     // Logout handling is now done via direct links to logout_process.php
-    };
 });

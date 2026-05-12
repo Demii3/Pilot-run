@@ -46,6 +46,7 @@
 	<script src="./Assets/Event_functions.js" defer></script>
 	<script src="./Assets/Miscellaneous_functions.js" defer></script>
 	<script src="./Assets/Database_functions.js" defer></script>
+	<script src="./Assets/EmpInfo_functions.js" defer></script>
 	<script src="../Modules/universal_logout_handler.js"></script>
 
 </head>
@@ -73,7 +74,7 @@
 			</div>
 
 			<div class="nav-right">
-				<button class="avatar" onclick="toggleMenu()" type="button" aria-label="User profile">
+				<button class="avatar" type="button" aria-label="User profile">
 					<img src="./Images/profilepic.jpg" alt="User">
 				</button>
 
@@ -83,7 +84,7 @@
 						<span>User</span>
 					</div>
 
-					<a href="#" class="profile-item"> Settings & Privacy </a>
+					<a id="settingsLink" class="profile-item"> Settings & Privacy </a>
 					<a href="#" class="profile-item"> Help & Support </a>
 					<a href="<?php echo $baseUrl; ?>/Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
 				</div>
