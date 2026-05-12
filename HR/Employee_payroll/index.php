@@ -1267,15 +1267,23 @@
             <table class="table table-hover" id="employeeSalaryTable">
               <thead class="table-dark">
                 <tr>
-                  <th>ID</th>
-                  <th>Name</th>
+                  <th>Employee ID</th>
+                  <th>Employee</th>
+                  <th>Email</th>
+                  <th>Gross Pay Per Month</th>
                   <th>Gross Pay Per Day</th>
                   <th>Hours of Work</th>
-                  <th>Bi-Salary</th>
-                  <th>Total Allowance</th>
+                  <th>Total OT</th>
                   <th>Legal Holiday</th>
                   <th>Special Holiday</th>
-                  <th>Total Deduction</th>
+                  <th>Taxable Additional Income</th>
+                  <th>Non-Taxable Additional Income</th>
+                  <th>SSS</th>
+                  <th>PHLTH</th>
+                  <th>PAGIBIG</th>
+                  <th>TAX</th>
+                  <th>Additional Deductions</th>
+                  <th>Total Ded.</th>
                   <th>Net Pay</th>
                 </tr>
               </thead>
@@ -1427,7 +1435,7 @@
                   <th>Email</th>
                   <th>Gross Pay Per Month</th>
                   <th>Gross Pay Per Day</th>
-                  <th>Regular Days</th>
+                  <th>Hours of Work</th>
                   <th>Total OT</th>
                   <th>Legal Holiday</th>
                   <th>Special Holiday</th>
@@ -1716,17 +1724,23 @@ function initDatePickerForInput(inputId, onChanged) {
 
 function initDatePickersForRanges() {
   const rangeConfigs = [
-    ['employeeIncomeDateFrom', 'employeeIncomeDateTo', 'employeeIncomeDateRangeText'],
-    ['attendanceDateFrom', 'attendanceDateTo', 'attendanceDateRangeText'],
-    ['premiumDateFrom', 'premiumDateTo', 'premiumDateRangeText'],
-    ['employeeSalaryDateFrom', 'employeeSalaryDateTo', 'employeeSalaryDateRangeText'],
-    ['payslipDateFrom', 'payslipDateTo', 'payslipDateRangeText']
+    ['employeeIncomeDateFrom', 'employeeIncomeDateTo', 'employeeIncomeDateRangeText', null],
+    ['attendanceDateFrom', 'attendanceDateTo', 'attendanceDateRangeText', null],
+    ['premiumDateFrom', 'premiumDateTo', 'premiumDateRangeText', null],
+    ['employeeSalaryDateFrom', 'employeeSalaryDateTo', 'employeeSalaryDateRangeText', loadEmployeeSalary],
+    ['payslipDateFrom', 'payslipDateTo', 'payslipDateRangeText', loadPayslip]
   ];
 
-  rangeConfigs.forEach(([fromId, toId, outputId]) => {
+  rangeConfigs.forEach(([fromId, toId, outputId, reloadFn]) => {
     const sync = () => updateDateRangeText(fromId, toId, outputId);
-    initDatePickerForInput(fromId, sync);
-    initDatePickerForInput(toId, sync);
+    const syncAndReload = () => {
+      sync();
+      if (typeof reloadFn === 'function') {
+        reloadFn();
+      }
+    };
+    initDatePickerForInput(fromId, syncAndReload);
+    initDatePickerForInput(toId, syncAndReload);
   });
 }
 
@@ -1963,6 +1977,11 @@ function computeSssContribution(salaryValue) {
     return null;
   }
 
+  // Return 0 for zero salary (cutoff with 0 hours worked)
+  if (salary === 0) {
+    return 0;
+  }
+
   if (salary < 5250) {
     return 250;
   }
@@ -1977,6 +1996,11 @@ function computePagibigContribution(salaryValue) {
   const salary = Number(String(salaryValue ?? '').replace(/,/g, ''));
   if (!Number.isFinite(salary) || salary < 0) {
     return null;
+  }
+
+  // Return 0 for zero salary (cutoff with 0 hours worked)
+  if (salary === 0) {
+    return 0;
   }
 
   if (salary <= 1500) {
@@ -1994,6 +2018,11 @@ function computePhilhealthContribution(salaryValue) {
   const salary = Number(String(salaryValue ?? '').replace(/,/g, ''));
   if (!Number.isFinite(salary) || salary < 0) {
     return null;
+  }
+
+  // Return 0 for zero salary (cutoff with 0 hours worked)
+  if (salary === 0) {
+    return 0;
   }
 
   if (salary <= 10000) {
@@ -2018,6 +2047,11 @@ function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, p
     return null;
   }
 
+  // Return 0 for zero salary (cutoff with 0 hours worked)
+  if (salary === 0) {
+    return 0;
+  }
+
   // Taxable Income = Gross - Non-taxable - Mandatory Contributions.
   const taxableIncome = Math.max(0, salary - nonTaxable - sss - philhealth - pagibig);
 
@@ -2029,6 +2063,69 @@ function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, p
   if (taxableIncome <= 666667) return 33541.8 + (taxableIncome - 166667) * 0.30;
   return 183541.8 + (taxableIncome - 666667) * 0.35;
 }
+
+// --- Carry-over helpers: store and retrieve per-employee, per-cutoff carry amounts ---
+function makeCutoffKey(fromStr, toStr) {
+  return `${String(fromStr || '')}_${String(toStr || '')}`;
+}
+
+function getCarryForCutoff(employeeId, cutoffKey) {
+  if (!employeeId || !cutoffKey) return 0;
+  try {
+    const raw = localStorage.getItem(`payroll_carry_${employeeId}_${cutoffKey}`);
+    const v = Number(raw || 0);
+    return Number.isFinite(v) ? v : 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+function setCarryForCutoff(employeeId, cutoffKey, amount) {
+  if (!employeeId || !cutoffKey) return;
+  try {
+    const v = Number(amount) || 0;
+    localStorage.setItem(`payroll_carry_${employeeId}_${cutoffKey}`, String(v));
+  } catch (e) {
+    // ignore storage errors
+  }
+}
+
+function computeNextCutoffKey(fromStr, toStr) {
+  // fromStr and toStr expected as yyyy-mm-dd or empty. We'll parse to Dates safely.
+  try {
+    const from = fromStr ? new Date(fromStr + 'T00:00:00') : null;
+    const to = toStr ? new Date(toStr + 'T00:00:00') : null;
+    if (!to || isNaN(to.getTime())) return '';
+
+    // If current cutoff is 1..15 -> next is 16..last day of same month
+    // Else (16..end) -> next is 1..15 of next month
+    const dayFrom = from ? from.getDate() : 1;
+    const dayTo = to.getDate();
+
+    let nextFrom, nextTo;
+    if (dayFrom === 1 && dayTo === 15) {
+      // same month, second cutoff
+      nextFrom = new Date(to);
+      nextFrom.setDate(16);
+      const lastDay = new Date(to.getFullYear(), to.getMonth() + 1, 0).getDate();
+      nextTo = new Date(to);
+      nextTo.setDate(lastDay);
+    } else {
+      // next is first..15 of next month
+      const year = to.getFullYear();
+      const month = to.getMonth();
+      nextFrom = new Date(year, month + 1, 1);
+      nextTo = new Date(year, month + 1, 15);
+    }
+
+    const fromIso = nextFrom.toISOString().slice(0,10);
+    const toIso = nextTo.toISOString().slice(0,10);
+    return makeCutoffKey(fromIso, toIso);
+  } catch (e) {
+    return '';
+  }
+}
+
 
 function buildNonTaxableIncomeMap(assignedIncomeData = []) {
   const nonTaxableCostByEmployee = {};
@@ -2065,12 +2162,34 @@ function buildTotalIncomeMap(assignedIncomeData = []) {
   return totalIncomeByEmployee;
 }
 
-function computePremiumDeductions(salaryValue, nonTaxableIncome = 0) {
-  const sssContribution = computeSssContribution(salaryValue);
-  const pagibigContribution = computePagibigContribution(salaryValue);
-  const philhealthContribution = computePhilhealthContribution(salaryValue);
+function computePremiumDeductions(salaryValue, hoursWorkedInCutoff = null, nonTaxableIncome = 0) {
+  // If hoursWorkedInCutoff is provided, compute cutoffSalary from monthly salary -> daily -> hourly
+  // and use cutoffSalary as the input basis for the premium calculations. If hoursWorkedInCutoff
+  // is null or not a finite number, fall back to the existing monthly-salary behaviour.
+  let basisSalary = Number(salaryValue) || 0;
+  if (hoursWorkedInCutoff !== null && Number.isFinite(Number(hoursWorkedInCutoff))) {
+    const dailyRate = basisSalary / 26;
+    const hourlyRate = dailyRate / 8;
+    const cutoffSalary = hourlyRate * Number(hoursWorkedInCutoff);
+    basisSalary = cutoffSalary;
+  }
+
+  // If cutoff salary is 0 (no hours worked in this cutoff), all deductions are 0
+  if (basisSalary === 0) {
+    return {
+      sssContribution: 0,
+      pagibigContribution: 0,
+      philhealthContribution: 0,
+      withholdingTax: 0,
+      totalDeductions: 0
+    };
+  }
+
+  const sssContribution = computeSssContribution(basisSalary);
+  const pagibigContribution = computePagibigContribution(basisSalary);
+  const philhealthContribution = computePhilhealthContribution(basisSalary);
   const withholdingTax = computeWithholdingTax(
-    salaryValue,
+    basisSalary,
     sssContribution,
     philhealthContribution,
     pagibigContribution,
@@ -2834,7 +2953,7 @@ async function loadEmployeesForPremiums() {
         philhealthContribution,
         withholdingTax,
         totalDeductions
-      } = computePremiumDeductions(salary, nonTaxableIncome);
+      } = computePremiumDeductions(salary, null, nonTaxableIncome);
 
       premiumRecords.push({
         employee_id: Number(emp.id),
@@ -3515,15 +3634,15 @@ function renderAttendanceSummaryTable() {
   const summaryByEmployeeAndPeriod = new Map();
 
   filteredAttendanceRows.forEach(item => {
-    const employeeId = item.id ?? '';
-    const employeeName = item.name ?? '';
-    const itemDate = item.date ? new Date(`${item.date}T00:00:00`) : null;
+    const employeeId = item.id ?? getAttendanceEmployeeId(item);
+    const employeeName = item.name ?? item.employee_name ?? '';
+    const itemDate = item.date ? new Date(`${item.date}T00:00:00`) : getAttendanceItemDate(item);
     if (!itemDate || Number.isNaN(itemDate.getTime())) {
       return;
     }
 
     const periodLabel = getAttendanceHalfMonthLabel(itemDate);
-    const durationMinutes = Number(item.duration) || 0;
+    const durationMinutes = getAttendanceDurationMinutes(item);
     const isAO = Number(item.ao) === 1;
     const effectiveMinutes = durationMinutes > 480 ? (isAO ? durationMinutes : 480) : durationMinutes;
     const summaryKey = `${employeeId}::${employeeName}::${periodLabel}`;
@@ -3554,6 +3673,49 @@ function renderAttendanceSummaryTable() {
     `;
     tableBody.appendChild(row);
   });
+}
+
+function getAttendanceEmployeeId(item = {}) {
+  return String(item.Emp_id ?? item.id ?? '').trim();
+}
+
+function getAttendanceItemDate(item = {}) {
+  const rawDate = item.Date ?? item.date ?? '';
+  if (!rawDate) {
+    return null;
+  }
+
+  const normalized = String(rawDate).trim();
+  const parsedDate = /^\d{4}-\d{2}-\d{2}/.test(normalized)
+    ? new Date(`${normalized.slice(0, 10)}T00:00:00`)
+    : new Date(normalized);
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+}
+
+function getAttendanceDurationMinutes(item = {}) {
+  const directDuration = Number(item.Duration ?? item.duration);
+  if (Number.isFinite(directDuration) && directDuration > 0) {
+    return directDuration;
+  }
+
+  const clockInValue = item.Clock_in ?? item.clockIn;
+  const clockOutValue = item.Clock_out ?? item.clockOut;
+  if (!clockInValue || !clockOutValue) {
+    return 0;
+  }
+
+  const clockIn = new Date(clockInValue);
+  const clockOut = new Date(clockOutValue);
+  if (Number.isNaN(clockIn.getTime()) || Number.isNaN(clockOut.getTime())) {
+    return 0;
+  }
+
+  let durationMinutes = (clockOut.getTime() - clockIn.getTime()) / 60000;
+  if (durationMinutes < 0) {
+    durationMinutes += 1440;
+  }
+
+  return Number.isFinite(durationMinutes) && durationMinutes > 0 ? durationMinutes : 0;
 }
 
 function getAttendanceHalfMonthLabel(date) {
@@ -3917,20 +4079,24 @@ async function loadEmployeeSalary() {
   const dateFrom = parseDateInputValue(dateFromInput?.value, false);
   const dateTo = parseDateInputValue(dateToInput?.value, true);
 
-  tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading employees...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="18" class="text-center">Loading employees...</td></tr>';
 
   try {
-    const [employeeResponse, attendanceResponse, assignedIncomeResponse, incomeTypesResponse] = await Promise.all([
+    const [employeeResponse, attendanceResponse, assignedIncomeResponse, assignedDeductionResponse, incomeTypesResponse, deductionTypesResponse] = await Promise.all([
       fetch('../Employee_management/employees_api.php'),
       fetch('attendance_api.php'),
       fetch('assigned_emp_inc_api.php'),
-      fetch('emp_inc_type_api.php')
+      fetch('assigned_emp_deduc_api.php'),
+      fetch('emp_inc_type_api.php'),
+      fetch('emp_deduc_type_api.php')
     ]);
 
     const employeeResult = await employeeResponse.json();
     const attendanceResult = attendanceResponse.ok ? await attendanceResponse.json() : { success: false, data: [] };
     const assignedIncomeResult = assignedIncomeResponse.ok ? await assignedIncomeResponse.json() : { success: false, data: [] };
     const incomeTypesResult = incomeTypesResponse.ok ? await incomeTypesResponse.json() : { success: false, data: [] };
+    const assignedDeductionResult = assignedDeductionResponse.ok ? await assignedDeductionResponse.json() : { success: false, data: [] };
+    const deductionTypesResult = deductionTypesResponse.ok ? await deductionTypesResponse.json() : { success: false, data: [] };
 
     if (!employeeResult.success) {
       throw new Error(employeeResult.message || 'Unable to load employees.');
@@ -3942,89 +4108,97 @@ async function loadEmployeeSalary() {
     const attendanceRows = attendanceResult.success ? (attendanceResult.data || []) : [];
     const assignedIncomeData = assignedIncomeResult.success ? (assignedIncomeResult.data || []) : [];
     const incomeTypesData = incomeTypesResult.success ? (incomeTypesResult.data || []) : [];
+    const assignedDeductions = assignedDeductionResult.success ? (assignedDeductionResult.data || []) : [];
+    const deductionTypes = deductionTypesResult.success ? (deductionTypesResult.data || []) : [];
     const applicableAssignedIncomeData = filterAssignedIncomeByCutoff(assignedIncomeData, incomeTypesData, dateFrom, dateTo);
-    
-    const nonTaxableCostByEmployee = buildNonTaxableIncomeMap(applicableAssignedIncomeData);
-    const totalIncomeByEmployee = buildTotalIncomeMap(applicableAssignedIncomeData);
-    const minutesByEmployee = new Map();
-
-    attendanceRows.forEach(item => {
-      const employeeId = String(item.Emp_id ?? '').trim();
-      if (!employeeId) {
-        return;
-      }
-
-      if (dateFrom || dateTo) {
-        const itemDate = item.Date ? new Date(`${item.Date}T00:00:00`) : null;
-        if (!itemDate || Number.isNaN(itemDate.getTime())) {
-          return;
-        }
-
-        if (dateFrom && itemDate < dateFrom) {
-          return;
-        }
-
-        if (dateTo && itemDate > dateTo) {
-          return;
-        }
-      }
-
-      const durationMinutes = Number(item.Duration) || 0;
-      const isAO = Number(item.AO) === 1;
-      const effectiveMinutes = durationMinutes > 480 ? (isAO ? durationMinutes : 480) : durationMinutes;
-      const existingMinutes = minutesByEmployee.get(employeeId) || 0;
-      minutesByEmployee.set(employeeId, existingMinutes + effectiveMinutes);
-    });
+    const applicableAssignedDeductionData = filterAssignedDeductionsByCutoff(assignedDeductions, deductionTypes, dateFrom, dateTo);
+    const attendanceByEmployee = buildAttendanceWorkMap(attendanceRows, dateFrom, dateTo);
+    const incomeByType = buildIncomeByTypeMap(applicableAssignedIncomeData);
+    const additionalIncomeByEmployee = buildAdditionalIncomeSummaryMap(applicableAssignedIncomeData);
+    const nonTaxableIncomeByEmployee = buildNonTaxableIncomeMap(applicableAssignedIncomeData);
+    const personalCaByEmployee = buildPersonalCaMap(applicableAssignedDeductionData);
 
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No employees found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="18" class="text-center">No employees found.</td></tr>';
       paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
       return;
     }
 
     tableBody.innerHTML = '';
     rows.forEach(emp => {
+      const employeeId = String(emp.id);
+      const employeeNameKey = String(emp.name || '').trim().toLowerCase();
       const salary = Number(emp.salary || 0);
       const grossPayPerDay = salary / 26;
-      const totalMinutesWorked = minutesByEmployee.get(String(emp.id)) || 0;
-      const totalHoursWorked = totalMinutesWorked / 60;
-      const biSalary = grossPayPerDay * totalHoursWorked;
-      const employeeNameKey = String(emp.name || '').trim().toLowerCase();
-      const assignedIncomeAllowance = (totalIncomeByEmployee[employeeNameKey] || 0) / 2;
-      const totalAllowance = assignedIncomeAllowance;
-      const legalHoliday = 0;
-      const specialHoliday = 0;
-      const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
-      const premium = computePremiumDeductions(salary, nonTaxableIncome);
-      let { sssContribution, pagibigContribution, philhealthContribution, withholdingTax, totalDeductions } = premium;
+      const hourlyRate = grossPayPerDay / 8;
+      const work = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
+      const hoursWorked = (work.regularMinutes || 0) / 60;
+      const cutoffSalary = hourlyRate * hoursWorked;
+      const totalOtPay = (work.overtimeMinutes / 60) * hourlyRate;
+      const employeeIncomeByType = incomeByType[employeeNameKey] || {};
+      const additionalIncomeSummary = additionalIncomeByEmployee[employeeNameKey] || { taxable: 0, nonTaxable: 0 };
+      const legalHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /legal\s*holiday/i, 2);
+      const specialHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /special\s*holiday/i, 1.3);
+      const taxableAdditionalIncome = Number(additionalIncomeSummary.taxable) || 0;
+      const nonTaxableAdditionalIncome = Number(additionalIncomeSummary.nonTaxable) || 0;
+      const nonTaxableIncome = (nonTaxableIncomeByEmployee[employeeNameKey] || 0) + nonTaxableAdditionalIncome;
+      const premium = computePremiumDeductions(salary, hoursWorked, nonTaxableIncome);
+      const sss = Number(premium.sssContribution) || 0;
+      const phlth = Number(premium.philhealthContribution) || 0;
+      const pagibig = Number(premium.pagibigContribution) || 0;
+      const tax = Number(premium.withholdingTax) || 0;
+      const additionalDeductions = Number(personalCaByEmployee[employeeNameKey]) || 0;
+      const totalDeduction = sss + phlth + pagibig + tax + additionalDeductions;
+      const netPay = cutoffSalary + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
 
-      // When there is no attendance (no hours worked), do not apply withholding tax
-      if (totalHoursWorked <= 0) {
-        withholdingTax = 0;
-        totalDeductions = (Number(sssContribution) || 0) + (Number(pagibigContribution) || 0) + (Number(philhealthContribution) || 0) + (Number(withholdingTax) || 0);
+      // Apply carry-over: retrieve any carry that was stored for this cutoff (from previous cutoff processing)
+      const currentCutoffKey = makeCutoffKey(dateFromInput?.value || '', dateToInput?.value || '');
+      const prevCarry = getCarryForCutoff(employeeId, currentCutoffKey) || 0;
+
+      let netAfterPrevCarry = netPay - prevCarry;
+      let carryOut = 0;
+      let displayedNet = netAfterPrevCarry;
+      if (netAfterPrevCarry < 0) {
+        carryOut = -netAfterPrevCarry;
+        displayedNet = 0;
+      } else {
+        carryOut = 0;
       }
 
-      const netPay = biSalary + totalAllowance + legalHoliday + specialHoliday - totalDeductions;
+      // Clear the carry that was applied for this cutoff so it won't be double-applied
+      try { localStorage.removeItem(`payroll_carry_${employeeId}_${currentCutoffKey}`); } catch (e) {}
+
+      // Persist carryOut for the next cutoff
+      const nextCutoffKey = computeNextCutoffKey(dateFromInput?.value || '', dateToInput?.value || '');
+      if (nextCutoffKey) setCarryForCutoff(employeeId, nextCutoffKey, carryOut);
 
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${emp.id}</td>
-        <td>${emp.name}</td>
+        <td>${emp.id || ''}</td>
+        <td>${emp.name || ''}</td>
+        <td>${emp.email || ''}</td>
+        <td>${formatCurrency(salary)}</td>
         <td>${formatCurrency(grossPayPerDay)}</td>
-        <td>${totalHoursWorked.toFixed(2)} hrs</td>
-        <td>${formatCurrency(biSalary)}</td>
-        <td>${formatCurrency(totalAllowance)}</td>
+        <td>${hoursWorked.toFixed(2)}</td>
+        <td>${formatCurrency(totalOtPay)}</td>
         <td>${formatCurrency(legalHoliday)}</td>
         <td>${formatCurrency(specialHoliday)}</td>
-        <td>${formatCurrency(totalDeductions)}</td>
-        <td>${formatCurrency(netPay)}</td>
+        <td>${formatCurrency(taxableAdditionalIncome)}</td>
+        <td>${formatCurrency(nonTaxableAdditionalIncome)}</td>
+        <td>${formatCurrency(sss)}</td>
+        <td>${formatCurrency(phlth)}</td>
+        <td>${formatCurrency(pagibig)}</td>
+        <td>${formatCurrency(tax)}</td>
+        <td>${formatCurrency(additionalDeductions)}</td>
+        <td>${formatCurrency(totalDeduction)}</td>
+        <td>${formatCurrency(displayedNet)}</td>
       `;
       tableBody.appendChild(row);
     });
 
     paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="10" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="18" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
   }
 }
@@ -4264,13 +4438,13 @@ function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = n
   const attendanceByEmployee = new Map();
 
   (attendanceData || []).forEach(item => {
-    const employeeId = String(item.Emp_id ?? '').trim();
+    const employeeId = getAttendanceEmployeeId(item);
     if (!employeeId) {
       return;
     }
 
     if (dateFrom || dateTo) {
-      const itemDate = item.Date ? new Date(`${item.Date}T00:00:00`) : null;
+      const itemDate = getAttendanceItemDate(item);
       if (!itemDate || Number.isNaN(itemDate.getTime())) {
         return;
       }
@@ -4284,7 +4458,7 @@ function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = n
       }
     }
 
-    const durationMinutes = Number(item.Duration) || 0;
+    const durationMinutes = getAttendanceDurationMinutes(item);
     const isAO = Number(item.AO) === 1;
     const regularMinutes = Math.max(0, Math.min(durationMinutes, 480));
     const overtimeMinutes = durationMinutes > 480 && isAO ? (durationMinutes - 480) : 0;
@@ -4529,7 +4703,8 @@ async function loadPayslip() {
       const hourlyRate = grossPayPerDay / 8;
 
       const work = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
-      const regularDays = work.regularMinutes / 480;
+      const hoursWorked = (work.regularMinutes || 0) / 60;
+      const cutoffSalary = hourlyRate * hoursWorked;
       const totalOtPay = (work.overtimeMinutes / 60) * hourlyRate;
 
       const employeeIncomeByType = incomeByType[employeeNameKey] || {};
@@ -4546,7 +4721,7 @@ async function loadPayslip() {
         pagibigContribution,
         philhealthContribution,
         withholdingTax
-      } = computePremiumDeductions(salary, nonTaxableIncome);
+      } = computePremiumDeductions(salary, hoursWorked, nonTaxableIncome);
 
       const sss = Number(sssContribution) || 0;
       const phlth = Number(philhealthContribution) || 0;
@@ -4555,14 +4730,27 @@ async function loadPayslip() {
       const personalCa = Number(personalCaByEmployee[employeeNameKey]) || 0;
       const totalDeduction = sss + phlth + pagibig + tax + personalCa;
 
-      const grossRegularPay = regularDays * grossPayPerDay;
-      const netPay = grossRegularPay + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
+      const netPay = cutoffSalary + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
+
+      // Apply carry-over for this cutoff
+      const currentCutoffKey = makeCutoffKey(dateFromInput?.value || '', dateToInput?.value || '');
+      const prevCarry = getCarryForCutoff(employeeId, currentCutoffKey) || 0;
+      let netAfterPrevCarry = netPay - prevCarry;
+      let carryOut = 0;
+      let displayedNet = netAfterPrevCarry;
+      if (netAfterPrevCarry < 0) {
+        carryOut = -netAfterPrevCarry;
+        displayedNet = 0;
+      }
+      try { localStorage.removeItem(`payroll_carry_${employeeId}_${currentCutoffKey}`); } catch (e) {}
+      const nextCutoffKey = computeNextCutoffKey(dateFromInput?.value || '', dateToInput?.value || '');
+      if (nextCutoffKey) setCarryForCutoff(employeeId, nextCutoffKey, carryOut);
 
       enrichedPayslipEmployees.push({
         ...emp,
         grossPayPerMonth: salary,
         grossPayPerDay,
-        regularDays,
+        hoursWorked,
         totalOt: totalOtPay,
         legalHoliday,
         specialHoliday,
@@ -4574,7 +4762,7 @@ async function loadPayslip() {
         tax,
         personalCa,
         totalDeduction,
-        netPay
+        netPay: displayedNet
       });
 
       const row = document.createElement('tr');
@@ -4584,7 +4772,7 @@ async function loadPayslip() {
         <td>${emp.email || ''}</td>
         <td>${formatCurrency(salary)}</td>
         <td>${formatCurrency(grossPayPerDay)}</td>
-        <td>${regularDays.toFixed(2)}</td>
+        <td>${hoursWorked.toFixed(2)}</td>
         <td>${formatCurrency(totalOtPay)}</td>
         <td>${formatCurrency(legalHoliday)}</td>
         <td>${formatCurrency(specialHoliday)}</td>
@@ -4596,7 +4784,7 @@ async function loadPayslip() {
         <td>${formatCurrency(tax)}</td>
         <td>${formatCurrency(personalCa)}</td>
         <td>${formatCurrency(totalDeduction)}</td>
-        <td>${formatCurrency(netPay)}</td>
+        <td>${formatCurrency(displayedNet)}</td>
       `;
 
       tableBody.appendChild(row);
