@@ -16,18 +16,18 @@ function handleLogout(event) {
     if (event) {
         event.preventDefault();
     }
-    
+
     if (isAttendanceActive) {
         const shouldLogout = window.confirm('You are currently tapped in. Logging out will automatically tap you out first. Continue?');
         if (!shouldLogout) {
             return false;
         }
     }
-    
+
     // Clear any client-side storage to prevent back button issues
     localStorage.clear();
     sessionStorage.clear();
-    
+
     // Use absolute path for logout
     window.location.href = '/Pilot-run/Modules/logout_process.php';
     return false;
