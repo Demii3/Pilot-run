@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug API Response Status</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        pre { background: #f0f0f0; padding: 15px; max-height: 800px; overflow: auto; border: 1px solid #ccc; }
+        button { padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Debug Attendance API Response</h1>
+    
+    <button onclick="testAttendanceAPI()">Test Attendance API (Raw Response)</button>
+    <button onclick="testAfterParse()">Test After JSON Parse</button>
+    
+    <h2>Raw Response Text</h2>
+    <pre id="rawResponse"></pre>
+    
+    <h2>After JSON Parse</h2>
+    <pre id="parsedResponse"></pre>
+    
+    <h2>Response Analysis</h2>
+    <pre id="analysis"></pre>
+
+    <script>
+        async function testAttendanceAPI() {
+            const rawDiv = document.getElementById('rawResponse');
+            const analysisDiv = document.getElementById('analysis');
+            
+            try {
+                const response = await fetch('attendance_api.php');
+                const text = await response.text();
+                
+                rawDiv.textContent = 'Status: ' + response.status + '\n' + 
+                                    'Headers:\n' +
+                                    'Content-Type: ' + response.headers.get('Content-Type') + '\n' +
+                                    'Content-Length: ' + response.headers.get('Content-Length') + '\n\n' +
+                                    'Body (first 500 chars):\n' + text.substring(0, 500);
+                
+                // Now parse
+                let data;
+                try {
+                    data = JSON.parse(text);
+                    testAfterParse(data);
+                } catch (parseError) {
+                    analysisDiv.textContent = 'JSON Parse Error: ' + parseError.message;
+                }
+                
+            } catch (error) {
+                rawDiv.textContent = 'Fetch Error: ' + error.message;
+            }
+        }
+        
+        function testAfterParse(data) {
+            const parsedDiv = document.getElementById('parsedResponse');
+            const analysisDiv = document.getElementById('analysis');
+            
+            if (data) {
+                parsedDiv.textContent = JSON.stringify(data, null, 2).substring(0, 1000) + '...';
+                
+                let analysis = 'Data Structure Analysis:\n\n';
+                analysis += 'success: ' + data.success + '\n';
+                analysis += 'message: ' + data.message + '\n';
+                analysis += 'data type: ' + typeof data.data + '\n';
+                analysis += 'data is array: ' + Array.isArray(data.data) + '\n';
+                analysis += 'data length: ' + (data.data ? data.data.length : 'N/A') + '\n\n';
+                
+                if (data.data && data.data.length > 0) {
+                    analysis += 'First record structure:\n';
+                    const firstRecord = data.data[0];
+                    Object.keys(firstRecord).forEach(key => {
+                        analysis += `  ${key}: ${typeof firstRecord[key]} = ${JSON.stringify(firstRecord[key])}\n`;
+                    });
+                }
+                
+                analysisDiv.textContent = analysis;
+            }
+        }
+        
+        window.onload = function() {
+            testAttendanceAPI();
+        };
+    </script>
+</body>
+</html>

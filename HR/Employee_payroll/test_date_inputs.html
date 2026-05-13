@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Date Input Population</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 4px; }
+        pre { background: white; padding: 10px; border-radius: 4px; max-height: 300px; overflow: auto; }
+        input { padding: 8px; font-size: 14px; width: 200px; }
+        button { padding: 8px 15px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Test Date Input Population</h1>
+    
+    <div class="section">
+        <h2>Input Fields (auto-populated)</h2>
+        <p>
+            <label>From: <input type="text" id="testFrom"></label>
+        </p>
+        <p>
+            <label>To: <input type="text" id="testTo"></label>
+        </p>
+    </div>
+    
+    <div class="section">
+        <h2>Status</h2>
+        <pre id="status"></pre>
+    </div>
+    
+    <script>
+        // Mimic the exact setBiMonthlyRangeForInputs function
+        function setBiMonthlyRangeForInputs(fromId, toId, referenceDate = new Date()) {
+            const fromInput = document.getElementById(fromId);
+            const toInput = document.getElementById(toId);
+            if (!fromInput || !toInput) return;
+
+            // Only set defaults when inputs are empty
+            if (fromInput.value || toInput.value) return;
+
+            const ref = new Date(referenceDate);
+            const year = ref.getFullYear();
+            const month = ref.getMonth();
+            let fromDate, toDate;
+
+            if (ref.getDate() <= 15) {
+                fromDate = new Date(year, month, 1);
+                toDate = new Date(year, month, 15);
+            } else {
+                fromDate = new Date(year, month, 16);
+                // last day of month: day 0 of next month
+                toDate = new Date(year, month + 1, 0);
+            }
+
+            // Use ISO format (YYYY-MM-DD) for consistent parsing across all systems
+            const toISODateString = (date) => {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            };
+
+            fromInput.value = toISODateString(fromDate);
+            toInput.value = toISODateString(toDate);
+        }
+        
+        function parseDateInputValue(value, endOfDay = false) {
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+
+            let parsedDate = null;
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                const [year, month, day] = raw.split('-').map(Number);
+                parsedDate = new Date(year, month - 1, day);
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                const [partA, partB, year] = raw.split('/').map(Number);
+                let day = partA;
+                let month = partB;
+
+                if (partA <= 12 && partB > 12) {
+                    month = partA;
+                    day = partB;
+                }
+
+                parsedDate = new Date(year, month - 1, day);
+            } else {
+                const fallback = new Date(raw);
+                if (!Number.isNaN(fallback.getTime())) {
+                    parsedDate = fallback;
+                }
+            }
+
+            if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+                return null;
+            }
+
+            if (endOfDay) {
+                parsedDate.setHours(23, 59, 59, 999);
+            } else {
+                parsedDate.setHours(0, 0, 0, 0);
+            }
+
+            return parsedDate;
+        }
+
+        window.onload = function() {
+            const status = document.getElementById('status');
+            
+            // Set the dates
+            setBiMonthlyRangeForInputs('testFrom', 'testTo');
+            
+            // Check the values
+            const fromInput = document.getElementById('testFrom');
+            const toInput = document.getElementById('testTo');
+            
+            let output = 'After setBiMonthlyRangeForInputs():\n';
+            output += `From input value: "${fromInput.value}"\n`;
+            output += `To input value: "${toInput.value}"\n\n`;
+            
+            // Parse them
+            const dateFrom = parseDateInputValue(fromInput.value, false);
+            const dateTo = parseDateInputValue(toInput.value, true);
+            
+            output += 'After parsing:\n';
+            output += `dateFrom: ${dateFrom?.toISOString()}\n`;
+            output += `dateTo: ${dateTo?.toISOString()}\n\n`;
+            
+            // Test with current month's April 1-15 range manually
+            output += 'Testing manual date range (2026-04-01 to 2026-04-15):\n';
+            const testFrom = parseDateInputValue('2026-04-01', false);
+            const testTo = parseDateInputValue('2026-04-15', true);
+            output += `testFrom: ${testFrom?.toISOString()}\n`;
+            output += `testTo: ${testTo?.toISOString()}\n`;
+            
+            status.textContent = output;
+        };
+    </script>
+</body>
+</html>

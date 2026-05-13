@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Attendance API Response</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; max-height: 600px; border: 1px solid #ccc; }
+        .debug-section { margin: 20px 0; border: 1px solid #ddd; padding: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Debug Attendance API Response Structure</h1>
+    
+    <div class="debug-section">
+        <h2>Full API Response</h2>
+        <pre id="apiResponse"></pre>
+    </div>
+
+    <div class="debug-section">
+        <h2>Employee 4 Records in April 16-30 Range</h2>
+        <pre id="employee4Records"></pre>
+    </div>
+
+    <div class="debug-section">
+        <h2>Parsed Employee 4 Data</h2>
+        <pre id="parsedData"></pre>
+    </div>
+
+    <script>
+        async function fetchAndDebug() {
+            try {
+                const response = await fetch('attendance_api.php');
+                const data = await response.json();
+
+                // Log full response
+                const fullResponse = JSON.stringify(data, null, 2);
+                document.getElementById('apiResponse').textContent = 
+                    `Success: ${data.success}\n` +
+                    `Message: ${data.message || 'N/A'}\n` +
+                    `Total records: ${data.data?.length || 0}\n` +
+                    `\nFirst 3 records sample:\n` +
+                    JSON.stringify((data.data || []).slice(0, 3), null, 2);
+
+                // Filter for employee 4 in April 16-30 range
+                const april16 = new Date('2026-04-16');
+                const april30 = new Date('2026-04-30');
+
+                const employee4InRange = (data.data || []).filter(record => {
+                    const recordDate = new Date(`${record.Date}T00:00:00`);
+                    return String(record.Emp_id) === '4' && 
+                           recordDate >= april16 && 
+                           recordDate <= april30;
+                });
+
+                document.getElementById('employee4Records').textContent = 
+                    `Found ${employee4InRange.length} records:\n\n` +
+                    JSON.stringify(employee4InRange, null, 2);
+
+                // Parse the data to understand structure
+                if (employee4InRange.length > 0) {
+                    const firstRecord = employee4InRange[0];
+                    const parsedInfo = {
+                        "Date field type": typeof firstRecord.Date,
+                        "Date value": firstRecord.Date,
+                        "Duration field type": typeof firstRecord.Duration,
+                        "Duration value": firstRecord.Duration,
+                        "Duration as number": Number(firstRecord.Duration),
+                        "Emp_id type": typeof firstRecord.Emp_id,
+                        "Emp_id value": firstRecord.Emp_id,
+                        "All field names": Object.keys(firstRecord)
+                    };
+                    
+                    // Calculate total
+                    const totalMinutes = employee4InRange.reduce((sum, record) => {
+                        const minutes = Number(record.Duration) || 0;
+                        return sum + minutes;
+                    }, 0);
+                    
+                    parsedInfo["Total minutes from " + employee4InRange.length + " records"] = totalMinutes;
+                    parsedInfo["Total hours"] = (totalMinutes / 60).toFixed(2);
+
+                    document.getElementById('parsedData').textContent = JSON.stringify(parsedInfo, null, 2);
+                }
+
+            } catch (error) {
+                document.getElementById('apiResponse').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        fetchAndDebug();
+    </script>
+</body>
+</html>

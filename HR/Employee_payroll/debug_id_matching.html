@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Employee ID Matching</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        pre { background: white; padding: 15px; max-height: 600px; overflow: auto; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+        .section { margin: 20px 0; background: white; border: 1px solid #ddd; padding: 15px; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Debug Employee ID Matching</h1>
+    
+    <div class="section">
+        <button onclick="debugIDMatching()">Run Debug</button>
+    </div>
+    
+    <div class="section">
+        <h2>Employee IDs from Employees API</h2>
+        <pre id="employeeIds"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>Emp_id Values from Attendance API</h2>
+        <pre id="attendanceIds"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>Map Key Comparison</h2>
+        <pre id="comparison"></pre>
+    </div>
+
+    <script>
+        async function debugIDMatching() {
+            const empDiv = document.getElementById('employeeIds');
+            const attDiv = document.getElementById('attendanceIds');
+            const compDiv = document.getElementById('comparison');
+            
+            empDiv.textContent = 'Loading...';
+            attDiv.textContent = 'Loading...';
+            
+            try {
+                // Fetch employees
+                const empRes = await fetch('../Employee_management/employees_api.php');
+                const empData = await empRes.json();
+                
+                // Fetch attendance
+                const attRes = await fetch('attendance_api.php');
+                const attData = await attRes.json();
+                
+                // Display employee IDs
+                let empText = 'Total employees: ' + empData.data.length + '\n\nFirst 10 employees:\n';
+                (empData.data || []).slice(0, 10).forEach(emp => {
+                    empText += `ID=${emp.id} (${typeof emp.id}), Name=${emp.name}\n`;
+                });
+                empDiv.textContent = empText;
+                
+                // Display attendance IDs
+                let attText = 'Total attendance records: ' + attData.data.length + '\n\nUnique Emp_ids:\n';
+                const uniqueEmpIds = new Set();
+                (attData.data || []).forEach(rec => {
+                    uniqueEmpIds.add(rec.Emp_id);
+                });
+                Array.from(uniqueEmpIds).sort().forEach(id => {
+                    const count = attData.data.filter(r => r.Emp_id === id).length;
+                    attText += `Emp_id=${id} (${typeof id}), Count=${count}\n`;
+                });
+                attDiv.textContent = attText;
+                
+                // Test Map lookups
+                const mapTest = new Map();
+                (empData.data || []).forEach(emp => {
+                    mapTest.set(String(emp.id), { name: emp.name });
+                });
+                
+                let compText = 'Testing Map.get() with different key types:\n\n';
+                
+                // Test with first attendance record's Emp_id
+                if (attData.data && attData.data.length > 0) {
+                    const testEmpId = attData.data[0].Emp_id;
+                    compText += `First attendance Emp_id value: ${testEmpId}\n`;
+                    compText += `First attendance Emp_id type: ${typeof testEmpId}\n\n`;
+                    
+                    compText += `Trying Map lookups:\n`;
+                    compText += `  mapTest.get("${testEmpId}"): ${mapTest.get(String(testEmpId)) ? 'FOUND' : 'NOT FOUND'}\n`;
+                    compText += `  mapTest.get(${testEmpId}): ${mapTest.get(testEmpId) ? 'FOUND' : 'NOT FOUND'}\n`;
+                    compText += `  mapTest.get("${testEmpId.toString()}"): ${mapTest.get(testEmpId.toString()) ? 'FOUND' : 'NOT FOUND'}\n`;
+                    
+                    compText += `\nAll keys in map:\n`;
+                    Array.from(mapTest.keys()).slice(0, 10).forEach(key => {
+                        compText += `  "${key}" (${typeof key})\n`;
+                    });
+                }
+                
+                compDiv.textContent = compText;
+                
+            } catch (error) {
+                empDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        window.onload = debugIDMatching;
+    </script>
+</body>
+</html>

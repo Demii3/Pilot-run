@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Date Parsing Fix</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; max-height: 400px; border: 1px solid #ccc; }
+        .test-section { margin: 20px 0; border: 1px solid #ddd; padding: 15px; }
+        button { padding: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Test Date Parsing Fix</h1>
+    
+    <div class="test-section">
+        <h2>ISO Date Format Parsing</h2>
+        <p>Testing if ISO dates (YYYY-MM-DD) parse correctly...</p>
+        <pre id="isoDateTest"></pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Simulated Date Range Setup</h2>
+        <p>Simulating what setBiMonthlyRangeForInputs now does...</p>
+        <pre id="dateRangeTest"></pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Attendance Filtering Test</h2>
+        <button onclick="testAttendanceFiltering()">Run Attendance Filtering Test</button>
+        <pre id="attendanceFilterTest"></pre>
+    </div>
+
+    <script>
+        function parseDateInputValue(value, endOfDay = false) {
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+
+            let parsedDate = null;
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                const [year, month, day] = raw.split('-').map(Number);
+                parsedDate = new Date(year, month - 1, day);
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                const [partA, partB, year] = raw.split('/').map(Number);
+                let day = partA;
+                let month = partB;
+
+                if (partA <= 12 && partB > 12) {
+                    month = partA;
+                    day = partB;
+                }
+
+                parsedDate = new Date(year, month - 1, day);
+            } else {
+                const fallback = new Date(raw);
+                if (!Number.isNaN(fallback.getTime())) {
+                    parsedDate = fallback;
+                }
+            }
+
+            if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+                return null;
+            }
+
+            if (endOfDay) {
+                parsedDate.setHours(23, 59, 59, 999);
+            } else {
+                parsedDate.setHours(0, 0, 0, 0);
+            }
+
+            return parsedDate;
+        }
+
+        // Test ISO date parsing
+        const isoTests = [
+            '2026-04-01',
+            '2026-04-15',
+            '2026-04-16',
+            '2026-04-30'
+        ];
+
+        let isoResult = 'Testing ISO date format parsing:\n';
+        isoTests.forEach(dateStr => {
+            const parsed = parseDateInputValue(dateStr);
+            isoResult += `${dateStr} → ${parsed?.toISOString() || 'FAILED'}\n`;
+        });
+        document.getElementById('isoDateTest').textContent = isoResult;
+
+        // Test simulated date range setup
+        function toISODateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        let fromDate, toDate;
+
+        if (now.getDate() <= 15) {
+            fromDate = new Date(year, month, 1);
+            toDate = new Date(year, month, 15);
+        } else {
+            fromDate = new Date(year, month, 16);
+            toDate = new Date(year, month + 1, 0);
+        }
+
+        const fromIso = toISODateString(fromDate);
+        const toIso = toISODateString(toDate);
+
+        let dateRangeResult = `Current date: ${now.toDateString()}\n`;
+        dateRangeResult += `Bi-monthly range: ${fromIso} to ${toIso}\n`;
+        dateRangeResult += `\nParsed from: ${parseDateInputValue(fromIso)}\n`;
+        dateRangeResult += `Parsed to: ${parseDateInputValue(toIso, true)}\n`;
+        document.getElementById('dateRangeTest').textContent = dateRangeResult;
+
+        async function testAttendanceFiltering() {
+            const output = document.getElementById('attendanceFilterTest');
+            output.textContent = 'Loading attendance data...';
+
+            try {
+                const response = await fetch('attendance_api.php');
+                const data = await response.json();
+
+                if (!data.success) {
+                    output.textContent = `Error: API returned success=false`;
+                    return;
+                }
+
+                // Use April 16-30, 2026 range
+                const fromDate = parseDateInputValue('2026-04-16', false);
+                const toDate = parseDateInputValue('2026-04-30', true);
+
+                let result = `Testing attendance filtering for: 2026-04-16 to 2026-04-30\n`;
+                result += `Total attendance records: ${data.data?.length || 0}\n\n`;
+
+                // Filter for employee 4 in date range
+                const employee4Records = (data.data || []).filter(record => {
+                    const empId = String(record.Emp_id || '');
+                    const recordDate = new Date(`${record.Date}T00:00:00`);
+                    const inRange = recordDate >= fromDate && recordDate <= toDate;
+                    return empId === '4' && inRange;
+                });
+
+                result += `Employee 4 records in date range: ${employee4Records.length}\n`;
+                employee4Records.forEach((rec, idx) => {
+                    result += `  ${idx + 1}. Date=${rec.Date}, Duration=${rec.Duration}\n`;
+                });
+
+                const totalMinutes = employee4Records.reduce((sum, r) => sum + (Number(r.Duration) || 0), 0);
+                result += `\nTotal minutes: ${totalMinutes}\n`;
+                result += `Total hours: ${(totalMinutes / 60).toFixed(2)}\n`;
+
+                output.textContent = result;
+            } catch (error) {
+                output.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

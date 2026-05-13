@@ -30,6 +30,19 @@ function tableExists($dbc, $name)
     return $result && mysqli_num_rows($result) > 0;
 }
 
+function columnHasAutoIncrement($dbc, $table, $column)
+{
+    $table = mysqli_real_escape_string($dbc, $table);
+    $column = mysqli_real_escape_string($dbc, $column);
+    $result = mysqli_query($dbc, "SHOW COLUMNS FROM `" . $table . "` LIKE '" . $column . "'");
+    if (!$result || mysqli_num_rows($result) === 0) {
+        return false;
+    }
+
+    $row = mysqli_fetch_assoc($result);
+    return isset($row['Extra']) && stripos($row['Extra'], 'auto_increment') !== false;
+}
+
 function ensureProcessed13MonthTable($dbc)
 {
     $createSql = "CREATE TABLE IF NOT EXISTS `employee_13th_month` (
@@ -49,6 +62,13 @@ function ensureProcessed13MonthTable($dbc)
     mysqli_query($dbc, $createSql);
     if (mysqli_errno($dbc)) {
         respond(false, null, 'Database setup failed: ' . mysqli_error($dbc), 500);
+    }
+
+    if (!columnHasAutoIncrement($dbc, 'employee_13th_month', 'id')) {
+        mysqli_query($dbc, "ALTER TABLE `employee_13th_month` MODIFY `id` INT UNSIGNED NOT NULL AUTO_INCREMENT");
+        if (mysqli_errno($dbc)) {
+            respond(false, null, 'Failed to fix employee_13th_month id column: ' . mysqli_error($dbc), 500);
+        }
     }
 }
 
@@ -96,37 +116,32 @@ function fetchRegularMinutesByEmployee($dbc, $year)
 
 function upsert13MonthRows($dbc, $rows)
 {
-    $sql = "INSERT INTO employee_13th_month (
-              employee_id,
-              employee_name,
-              process_year,
-              monthly_salary,
-              total_basic_salary_earned,
-              month_13_pay
-            ) VALUES (?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-              employee_name = VALUES(employee_name),
-              monthly_salary = VALUES(monthly_salary),
-              total_basic_salary_earned = VALUES(total_basic_salary_earned),
-              month_13_pay = VALUES(month_13_pay),
-              computed_at = CURRENT_TIMESTAMP";
-
-    $stmt = mysqli_prepare($dbc, $sql);
-    if (!$stmt) {
-        respond(false, null, 'Failed to prepare upsert statement: ' . mysqli_error($dbc), 500);
+    if (empty($rows)) {
+        return; // Nothing to insert
     }
-
     foreach ($rows as $row) {
         $employeeId = (int) $row['id'];
-        $employeeName = (string) $row['name'];
+        $employeeName = mysqli_real_escape_string($dbc, (string) $row['name']);
         $year = (int) $row['process_year'];
         $monthlySalary = (float) $row['salary'];
         $totalBasicSalaryEarned = (float) $row['total_basic_salary_earned'];
         $month13Pay = (float) $row['month_13_pay'];
 
-        mysqli_stmt_bind_param(
-            $stmt,
-            'isiddd',
+        $sql = sprintf(
+            "INSERT INTO employee_13th_month (
+                employee_id,
+                employee_name,
+                process_year,
+                monthly_salary,
+                total_basic_salary_earned,
+                month_13_pay
+            ) VALUES (%d, '%s', %d, %.2f, %.2f, %.2f)
+            ON DUPLICATE KEY UPDATE
+                employee_name = VALUES(employee_name),
+                monthly_salary = VALUES(monthly_salary),
+                total_basic_salary_earned = VALUES(total_basic_salary_earned),
+                month_13_pay = VALUES(month_13_pay),
+                computed_at = CURRENT_TIMESTAMP",
             $employeeId,
             $employeeName,
             $year,
@@ -135,13 +150,10 @@ function upsert13MonthRows($dbc, $rows)
             $month13Pay
         );
 
-        if (!mysqli_stmt_execute($stmt)) {
-            mysqli_stmt_close($stmt);
+        if (!mysqli_query($dbc, $sql)) {
             respond(false, null, 'Failed to save 13th month results: ' . mysqli_error($dbc), 500);
         }
     }
-
-    mysqli_stmt_close($stmt);
 }
 
 function fetchStored13MonthRows($dbc, $year)
@@ -209,6 +221,7 @@ function handleGetRequest($dbc)
     }
 
     $minutesByEmployee = fetchRegularMinutesByEmployee($dbc, $year);
+
     $rows = [];
 
     while ($employee = mysqli_fetch_assoc($employeeResult)) {
@@ -220,6 +233,8 @@ function handleGetRequest($dbc)
         $salary = (float) ($employee['salary'] ?? 0);
         $grossPayPerDay = $salary / 26;
         $regularMinutesWorked = (float) ($minutesByEmployee[$employeeId] ?? 0);
+
+        // Include all employees, even those with zero attendance
         $regularDaysWorked = $regularMinutesWorked / 480;
         $totalBasicSalaryEarned = $regularDaysWorked * $grossPayPerDay;
         $month13Pay = $totalBasicSalaryEarned / 12;

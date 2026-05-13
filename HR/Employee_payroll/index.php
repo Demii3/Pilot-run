@@ -516,13 +516,42 @@
   </div>
 </div>
 
+<!-- Process Payroll Modal -->
+<div class="modal fade" id="processPayrollModal" tabindex="-1" aria-labelledby="processPayrollModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="processPayrollModalLabel">Process Employee Salary for the Cut-off</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="processPayrollForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="modalProcessPayrollFrom" class="form-label">From</label>
+              <input type="text" id="modalProcessPayrollFrom" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label for="modalProcessPayrollTo" class="form-label">To</label>
+              <input type="text" id="modalProcessPayrollTo" class="form-control" required>
+            </div>
+          </div>
+          <div class="small text-muted mt-2" id="modalProcessPayrollDateRange"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="confirmProcessPayroll()">Process Payroll</button>
+      </div>
+    </div>
+  </div>
+</div>
 
   <!-- Background -->
 <div class="bg-container">
     <img src="<?php echo $baseUrl; ?>/Images/bgimg.jpg" class="bg-image">
     <div class="overlay"></div>
 </div>
-
 
 
 
@@ -649,6 +678,8 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <div>
             <h2>Manage Employee Deductions</h2>
+            restorePayslipRangeState();
+            loadPayslip();
             <span class="text-muted">Search employees stored in simpletest_db</span>
           </div>
           <button class="btn btn-success" onclick="openEmployeeDeductionForm()">Add Deduction to Employee</button>
@@ -934,7 +965,8 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <h2>Remittances - Withholding Tax</h2>
           <div>
-            <input type="text" id="remittanceTaxSearch" class="form-control form-control-sm" placeholder="Search by name or id..." onkeyup="filterRemittanceTaxes()" style="width:280px; display:inline-block;">
+            <input type="text" id="remittanceTaxSearch" class="form-control form-control-sm" placeholder="Search by name or id..." onkeyup="filterRemittanceTaxes()" style="width:220px; display:inline-block;">
+            <input type="month" id="remittanceTaxMonth" onchange="loadRemittanceTaxes()" style="margin-left:8px;">
           </div>
         </div>
         <div class="card-body">
@@ -953,6 +985,11 @@
         </div>
       </div>`;
 
+    const taxMonthInput = document.getElementById('remittanceTaxMonth');
+    if (taxMonthInput && !taxMonthInput.value) {
+      const today = new Date();
+      taxMonthInput.value = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+    }
     loadRemittanceTaxes();
   }
 
@@ -962,7 +999,8 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <h2>Remittances - SSS</h2>
           <div>
-            <input type="text" id="remittanceSssSearch" class="form-control form-control-sm" placeholder="Search by name or id..." onkeyup="filterRemittanceSss()" style="width:280px; display:inline-block;">
+            <input type="text" id="remittanceSssSearch" class="form-control form-control-sm" placeholder="Search by name or id..." onkeyup="filterRemittanceSss()" style="width:200px; display:inline-block;">
+            <input type="month" id="remittanceSssMonth" onchange="loadRemittanceSss()" style="margin-left:8px;">
           </div>
         </div>
         <div class="card-body">
@@ -972,7 +1010,9 @@
                 <tr>
                   <th>Employee ID</th>
                   <th>Employee Name</th>
-                  <th>SSS Contribution</th>
+                  <th>Employee Contribution</th>
+                  <th>Employer Contribution</th>
+                  <th>Total Contribution</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -981,6 +1021,11 @@
         </div>
       </div>`;
 
+    const sssMonthInput = document.getElementById('remittanceSssMonth');
+    if (sssMonthInput && !sssMonthInput.value) {
+      const today = new Date();
+      sssMonthInput.value = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+    }
     loadRemittanceSss();
   }
 
@@ -990,7 +1035,8 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <h2>Remittances - PhilHealth</h2>
           <div>
-            <input type="text" id="remittancePhilSearch" class="form-control form-control-sm" placeholder="Search by name or id..." onkeyup="filterRemittancePhilhealth()" style="width:280px; display:inline-block;">
+            <input type="text" id="remittancePhilSearch" class="form-control form-control-sm" placeholder="Search by name or id..." onkeyup="filterRemittancePhilhealth()" style="width:200px; display:inline-block;">
+            <input type="month" id="remittancePhilMonth" onchange="loadRemittancePhilhealth()" style="margin-left:8px;">
           </div>
         </div>
         <div class="card-body">
@@ -1000,7 +1046,9 @@
                 <tr>
                   <th>Employee ID</th>
                   <th>Employee Name</th>
-                  <th>PhilHealth Contribution</th>
+                  <th>Employee Contribution</th>
+                  <th>Employer Contribution</th>
+                  <th>Total Contribution</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -1009,6 +1057,11 @@
         </div>
       </div>`;
 
+    const philMonthInput = document.getElementById('remittancePhilMonth');
+    if (philMonthInput && !philMonthInput.value) {
+      const today = new Date();
+      philMonthInput.value = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+    }
     loadRemittancePhilhealth();
   }
 
@@ -1018,7 +1071,8 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <h2>Remittances - Pag-IBIG</h2>
           <div>
-            <input type="text" id="remittancePagibigSearch" class="form-control form-control-sm" placeholder="Search by name or id..." onkeyup="filterRemittancePagibig()" style="width:280px; display:inline-block;">
+            <input type="text" id="remittancePagibigSearch" class="form-control form-control-sm" placeholder="Search by name or id..." onkeyup="filterRemittancePagibig()" style="width:200px; display:inline-block;">
+            <input type="month" id="remittancePagibigMonth" onchange="loadRemittancePagibig()" style="margin-left:8px;">
           </div>
         </div>
         <div class="card-body">
@@ -1028,7 +1082,9 @@
                 <tr>
                   <th>Employee ID</th>
                   <th>Employee Name</th>
-                  <th>Pag-IBIG Contribution</th>
+                  <th>Employee Contribution</th>
+                  <th>Employer Contribution</th>
+                  <th>Total Contribution</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -1037,6 +1093,11 @@
         </div>
       </div>`;
 
+    const pagibigMonthInput = document.getElementById('remittancePagibigMonth');
+    if (pagibigMonthInput && !pagibigMonthInput.value) {
+      const today = new Date();
+      pagibigMonthInput.value = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+    }
     loadRemittancePagibig();
   }
 
@@ -1232,6 +1293,7 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h2>Employee Salary</h2>
+            <button class="btn btn-success btn-sm" id="processEmployeeSalaryBtn" onclick="openProcessPayrollModal()">Process Employee Salary for the cut-off</button>
         </div>
         <div class="card-body">
           <div class="row g-2 mb-3">
@@ -1270,7 +1332,7 @@
                   <th>Employee ID</th>
                   <th>Employee</th>
                   <th>Email</th>
-                  <th>Gross Pay Per Month</th>
+                  <th>Cutoff Salary</th>
                   <th>Gross Pay Per Day</th>
                   <th>Hours of Work</th>
                   <th>Total OT</th>
@@ -1285,12 +1347,62 @@
                   <th>Additional Deductions</th>
                   <th>Total Ded.</th>
                   <th>Net Pay</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody></tbody>
             </table>
           </div>
           <div id="employeeSalaryPagination" class="d-flex justify-content-between align-items-center mt-3"></div>
+        </div>
+      </div>
+      <div id="employeeSalaryEditModal" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background: rgba(0, 0, 0, 0.45); z-index: 1055;">
+        <div class="d-flex align-items-center justify-content-center w-100 h-100 p-3">
+          <div class="card shadow" style="max-width: 920px; width: 100%; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Edit Employee Salary</h5>
+              <button type="button" class="btn-close" aria-label="Close" onclick="closeEmployeeSalaryEditModal()"></button>
+            </div>
+            <div class="card-body" style="flex: 1; overflow-y: auto;">
+              <input type="hidden" id="employeeSalaryEditEmployeeId">
+              <input type="hidden" id="employeeSalaryEditCarryIn" value="0">
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Employee ID</label>
+                  <input type="text" id="employeeSalaryEditEmployeeIdDisplay" class="form-control" readonly>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Employee</label>
+                  <input type="text" id="employeeSalaryEditEmployeeName" class="form-control" readonly>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Email</label>
+                  <input type="text" id="employeeSalaryEditEmployeeEmail" class="form-control" readonly>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-4"><label class="form-label">Cutoff Salary</label><input type="number" step="0.01" id="employeeSalaryEditCutoffSalary" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">Gross Pay Per Day</label><input type="number" step="0.01" id="employeeSalaryEditGrossPayPerDay" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">Hours of Work</label><input type="number" step="0.01" id="employeeSalaryEditHoursWorked" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">Total OT</label><input type="number" step="0.01" id="employeeSalaryEditTotalOtPay" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">Legal Holiday</label><input type="number" step="0.01" id="employeeSalaryEditLegalHoliday" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">Special Holiday</label><input type="number" step="0.01" id="employeeSalaryEditSpecialHoliday" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">Taxable Additional Income</label><input type="number" step="0.01" id="employeeSalaryEditTaxableAdditionalIncome" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">Non-Taxable Additional Income</label><input type="number" step="0.01" id="employeeSalaryEditNonTaxableAdditionalIncome" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">SSS</label><input type="number" step="0.01" id="employeeSalaryEditSss" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">PHLTH</label><input type="number" step="0.01" id="employeeSalaryEditPhlth" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">PAGIBIG</label><input type="number" step="0.01" id="employeeSalaryEditPagibig" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">TAX</label><input type="number" step="0.01" id="employeeSalaryEditTax" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">Additional Deductions</label><input type="number" step="0.01" id="employeeSalaryEditAdditionalDeductions" class="form-control" oninput="recalculateEmployeeSalaryEditPreview()"></div>
+                <div class="col-md-4"><label class="form-label">Total Ded.</label><input type="text" id="employeeSalaryEditTotalDeduction" class="form-control" readonly></div>
+                <div class="col-md-4"><label class="form-label">Net Pay</label><input type="text" id="employeeSalaryEditNetPay" class="form-control" readonly></div>
+              </div>
+            </div>
+            <div class="card-footer d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary" onclick="closeEmployeeSalaryEditModal()">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="saveEmployeeSalaryEditRow()">Save Changes</button>
+            </div>
+          </div>
         </div>
       </div>`;
     initBiMonthlyRanges();
@@ -1301,7 +1413,24 @@
     content.innerHTML = `
       <div class="card">
         <div class="card-header">
-          <h2>Process 13th Month Pay</h2>
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h2 class="mb-0">Process 13th Month Pay</h2>
+            <div class="d-flex align-items-end gap-2 flex-wrap">
+              <div>
+                <label for="month13ListingYear" class="form-label mb-1">Year</label>
+                <input
+                  type="number"
+                  id="month13ListingYear"
+                  class="form-control"
+                  value="${new Date().getFullYear()}"
+                  min="1900"
+                  max="9999"
+                >
+              </div>
+              <button class="btn btn-primary" onclick="loadProcess13ComputedData()">Load</button>
+              <button class="btn btn-warning" id="process13ListingBtn" onclick="process13MonthListingYear()">Process Year</button>
+            </div>
+          </div>
         </div>
         <div class="card-body">
           <div class="mb-3">
@@ -1334,25 +1463,23 @@
   }
 
   else if (section === "13_month_listing") {
-    const currentYear = new Date().getFullYear();
     content.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
           <h2 class="mb-0">13th Month Listing</h2>
           <div class="d-flex align-items-end gap-2 flex-wrap">
             <div>
-              <label for="month13ListingYear" class="form-label mb-1">Year</label>
+              <label for="month13ListingYearFilter" class="form-label mb-1">Year</label>
               <input
                 type="number"
-                id="month13ListingYear"
+                id="month13ListingYearFilter"
                 class="form-control"
-                value="${currentYear}"
+                value="${new Date().getFullYear()}"
                 min="1900"
                 max="9999"
               >
             </div>
             <button class="btn btn-primary" onclick="load13MonthListing()">Load</button>
-            <button class="btn btn-warning" id="process13ListingBtn" onclick="process13MonthListingYear()">Process Year</button>
             <button class="btn btn-outline-success" onclick="export13MonthListingCsv()">Export CSV</button>
           </div>
         </div>
@@ -1426,14 +1553,18 @@
             </div>
           </div>
 
-          <div class="table-responsive">
+          <div id="payslipEmptyState" class="alert alert-info mb-3 d-none">
+            No processed payroll found for this cutoff. Go to Employee Salary, select the cutoff, then click Process Employee Salary for the cut-off.
+          </div>
+
+          <div id="payslipTableWrap" class="table-responsive">
             <table class="table table-hover" id="payslipTable">
               <thead class="table-dark">
                 <tr>
                   <th>Employee ID</th>
                   <th>Employee</th>
                   <th>Email</th>
-                  <th>Gross Pay Per Month</th>
+                  <th>Cutoff Salary</th>
                   <th>Gross Pay Per Day</th>
                   <th>Hours of Work</th>
                   <th>Total OT</th>
@@ -1549,16 +1680,16 @@ function setBiMonthlyRangeForInputs(fromId, toId, referenceDate = new Date()) {
     toDate = new Date(year, month + 1, 0);
   }
 
-  fromInput.value = fromDate.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  });
-  toInput.value = toDate.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  });
+  // Use ISO format (YYYY-MM-DD) for consistent parsing across all systems
+  const toISODateString = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  fromInput.value = toISODateString(fromDate);
+  toInput.value = toISODateString(toDate);
 }
 
 function parseDateInputValue(value, endOfDay = false) {
@@ -1711,7 +1842,7 @@ function initDatePickerForInput(inputId, onChanged) {
   }
 
   $(selector).datepicker({
-    dateFormat: 'MM d, yy',
+    dateFormat: 'yy-mm-dd',  // ISO format for consistent parsing
     changeMonth: true,
     changeYear: true,
     onSelect: function() {
@@ -1762,6 +1893,59 @@ function initBiMonthlyRanges() {
   initDatePickersForRanges();
 }
 
+function getPayslipRangeStorageKey() {
+  return 'payroll_payslip_range';
+}
+
+function savePayslipRangeState() {
+  const fromInput = document.getElementById('payslipDateFrom');
+  const toInput = document.getElementById('payslipDateTo');
+  if (!fromInput || !toInput || typeof localStorage === 'undefined') {
+    return;
+  }
+
+  const value = {
+    from: fromInput.value || '',
+    to: toInput.value || ''
+  };
+
+  try {
+    localStorage.setItem(getPayslipRangeStorageKey(), JSON.stringify(value));
+  } catch (error) {
+    console.warn('Unable to persist payslip range state:', error);
+  }
+}
+
+function restorePayslipRangeState() {
+  const fromInput = document.getElementById('payslipDateFrom');
+  const toInput = document.getElementById('payslipDateTo');
+  if (!fromInput || !toInput || typeof localStorage === 'undefined') {
+    return false;
+  }
+
+  try {
+    const raw = localStorage.getItem(getPayslipRangeStorageKey());
+    if (!raw) {
+      return false;
+    }
+
+    const parsed = JSON.parse(raw);
+    const fromValue = typeof parsed.from === 'string' ? parsed.from : '';
+    const toValue = typeof parsed.to === 'string' ? parsed.to : '';
+    if (!fromValue || !toValue) {
+      return false;
+    }
+
+    fromInput.value = fromValue;
+    toInput.value = toValue;
+    updateDateRangeText('payslipDateFrom', 'payslipDateTo', 'payslipDateRangeText');
+    return true;
+  } catch (error) {
+    console.warn('Unable to restore payslip range state:', error);
+    return false;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', initBiMonthlyRanges);
 
 let employeesForIncome = [];
@@ -1775,6 +1959,7 @@ let employeesForSalary = [];
 let attendanceRows = [];
 let filteredAttendanceRows = [];
 let month13ListingRows = [];
+let currentEmployeeSalaryRows = [];
 let attendanceCurrentPage = 1;
 const attendancePageSize = 10;
 const tablePageSize = 10;
@@ -1783,6 +1968,22 @@ const payrollDataTableInstances = {};
 let bulkEmailEmployees = [];
 let allPayslipEmployees = [];
 let selectedBulkEmailEmployees = new Set();
+const processedCutoffPayrollCache = {};
+
+function saveProcessedCutoffPayroll(cutoffKey, rows = []) {
+  if (!cutoffKey) return;
+
+  processedCutoffPayrollCache[cutoffKey] = {
+    cutoffKey,
+    processedAt: new Date().toISOString(),
+    rows
+  };
+}
+
+function getProcessedCutoffPayroll(cutoffKey) {
+  if (!cutoffKey) return null;
+  return processedCutoffPayrollCache[cutoffKey] || null;
+}
 
 function getPayrollDataTable(tableId) {
   return payrollDataTableInstances[tableId] || null;
@@ -1982,14 +2183,18 @@ function computeSssContribution(salaryValue) {
     return 0;
   }
 
-  if (salary < 5250) {
-    return 250;
+  // SSS (effective Jan 2025): 15% total contribution,
+  // split as 5% employee and 10% employer, based on Monthly Salary Credit (MSC).
+  // Salary input is expected to be MONTHLY salary for this function.
+  let msc = 5000;
+  if (salary >= 34750) {
+    msc = 35000;
+  } else if (salary >= 5250) {
+    const step = Math.floor((salary - 5250) / 500) + 1;
+    msc = 5000 + step * 500;
   }
 
-  // Table-based progression: every 500 salary bracket adds 25, capped at 1750.
-  const bracketStep = Math.floor((salary - 5250) / 500) + 1;
-  const contribution = 250 + bracketStep * 25;
-  return Math.min(contribution, 1750);
+  return Number((msc * 0.15).toFixed(2));
 }
 
 function computePagibigContribution(salaryValue) {
@@ -2003,15 +2208,8 @@ function computePagibigContribution(salaryValue) {
     return 0;
   }
 
-  if (salary <= 1500) {
-    return salary * 0.01;
-  }
-
-  if (salary <= 10000) {
-    return salary * 0.02;
-  }
-
-  return 200;
+  // Pag-IBIG: 2% total contribution (1% employee + 1% employer), capped at 200 total.
+  return Number(Math.min(salary * 0.02, 200).toFixed(2));
 }
 
 function computePhilhealthContribution(salaryValue) {
@@ -2025,15 +2223,9 @@ function computePhilhealthContribution(salaryValue) {
     return 0;
   }
 
-  if (salary <= 10000) {
-    return 275;
-  }
-
-  if (salary <= 49999) {
-    return salary * 0.0275;
-  }
-
-  return 1375;
+  // PhilHealth: 5% premium rate with monthly salary floor/ceiling (10,000 to 100,000).
+  const premiumBasis = Math.min(Math.max(salary, 10000), 100000);
+  return Number((premiumBasis * 0.05).toFixed(2));
 }
 
 function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, pagibigValue = 0, nonTaxableValue = 0) {
@@ -2062,6 +2254,37 @@ function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, p
   if (taxableIncome <= 166667) return 8541.8 + (taxableIncome - 66667) * 0.25;
   if (taxableIncome <= 666667) return 33541.8 + (taxableIncome - 166667) * 0.30;
   return 183541.8 + (taxableIncome - 666667) * 0.35;
+}
+
+// Compute split between employee and employer shares for each scheme.
+function computeSssSplit(totalContribution) {
+  const total = Number(totalContribution) || 0;
+  if (!Number.isFinite(total)) return { employee: null, employer: null, total: null };
+  if (total === 0) return { employee: 0, employer: 0, total: 0 };
+  // SSS exact split from Circular 2024-006 basis: 5% employee and 10% employer (of 15% total).
+  const employee = Number((total / 3).toFixed(2));
+  const employer = Number((total - employee).toFixed(2));
+  return { employee, employer, total: Number(total.toFixed(2)) };
+}
+
+function computePhilhealthSplit(totalContribution) {
+  const total = Number(totalContribution) || 0;
+  if (!Number.isFinite(total)) return { employee: null, employer: null, total: null };
+  if (total === 0) return { employee: 0, employer: 0, total: 0 };
+  // PhilHealth is typically split 50/50 between employee and employer
+  const employee = Number((total / 2).toFixed(2));
+  const employer = Number((total - employee).toFixed(2));
+  return { employee, employer, total: Number(total.toFixed(2)) };
+}
+
+function computePagibigSplit(totalContribution) {
+  const total = Number(totalContribution) || 0;
+  if (!Number.isFinite(total)) return { employee: null, employer: null, total: null };
+  if (total === 0) return { employee: 0, employer: 0, total: 0 };
+  // Pag-IBIG current standard total is 2% (1% employee + 1% employer) — split evenly
+  const employee = Number((total / 2).toFixed(2));
+  const employer = Number((total - employee).toFixed(2));
+  return { employee, employer, total: Number(total.toFixed(2)) };
 }
 
 // --- Carry-over helpers: store and retrieve per-employee, per-cutoff carry amounts ---
@@ -2175,7 +2398,7 @@ function computePremiumDeductions(salaryValue, hoursWorkedInCutoff = null, nonTa
   }
 
   // If cutoff salary is 0 (no hours worked in this cutoff), all deductions are 0
-  if (basisSalary === 0) {
+  if (basisSalary <= 0) {
     return {
       sssContribution: 0,
       pagibigContribution: 0,
@@ -2944,7 +3167,9 @@ async function loadEmployeesForPremiums() {
     const premiumRecords = [];
     tableBody.innerHTML = '';
     rows.forEach(emp => {
-      const salary = Number(emp.salary || 0);
+      const salaryBiMonthly = Number(emp.salary || 0);
+      // Employee salary in this module is bi-monthly; convert to monthly for premium tables.
+      const monthlySalary = salaryBiMonthly * 2;
       const employeeNameKey = String(emp.name || '').trim().toLowerCase();
       const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
       const {
@@ -2953,17 +3178,43 @@ async function loadEmployeesForPremiums() {
         philhealthContribution,
         withholdingTax,
         totalDeductions
-      } = computePremiumDeductions(salary, null, nonTaxableIncome);
+      } = computePremiumDeductions(monthlySalary, null, nonTaxableIncome);
+
+      // Determine selected period for these premium records (default to current month)
+      const periodInput = document.getElementById('premiumDateFrom') || document.getElementById('remittanceSssMonth');
+      let periodYear = null;
+      let periodMonth = null;
+      if (periodInput && periodInput.value) {
+        const d = new Date(periodInput.value);
+        if (!Number.isNaN(d.getTime())) {
+          periodYear = d.getFullYear();
+          periodMonth = d.getMonth() + 1;
+        } else if (periodInput.value.indexOf('-') !== -1) {
+          const parts = periodInput.value.split('-');
+          if (parts.length >= 2) {
+            periodYear = parseInt(parts[0], 10);
+            periodMonth = parseInt(parts[1], 10);
+          }
+        }
+      }
 
       premiumRecords.push({
         employee_id: Number(emp.id),
         employee_name: emp.name,
-        salary,
+        salary: monthlySalary,
         sss: sssContribution === null ? 0 : sssContribution,
+        sss_employee: computeSssSplit(sssContribution === null ? 0 : sssContribution).employee,
+        sss_employer: computeSssSplit(sssContribution === null ? 0 : sssContribution).employer,
         philhealth: philhealthContribution === null ? 0 : philhealthContribution,
+        philhealth_employee: computePhilhealthSplit(philhealthContribution === null ? 0 : philhealthContribution).employee,
+        philhealth_employer: computePhilhealthSplit(philhealthContribution === null ? 0 : philhealthContribution).employer,
         pagibig: pagibigContribution === null ? 0 : pagibigContribution,
+        pagibig_employee: computePagibigSplit(pagibigContribution === null ? 0 : pagibigContribution).employee,
+        pagibig_employer: computePagibigSplit(pagibigContribution === null ? 0 : pagibigContribution).employer,
         withholding_tax: withholdingTax === null ? 0 : withholdingTax,
-        total_premium: totalDeductions
+        total_premium: totalDeductions,
+        period_year: periodYear,
+        period_month: periodMonth
       });
 
       const row = document.createElement('tr');
@@ -3036,7 +3287,15 @@ async function loadRemittanceTaxes() {
   tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
 
   try {
-    const response = await fetch('premiums_api.php');
+    let url = 'premiums_api.php';
+    const monthInput = document.getElementById('remittanceTaxMonth');
+    if (monthInput && monthInput.value) {
+      const parts = monthInput.value.split('-');
+      if (parts.length === 2) {
+        url += `?year=${parts[0]}&month=${parseInt(parts[1], 10)}`;
+      }
+    }
+    const response = await fetch(url);
     const result = await response.json();
 
     if (!result.success) {
@@ -3087,7 +3346,15 @@ async function loadRemittanceSss() {
   if (!tableBody) return;
   tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
   try {
-    const response = await fetch('premiums_api.php');
+    let url = 'premiums_api.php';
+    const monthInput = document.getElementById('remittanceSssMonth');
+    if (monthInput && monthInput.value) {
+      const parts = monthInput.value.split('-');
+      if (parts.length === 2) {
+        url += `?year=${parts[0]}&month=${parseInt(parts[1], 10)}`;
+      }
+    }
+    const response = await fetch(url);
     const result = await response.json();
     if (!result.success) throw new Error(result.message || 'Unable to load SSS data.');
     const rows = result.data || [];
@@ -3095,10 +3362,21 @@ async function loadRemittanceSss() {
     tableBody.innerHTML = '';
     rows.forEach(r => {
       const tr = document.createElement('tr');
+      const total = Number(r.sss || 0) || 0;
+      const split = {
+        employee: Number(r.sss_employee),
+        employer: Number(r.sss_employer),
+        total
+      };
+      if (!Number.isFinite(split.employee) || !Number.isFinite(split.employer)) {
+        Object.assign(split, computeSssSplit(total));
+      }
       tr.innerHTML = `
         <td>${r.employee_id}</td>
         <td>${r.employee_name}</td>
-        <td>${formatCurrency(r.sss || 0)}</td>
+        <td>${split.employee === null ? '' : formatCurrency(split.employee)}</td>
+        <td>${split.employer === null ? '' : formatCurrency(split.employer)}</td>
+        <td>${split.total === null ? '' : formatCurrency(split.total)}</td>
       `;
       tableBody.appendChild(tr);
     });
@@ -3128,7 +3406,15 @@ async function loadRemittancePhilhealth() {
   if (!tableBody) return;
   tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
   try {
-    const response = await fetch('premiums_api.php');
+    let url = 'premiums_api.php';
+    const monthInput = document.getElementById('remittancePhilMonth');
+    if (monthInput && monthInput.value) {
+      const parts = monthInput.value.split('-');
+      if (parts.length === 2) {
+        url += `?year=${parts[0]}&month=${parseInt(parts[1], 10)}`;
+      }
+    }
+    const response = await fetch(url);
     const result = await response.json();
     if (!result.success) throw new Error(result.message || 'Unable to load PhilHealth data.');
     const rows = result.data || [];
@@ -3136,10 +3422,21 @@ async function loadRemittancePhilhealth() {
     tableBody.innerHTML = '';
     rows.forEach(r => {
       const tr = document.createElement('tr');
+      const total = Number(r.philhealth || 0) || 0;
+      const split = {
+        employee: Number(r.philhealth_employee),
+        employer: Number(r.philhealth_employer),
+        total
+      };
+      if (!Number.isFinite(split.employee) || !Number.isFinite(split.employer)) {
+        Object.assign(split, computePhilhealthSplit(total));
+      }
       tr.innerHTML = `
         <td>${r.employee_id}</td>
         <td>${r.employee_name}</td>
-        <td>${formatCurrency(r.philhealth || 0)}</td>
+        <td>${split.employee === null ? '' : formatCurrency(split.employee)}</td>
+        <td>${split.employer === null ? '' : formatCurrency(split.employer)}</td>
+        <td>${split.total === null ? '' : formatCurrency(split.total)}</td>
       `;
       tableBody.appendChild(tr);
     });
@@ -3169,7 +3466,15 @@ async function loadRemittancePagibig() {
   if (!tableBody) return;
   tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
   try {
-    const response = await fetch('premiums_api.php');
+    let url = 'premiums_api.php';
+    const monthInput = document.getElementById('remittancePagibigMonth');
+    if (monthInput && monthInput.value) {
+      const parts = monthInput.value.split('-');
+      if (parts.length === 2) {
+        url += `?year=${parts[0]}&month=${parseInt(parts[1], 10)}`;
+      }
+    }
+    const response = await fetch(url);
     const result = await response.json();
     if (!result.success) throw new Error(result.message || 'Unable to load Pag-IBIG data.');
     const rows = result.data || [];
@@ -3177,10 +3482,21 @@ async function loadRemittancePagibig() {
     tableBody.innerHTML = '';
     rows.forEach(r => {
       const tr = document.createElement('tr');
+      const total = Number(r.pagibig || 0) || 0;
+      const split = {
+        employee: Number(r.pagibig_employee),
+        employer: Number(r.pagibig_employer),
+        total
+      };
+      if (!Number.isFinite(split.employee) || !Number.isFinite(split.employer)) {
+        Object.assign(split, computePagibigSplit(total));
+      }
       tr.innerHTML = `
         <td>${r.employee_id}</td>
         <td>${r.employee_name}</td>
-        <td>${formatCurrency(r.pagibig || 0)}</td>
+        <td>${split.employee === null ? '' : formatCurrency(split.employee)}</td>
+        <td>${split.employer === null ? '' : formatCurrency(split.employer)}</td>
+        <td>${split.total === null ? '' : formatCurrency(split.total)}</td>
       `;
       tableBody.appendChild(tr);
     });
@@ -3836,6 +4152,59 @@ async function loadAttendance() {
   }
 }
 
+async function loadProcess13ComputedData() {
+  const tableBody = document.querySelector('#process13Table tbody');
+  const yearInput = document.getElementById('month13ListingYear');
+  const selectedYear = Number(yearInput?.value || new Date().getFullYear());
+
+  if (!Number.isInteger(selectedYear) || selectedYear < 1900 || selectedYear > 9999) {
+    alert('Please enter a valid year.');
+    return;
+  }
+
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading computed 13th month data...</td></tr>';
+
+  try {
+    const response = await fetch(`process_13th_api.php?year=${encodeURIComponent(selectedYear)}`);
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to load 13th month data.');
+    }
+
+    const rows = result.data || [];
+
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No employees found for the selected year.</td></tr>';
+      paginateTable('process13Table', 'process13Pagination', true);
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    rows.forEach(emp => {
+      const monthlySalary = Number(emp.salary || 0);
+      const totalBasicSalaryEarned = Number(emp.total_basic_salary_earned || 0);
+      const month13Pay = Number(emp.month_13_pay || 0);
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${emp.id}</td>
+        <td>${emp.name}</td>
+        <td>${formatCurrency(monthlySalary)}</td>
+        <td>${formatCurrency(totalBasicSalaryEarned)}</td>
+        <td>${formatCurrency(month13Pay)}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+    paginateTable('process13Table', 'process13Pagination', true);
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
+    paginateTable('process13Table', 'process13Pagination', true);
+  }
+}
+
 async function loadEmployeesForProcess13() {
   const tableBody = document.querySelector('#process13Table tbody');
   if (!tableBody) return;
@@ -3886,7 +4255,7 @@ async function load13MonthListing() {
   const tableBody = document.querySelector('#month13ListingTable tbody');
   if (!tableBody) return;
 
-  const yearInput = document.getElementById('month13ListingYear');
+  const yearInput = document.getElementById('month13ListingYearFilter');
   const selectedYear = Number(yearInput?.value || new Date().getFullYear());
   if (!Number.isInteger(selectedYear) || selectedYear < 1900 || selectedYear > 9999) {
     alert('Please enter a valid year.');
@@ -3957,8 +4326,20 @@ async function process13MonthListingYear() {
       throw new Error(result.message || 'Unable to process 13th month data.');
     }
 
-    await load13MonthListing();
-    alert(`13th month data for ${selectedYear} has been processed and refreshed.`);
+    // Update the Listing tab's year filter to match the processed year
+    const listingYearInput = document.getElementById('month13ListingYearFilter');
+    if (listingYearInput) {
+      listingYearInput.value = selectedYear;
+    }
+
+    // After processing, navigate to the Listing tab; it will load its own data on render.
+    // Find and click the 13th Month Listing button to show the results
+    const listingButton = document.querySelector('button[onclick*="13_month_listing"]');
+    if (listingButton) {
+      listingButton.click();
+    }
+    
+    alert(`13th month data for ${selectedYear} has been processed and displayed in the Listing tab.`);
   } catch (error) {
     alert(error.message);
   } finally {
@@ -3975,7 +4356,7 @@ function export13MonthListingCsv() {
     return;
   }
 
-  const yearInput = document.getElementById('month13ListingYear');
+  const yearInput = document.getElementById('month13ListingYearFilter');
   const selectedYear = Number(yearInput?.value || new Date().getFullYear());
   const headers = [
     'Employee ID',
@@ -4058,6 +4439,469 @@ async function loadEmployees() {
   }
 }
 
+async function buildCutoffPayrollRows(dateFrom = null, dateTo = null, fromRaw = '', toRaw = '', applyCarry = false) {
+  const [employeeResponse, attendanceResponse, assignedIncomeResponse, assignedDeductionResponse, incomeTypesResponse, deductionTypesResponse] = await Promise.all([
+    fetch('../Employee_management/employees_api.php'),
+    fetch('attendance_api.php'),
+    fetch('assigned_emp_inc_api.php'),
+    fetch('assigned_emp_deduc_api.php'),
+    fetch('emp_inc_type_api.php'),
+    fetch('emp_deduc_type_api.php')
+  ]);
+
+  const employeeResult = await employeeResponse.json();
+  const attendanceResult = attendanceResponse.ok ? await attendanceResponse.json() : { success: false, data: [] };
+  const assignedIncomeResult = assignedIncomeResponse.ok ? await assignedIncomeResponse.json() : { success: false, data: [] };
+  const incomeTypesResult = incomeTypesResponse.ok ? await incomeTypesResponse.json() : { success: false, data: [] };
+  const assignedDeductionResult = assignedDeductionResponse.ok ? await assignedDeductionResponse.json() : { success: false, data: [] };
+  const deductionTypesResult = deductionTypesResponse.ok ? await deductionTypesResponse.json() : { success: false, data: [] };
+
+  if (!employeeResult.success) {
+    throw new Error(employeeResult.message || 'Unable to load employees.');
+  }
+
+  const rows = employeeResult.data || [];
+  const attendanceRows = attendanceResult.success ? (attendanceResult.data || []) : [];
+  const assignedIncomeData = assignedIncomeResult.success ? (assignedIncomeResult.data || []) : [];
+  const incomeTypesData = incomeTypesResult.success ? (incomeTypesResult.data || []) : [];
+  const assignedDeductions = assignedDeductionResult.success ? (assignedDeductionResult.data || []) : [];
+  const deductionTypes = deductionTypesResult.success ? (deductionTypesResult.data || []) : [];
+  
+  console.log('=== buildCutoffPayrollRows DEBUG ===');
+  console.log('dateFrom:', dateFrom);
+  console.log('dateTo:', dateTo);
+  console.log('attendanceResult.success:', attendanceResult.success);
+  console.log('attendanceResult.message:', attendanceResult.message);
+  console.log('attendanceRows count:', attendanceRows.length);
+  if (attendanceRows.length > 0) {
+    console.log('First attendance record:', attendanceRows[0]);
+    console.log('Record keys:', Object.keys(attendanceRows[0]));
+    console.log('Emp_id value:', attendanceRows[0].Emp_id);
+    console.log('Emp_id type:', typeof attendanceRows[0].Emp_id);
+    console.log('Date value:', attendanceRows[0].Date);
+    console.log('Duration value:', attendanceRows[0].Duration);
+    console.log('Duration type:', typeof attendanceRows[0].Duration);
+  } else {
+    console.log('WARNING: No attendance rows returned!');
+  }
+  
+  const applicableAssignedIncomeData = filterAssignedIncomeByCutoff(assignedIncomeData, incomeTypesData, dateFrom, dateTo);
+  const applicableAssignedDeductionData = filterAssignedDeductionsByCutoff(assignedDeductions, deductionTypes, dateFrom, dateTo);
+  const attendanceByEmployee = buildAttendanceWorkMap(attendanceRows, dateFrom, dateTo);
+  
+  console.log('attendanceByEmployee Map size:', attendanceByEmployee.size);
+  Array.from(attendanceByEmployee.entries()).forEach(([empId, data]) => {
+    console.log(`  Employee ${empId} (type: ${typeof empId}): ${data.regularMinutes}min regular, ${data.overtimeMinutes}min overtime`);
+  });
+  const incomeByType = buildIncomeByTypeMap(applicableAssignedIncomeData);
+  const additionalIncomeByEmployee = buildAdditionalIncomeSummaryMap(applicableAssignedIncomeData);
+  const nonTaxableIncomeByEmployee = buildNonTaxableIncomeMap(applicableAssignedIncomeData);
+  const personalCaByEmployee = buildPersonalCaMap(applicableAssignedDeductionData);
+
+  const processedRows = rows.map(emp => {
+    const employeeId = String(emp.id);
+    const employeeNameKey = String(emp.name || '').trim().toLowerCase();
+    const monthlySalary = Number(emp.salary || 0);
+    const grossPayPerDay = monthlySalary / 26;
+    const hourlyRate = grossPayPerDay / 8;
+    const work = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
+    const hoursWorked = (work.regularMinutes || 0) / 60;
+    
+    // Detailed logging for first few employees
+    if (emp.id <= 5) {
+      console.log(`Processing employee ${emp.id} (${emp.name}):`);
+      console.log(`  employeeId key: "${employeeId}" (type: ${typeof employeeId})`);
+      console.log(`  work data found:`, work);
+      console.log(`  hoursWorked: ${hoursWorked}`);
+    }
+    
+    const cutoffSalary = hourlyRate * hoursWorked;
+    const totalOtPay = (work.overtimeMinutes / 60) * hourlyRate;
+    const employeeIncomeByType = incomeByType[employeeNameKey] || {};
+    const additionalIncomeSummary = additionalIncomeByEmployee[employeeNameKey] || { taxable: 0, nonTaxable: 0 };
+    const legalHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /legal\s*holiday/i, 2);
+    const specialHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /special\s*holiday/i, 1.3);
+    const taxableAdditionalIncome = Number(additionalIncomeSummary.taxable) || 0;
+    const nonTaxableAdditionalIncome = Number(additionalIncomeSummary.nonTaxable) || 0;
+    const nonTaxableIncome = (nonTaxableIncomeByEmployee[employeeNameKey] || 0) + nonTaxableAdditionalIncome;
+
+    const hasWorkedHours = hoursWorked > 0;
+    const premium = hasWorkedHours
+      ? computePremiumDeductions(monthlySalary, hoursWorked, nonTaxableIncome)
+      : {
+          sssContribution: 0,
+          philhealthContribution: 0,
+          pagibigContribution: 0,
+          withholdingTax: 0
+        };
+
+    const sss = Number(premium.sssContribution) || 0;
+    const phlth = Number(premium.philhealthContribution) || 0;
+    const pagibig = Number(premium.pagibigContribution) || 0;
+    const tax = Number(premium.withholdingTax) || 0;
+    const additionalDeductions = hasWorkedHours ? (Number(personalCaByEmployee[employeeNameKey]) || 0) : 0;
+    const totalDeduction = sss + phlth + pagibig + tax + additionalDeductions;
+    const netPay = cutoffSalary + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
+
+    const currentCutoffKey = makeCutoffKey(fromRaw, toRaw);
+    const prevCarry = applyCarry ? (getCarryForCutoff(employeeId, currentCutoffKey) || 0) : 0;
+    let displayedNet = netPay - prevCarry;
+    let carryOut = 0;
+
+    if (displayedNet < 0) {
+      carryOut = -displayedNet;
+      displayedNet = 0;
+    }
+
+    if (applyCarry) {
+      try { localStorage.removeItem(`payroll_carry_${employeeId}_${currentCutoffKey}`); } catch (e) {}
+      const nextCutoffKey = computeNextCutoffKey(fromRaw, toRaw);
+      if (nextCutoffKey) {
+        setCarryForCutoff(employeeId, nextCutoffKey, carryOut);
+      }
+    }
+
+    return {
+      id: emp.id || '',
+      name: emp.name || '',
+      email: emp.email || '',
+      monthlySalary,
+      cutoffSalary,
+      grossPayPerDay,
+      hoursWorked,
+      totalOtPay,
+      legalHoliday,
+      specialHoliday,
+      taxableAdditionalIncome,
+      nonTaxableAdditionalIncome,
+      sss,
+      phlth,
+      pagibig,
+      tax,
+      additionalDeductions,
+      totalDeduction,
+      netPay: displayedNet,
+      riceSubsidy: nonTaxableAdditionalIncome,
+      electricity: taxableAdditionalIncome,
+      personalCa: additionalDeductions
+    };
+  });
+
+  return { employees: rows, rows: processedRows };
+}
+
+function renderEmployeeSalaryRows(rows = []) {
+  const tableBody = document.querySelector('#employeeSalaryTable tbody');
+  if (!tableBody) return;
+
+  currentEmployeeSalaryRows = Array.isArray(rows) ? rows.map(item => ({ ...item })) : [];
+
+  if (!rows.length) {
+    tableBody.innerHTML = '<tr><td colspan="19" class="text-center">No employees found.</td></tr>';
+    paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+    return;
+  }
+
+  tableBody.innerHTML = '';
+  rows.forEach(item => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.id}</td>
+      <td>${item.name}</td>
+      <td>${item.email}</td>
+      <td>${formatCurrency(item.cutoffSalary)}</td>
+      <td>${formatCurrency(item.grossPayPerDay)}</td>
+      <td>${Number(item.hoursWorked || 0).toFixed(2)}</td>
+      <td>${formatCurrency(item.totalOtPay)}</td>
+      <td>${formatCurrency(item.legalHoliday)}</td>
+      <td>${formatCurrency(item.specialHoliday)}</td>
+      <td>${formatCurrency(item.taxableAdditionalIncome)}</td>
+      <td>${formatCurrency(item.nonTaxableAdditionalIncome)}</td>
+      <td>${formatCurrency(item.sss)}</td>
+      <td>${formatCurrency(item.phlth)}</td>
+      <td>${formatCurrency(item.pagibig)}</td>
+      <td>${formatCurrency(item.tax)}</td>
+      <td>${formatCurrency(item.additionalDeductions)}</td>
+      <td>${formatCurrency(item.totalDeduction)}</td>
+      <td>${formatCurrency(item.netPay)}</td>
+      <td>
+        <div class="d-flex gap-1 flex-wrap">
+          <button type="button" class="btn btn-warning btn-sm" onclick="editEmployeeSalaryRow('${item.id}')">Edit</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="deleteEmployeeSalaryRow('${item.id}')">Delete</button>
+        </div>
+      </td>
+    `;
+    tableBody.appendChild(row);
+  });
+
+  paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+}
+
+function renderPayslipRows(rows = []) {
+  const tableBody = document.querySelector('#payslipTable tbody');
+  const tableWrap = document.getElementById('payslipTableWrap');
+  const emptyState = document.getElementById('payslipEmptyState');
+  if (!tableBody) return;
+
+  if (!rows.length) {
+    tableBody.innerHTML = '';
+    if (tableWrap) tableWrap.classList.add('d-none');
+    if (emptyState) emptyState.classList.remove('d-none');
+    const pagination = document.getElementById('payslipPagination');
+    if (pagination) pagination.innerHTML = '';
+    allPayslipEmployees = [];
+    return;
+  }
+
+  if (tableWrap) tableWrap.classList.remove('d-none');
+  if (emptyState) emptyState.classList.add('d-none');
+
+  tableBody.innerHTML = '';
+  allPayslipEmployees = rows.map(item => ({
+    id: item.id,
+    name: item.name,
+    email: item.email,
+    cutoffSalary: item.cutoffSalary,
+    grossPayPerMonth: item.cutoffSalary,
+    grossPayPerDay: item.grossPayPerDay,
+    hoursWorked: item.hoursWorked,
+    totalOt: item.totalOtPay,
+    legalHoliday: item.legalHoliday,
+    specialHoliday: item.specialHoliday,
+    taxableAdditionalIncome: item.taxableAdditionalIncome,
+    nonTaxableAdditionalIncome: item.nonTaxableAdditionalIncome,
+    riceSubsidy: item.riceSubsidy,
+    electricity: item.electricity,
+    sss: item.sss,
+    phlth: item.phlth,
+    pagibig: item.pagibig,
+    tax: item.tax,
+    personalCa: item.additionalDeductions,
+    additionalDeductions: item.additionalDeductions,
+    totalDeduction: item.totalDeduction,
+    netPay: item.netPay
+  }));
+
+  rows.forEach(item => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.id}</td>
+      <td>${item.name}</td>
+      <td>${item.email}</td>
+      <td>${formatCurrency(item.cutoffSalary)}</td>
+      <td>${formatCurrency(item.grossPayPerDay)}</td>
+      <td>${Number(item.hoursWorked || 0).toFixed(2)}</td>
+      <td>${formatCurrency(item.totalOtPay)}</td>
+      <td>${formatCurrency(item.legalHoliday)}</td>
+      <td>${formatCurrency(item.specialHoliday)}</td>
+      <td>${formatCurrency(item.taxableAdditionalIncome)}</td>
+      <td>${formatCurrency(item.nonTaxableAdditionalIncome)}</td>
+      <td>${formatCurrency(item.sss)}</td>
+      <td>${formatCurrency(item.phlth)}</td>
+      <td>${formatCurrency(item.pagibig)}</td>
+      <td>${formatCurrency(item.tax)}</td>
+      <td>${formatCurrency(item.additionalDeductions)}</td>
+      <td>${formatCurrency(item.totalDeduction)}</td>
+      <td>${formatCurrency(item.netPay)}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+
+  paginateTable('payslipTable', 'payslipPagination', true);
+}
+
+function openProcessPayrollModal() {
+  const fromInput = document.getElementById('employeeSalaryDateFrom');
+  const toInput = document.getElementById('employeeSalaryDateTo');
+  
+  // Pre-fill modal with current values
+  const modalFromInput = document.getElementById('modalProcessPayrollFrom');
+  const modalToInput = document.getElementById('modalProcessPayrollTo');
+  
+  if (modalFromInput) {
+    modalFromInput.value = fromInput?.value || '';
+  }
+  if (modalToInput) {
+    modalToInput.value = toInput?.value || '';
+  }
+  
+  // Update date range display in modal
+  updateModalPayrollDateRange();
+  
+  // Open the modal
+  const modalElement = document.getElementById('processPayrollModal');
+  const modal = new bootstrap.Modal(modalElement);
+  modal.show();
+}
+
+function updateModalPayrollDateRange() {
+  const fromInput = document.getElementById('modalProcessPayrollFrom');
+  const toInput = document.getElementById('modalProcessPayrollTo');
+  const rangeDisplay = document.getElementById('modalProcessPayrollDateRange');
+  
+  if (!rangeDisplay) return;
+  
+  const fromText = formatIsoDateToWords(fromInput?.value);
+  const toText = formatIsoDateToWords(toInput?.value);
+  
+  if (fromText && toText) {
+    rangeDisplay.textContent = `From ${fromText} to ${toText}`;
+  } else if (fromText) {
+    rangeDisplay.textContent = `From ${fromText}`;
+  } else if (toText) {
+    rangeDisplay.textContent = `To ${toText}`;
+  } else {
+    rangeDisplay.textContent = '';
+  }
+}
+
+// Add event listeners to modal inputs for date range formatting
+document.addEventListener('DOMContentLoaded', () => {
+  const modalFromInput = document.getElementById('modalProcessPayrollFrom');
+  const modalToInput = document.getElementById('modalProcessPayrollTo');
+  
+  if (modalFromInput) {
+    modalFromInput.addEventListener('change', updateModalPayrollDateRange);
+  }
+  if (modalToInput) {
+    modalToInput.addEventListener('change', updateModalPayrollDateRange);
+  }
+  
+  // Initialize date pickers for modal inputs
+  if (typeof $ !== 'undefined' && $.fn && $.fn.datepicker) {
+    if (modalFromInput && !$(modalFromInput).hasClass('hasDatepicker')) {
+      $(modalFromInput).datepicker({
+        dateFormat: 'yy-mm-dd',
+        changeMonth: true,
+        changeYear: true,
+        onSelect: function() {
+          updateModalPayrollDateRange();
+        }
+      });
+    }
+    
+    if (modalToInput && !$(modalToInput).hasClass('hasDatepicker')) {
+      $(modalToInput).datepicker({
+        dateFormat: 'yy-mm-dd',
+        changeMonth: true,
+        changeYear: true,
+        onSelect: function() {
+          updateModalPayrollDateRange();
+        }
+      });
+    }
+  }
+});
+
+async function confirmProcessPayroll() {
+  const modalFromInput = document.getElementById('modalProcessPayrollFrom');
+  const modalToInput = document.getElementById('modalProcessPayrollTo');
+  const fromRaw = modalFromInput?.value || '';
+  const toRaw = modalToInput?.value || '';
+  const dateFrom = parseDateInputValue(fromRaw, false);
+  const dateTo = parseDateInputValue(toRaw, true);
+  const cutoffKey = makeCutoffKey(fromRaw, toRaw);
+
+  if (!cutoffKey) {
+    alert('Please select a valid cutoff date range before processing salary.');
+    return;
+  }
+
+  // Close modal first
+  const modalElement = document.getElementById('processPayrollModal');
+  const modal = bootstrap.Modal.getInstance(modalElement);
+  if (modal) {
+    modal.hide();
+  }
+
+  const processButton = document.getElementById('processEmployeeSalaryBtn');
+  if (processButton) {
+    processButton.disabled = true;
+    processButton.textContent = 'Processing...';
+  }
+
+  try {
+    const response = await fetch('cutoff_payroll_api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: fromRaw, to: toRaw })
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to process employee salary.');
+    }
+
+    const rows = result.data?.rows || [];
+    renderEmployeeSalaryRows(rows);
+
+    const payslipFrom = document.getElementById('payslipDateFrom');
+    const payslipTo = document.getElementById('payslipDateTo');
+    if ((payslipFrom?.value || '') === fromRaw && (payslipTo?.value || '') === toRaw) {
+      renderPayslipRows(rows);
+    }
+
+    alert('Employee salary has been processed for the selected cutoff. Payslip is updated for this cutoff.');
+  } catch (error) {
+    alert(error.message || 'Failed to process employee salary.');
+  } finally {
+    if (processButton) {
+      processButton.disabled = false;
+      processButton.textContent = 'Process Employee Salary for the cut-off';
+    }
+  }
+}
+
+async function processEmployeeSalaryForCutoff() {
+  const processButton = document.getElementById('processEmployeeSalaryBtn');
+  const fromInput = document.getElementById('employeeSalaryDateFrom');
+  const toInput = document.getElementById('employeeSalaryDateTo');
+  const fromRaw = fromInput?.value || '';
+  const toRaw = toInput?.value || '';
+  const dateFrom = parseDateInputValue(fromRaw, false);
+  const dateTo = parseDateInputValue(toRaw, true);
+  const cutoffKey = makeCutoffKey(fromRaw, toRaw);
+
+  if (!cutoffKey) {
+    alert('Please select a valid cutoff date range before processing salary.');
+    return;
+  }
+
+  if (processButton) {
+    processButton.disabled = true;
+    processButton.textContent = 'Processing...';
+  }
+
+  try {
+    const response = await fetch('cutoff_payroll_api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: fromRaw, to: toRaw })
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to process employee salary.');
+    }
+
+    const rows = result.data?.rows || [];
+    renderEmployeeSalaryRows(rows);
+
+    const payslipFrom = document.getElementById('payslipDateFrom');
+    const payslipTo = document.getElementById('payslipDateTo');
+    if ((payslipFrom?.value || '') === fromRaw && (payslipTo?.value || '') === toRaw) {
+      renderPayslipRows(rows);
+    }
+
+    alert('Employee salary has been processed for the selected cutoff. Payslip is updated for this cutoff.');
+  } catch (error) {
+    alert(error.message || 'Failed to process employee salary.');
+  } finally {
+    if (processButton) {
+      processButton.disabled = false;
+      processButton.textContent = 'Process Employee Salary for the cut-off';
+    }
+  }
+}
+
 function filterEmployees() {
   const searchInput = document.getElementById('searchEmployees');
   if (!searchInput) return;
@@ -4079,126 +4923,31 @@ async function loadEmployeeSalary() {
   const dateFrom = parseDateInputValue(dateFromInput?.value, false);
   const dateTo = parseDateInputValue(dateToInput?.value, true);
 
-  tableBody.innerHTML = '<tr><td colspan="18" class="text-center">Loading employees...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="19" class="text-center">Loading employees...</td></tr>';
 
   try {
-    const [employeeResponse, attendanceResponse, assignedIncomeResponse, assignedDeductionResponse, incomeTypesResponse, deductionTypesResponse] = await Promise.all([
-      fetch('../Employee_management/employees_api.php'),
-      fetch('attendance_api.php'),
-      fetch('assigned_emp_inc_api.php'),
-      fetch('assigned_emp_deduc_api.php'),
-      fetch('emp_inc_type_api.php'),
-      fetch('emp_deduc_type_api.php')
-    ]);
+    const response = await fetch(`cutoff_payroll_api.php?from=${encodeURIComponent(dateFromInput?.value || '')}&to=${encodeURIComponent(dateToInput?.value || '')}`);
+    const result = await response.json();
 
-    const employeeResult = await employeeResponse.json();
-    const attendanceResult = attendanceResponse.ok ? await attendanceResponse.json() : { success: false, data: [] };
-    const assignedIncomeResult = assignedIncomeResponse.ok ? await assignedIncomeResponse.json() : { success: false, data: [] };
-    const incomeTypesResult = incomeTypesResponse.ok ? await incomeTypesResponse.json() : { success: false, data: [] };
-    const assignedDeductionResult = assignedDeductionResponse.ok ? await assignedDeductionResponse.json() : { success: false, data: [] };
-    const deductionTypesResult = deductionTypesResponse.ok ? await deductionTypesResponse.json() : { success: false, data: [] };
-
-    if (!employeeResult.success) {
-      throw new Error(employeeResult.message || 'Unable to load employees.');
-    }
-
-    const rows = employeeResult.data || [];
-    employeesForSalary = rows;
-
-    const attendanceRows = attendanceResult.success ? (attendanceResult.data || []) : [];
-    const assignedIncomeData = assignedIncomeResult.success ? (assignedIncomeResult.data || []) : [];
-    const incomeTypesData = incomeTypesResult.success ? (incomeTypesResult.data || []) : [];
-    const assignedDeductions = assignedDeductionResult.success ? (assignedDeductionResult.data || []) : [];
-    const deductionTypes = deductionTypesResult.success ? (deductionTypesResult.data || []) : [];
-    const applicableAssignedIncomeData = filterAssignedIncomeByCutoff(assignedIncomeData, incomeTypesData, dateFrom, dateTo);
-    const applicableAssignedDeductionData = filterAssignedDeductionsByCutoff(assignedDeductions, deductionTypes, dateFrom, dateTo);
-    const attendanceByEmployee = buildAttendanceWorkMap(attendanceRows, dateFrom, dateTo);
-    const incomeByType = buildIncomeByTypeMap(applicableAssignedIncomeData);
-    const additionalIncomeByEmployee = buildAdditionalIncomeSummaryMap(applicableAssignedIncomeData);
-    const nonTaxableIncomeByEmployee = buildNonTaxableIncomeMap(applicableAssignedIncomeData);
-    const personalCaByEmployee = buildPersonalCaMap(applicableAssignedDeductionData);
-
-    if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="18" class="text-center">No employees found.</td></tr>';
-      paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+    if (result.success && Array.isArray(result.data?.rows) && result.data.rows.length > 0) {
+      renderEmployeeSalaryRows(result.data.rows);
       return;
     }
-
-    tableBody.innerHTML = '';
-    rows.forEach(emp => {
-      const employeeId = String(emp.id);
-      const employeeNameKey = String(emp.name || '').trim().toLowerCase();
-      const salary = Number(emp.salary || 0);
-      const grossPayPerDay = salary / 26;
-      const hourlyRate = grossPayPerDay / 8;
-      const work = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
-      const hoursWorked = (work.regularMinutes || 0) / 60;
-      const cutoffSalary = hourlyRate * hoursWorked;
-      const totalOtPay = (work.overtimeMinutes / 60) * hourlyRate;
-      const employeeIncomeByType = incomeByType[employeeNameKey] || {};
-      const additionalIncomeSummary = additionalIncomeByEmployee[employeeNameKey] || { taxable: 0, nonTaxable: 0 };
-      const legalHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /legal\s*holiday/i, 2);
-      const specialHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /special\s*holiday/i, 1.3);
-      const taxableAdditionalIncome = Number(additionalIncomeSummary.taxable) || 0;
-      const nonTaxableAdditionalIncome = Number(additionalIncomeSummary.nonTaxable) || 0;
-      const nonTaxableIncome = (nonTaxableIncomeByEmployee[employeeNameKey] || 0) + nonTaxableAdditionalIncome;
-      const premium = computePremiumDeductions(salary, hoursWorked, nonTaxableIncome);
-      const sss = Number(premium.sssContribution) || 0;
-      const phlth = Number(premium.philhealthContribution) || 0;
-      const pagibig = Number(premium.pagibigContribution) || 0;
-      const tax = Number(premium.withholdingTax) || 0;
-      const additionalDeductions = Number(personalCaByEmployee[employeeNameKey]) || 0;
-      const totalDeduction = sss + phlth + pagibig + tax + additionalDeductions;
-      const netPay = cutoffSalary + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
-
-      // Apply carry-over: retrieve any carry that was stored for this cutoff (from previous cutoff processing)
-      const currentCutoffKey = makeCutoffKey(dateFromInput?.value || '', dateToInput?.value || '');
-      const prevCarry = getCarryForCutoff(employeeId, currentCutoffKey) || 0;
-
-      let netAfterPrevCarry = netPay - prevCarry;
-      let carryOut = 0;
-      let displayedNet = netAfterPrevCarry;
-      if (netAfterPrevCarry < 0) {
-        carryOut = -netAfterPrevCarry;
-        displayedNet = 0;
-      } else {
-        carryOut = 0;
-      }
-
-      // Clear the carry that was applied for this cutoff so it won't be double-applied
-      try { localStorage.removeItem(`payroll_carry_${employeeId}_${currentCutoffKey}`); } catch (e) {}
-
-      // Persist carryOut for the next cutoff
-      const nextCutoffKey = computeNextCutoffKey(dateFromInput?.value || '', dateToInput?.value || '');
-      if (nextCutoffKey) setCarryForCutoff(employeeId, nextCutoffKey, carryOut);
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${emp.id || ''}</td>
-        <td>${emp.name || ''}</td>
-        <td>${emp.email || ''}</td>
-        <td>${formatCurrency(salary)}</td>
-        <td>${formatCurrency(grossPayPerDay)}</td>
-        <td>${hoursWorked.toFixed(2)}</td>
-        <td>${formatCurrency(totalOtPay)}</td>
-        <td>${formatCurrency(legalHoliday)}</td>
-        <td>${formatCurrency(specialHoliday)}</td>
-        <td>${formatCurrency(taxableAdditionalIncome)}</td>
-        <td>${formatCurrency(nonTaxableAdditionalIncome)}</td>
-        <td>${formatCurrency(sss)}</td>
-        <td>${formatCurrency(phlth)}</td>
-        <td>${formatCurrency(pagibig)}</td>
-        <td>${formatCurrency(tax)}</td>
-        <td>${formatCurrency(additionalDeductions)}</td>
-        <td>${formatCurrency(totalDeduction)}</td>
-        <td>${formatCurrency(displayedNet)}</td>
-      `;
-      tableBody.appendChild(row);
-    });
-
-    paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="18" class="text-center text-danger">${error.message}</td></tr>`;
+    console.warn('Unable to load stored employee salary rows, falling back to live computation:', error);
+  }
+
+  try {
+    const { rows } = await buildCutoffPayrollRows(
+      dateFrom,
+      dateTo,
+      dateFromInput?.value || '',
+      dateToInput?.value || '',
+      false
+    );
+    renderEmployeeSalaryRows(rows);
+  } catch (error) {
+    tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
   }
 }
@@ -4285,6 +5034,186 @@ function closeBulkEmailModal() {
 
   modal.classList.add('d-none');
   selectedBulkEmailEmployees.clear();
+}
+
+function editEmployeeSalaryRow(employeeId) {
+  const row = currentEmployeeSalaryRows.find(item => String(item.id) === String(employeeId));
+  const modal = document.getElementById('employeeSalaryEditModal');
+  if (!row || !modal) {
+    alert('Unable to load this employee salary row for editing.');
+    return;
+  }
+
+  if (!row.processedAt) {
+    alert('This cutoff has not been saved yet. Process the cutoff first, then edit the stored payroll row.');
+    return;
+  }
+
+  const setValue = (id, value) => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.value = Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '0.00';
+    }
+  };
+
+  const textField = (id, value) => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.value = value || '';
+    }
+  };
+
+  textField('employeeSalaryEditEmployeeIdDisplay', row.id);
+  textField('employeeSalaryEditEmployeeName', row.name);
+  textField('employeeSalaryEditEmployeeEmail', row.email);
+  document.getElementById('employeeSalaryEditEmployeeId').value = row.id || '';
+  document.getElementById('employeeSalaryEditCarryIn').value = Number(row.carryIn || 0).toFixed(2);
+
+  setValue('employeeSalaryEditCutoffSalary', row.cutoffSalary);
+  setValue('employeeSalaryEditGrossPayPerDay', row.grossPayPerDay);
+  setValue('employeeSalaryEditHoursWorked', row.hoursWorked);
+  setValue('employeeSalaryEditTotalOtPay', row.totalOtPay);
+  setValue('employeeSalaryEditLegalHoliday', row.legalHoliday);
+  setValue('employeeSalaryEditSpecialHoliday', row.specialHoliday);
+  setValue('employeeSalaryEditTaxableAdditionalIncome', row.taxableAdditionalIncome);
+  setValue('employeeSalaryEditNonTaxableAdditionalIncome', row.nonTaxableAdditionalIncome);
+  setValue('employeeSalaryEditSss', row.sss);
+  setValue('employeeSalaryEditPhlth', row.phlth);
+  setValue('employeeSalaryEditPagibig', row.pagibig);
+  setValue('employeeSalaryEditTax', row.tax);
+  setValue('employeeSalaryEditAdditionalDeductions', row.additionalDeductions);
+
+  recalculateEmployeeSalaryEditPreview();
+  modal.classList.remove('d-none');
+}
+
+function closeEmployeeSalaryEditModal() {
+  const modal = document.getElementById('employeeSalaryEditModal');
+  if (!modal) return;
+  modal.classList.add('d-none');
+}
+
+function readEmployeeSalaryEditNumber(id) {
+  const input = document.getElementById(id);
+  const value = Number(input?.value || 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function recalculateEmployeeSalaryEditPreview() {
+  const cutoffSalary = readEmployeeSalaryEditNumber('employeeSalaryEditCutoffSalary');
+  const totalOtPay = readEmployeeSalaryEditNumber('employeeSalaryEditTotalOtPay');
+  const legalHoliday = readEmployeeSalaryEditNumber('employeeSalaryEditLegalHoliday');
+  const specialHoliday = readEmployeeSalaryEditNumber('employeeSalaryEditSpecialHoliday');
+  const taxableAdditionalIncome = readEmployeeSalaryEditNumber('employeeSalaryEditTaxableAdditionalIncome');
+  const nonTaxableAdditionalIncome = readEmployeeSalaryEditNumber('employeeSalaryEditNonTaxableAdditionalIncome');
+  const sss = readEmployeeSalaryEditNumber('employeeSalaryEditSss');
+  const phlth = readEmployeeSalaryEditNumber('employeeSalaryEditPhlth');
+  const pagibig = readEmployeeSalaryEditNumber('employeeSalaryEditPagibig');
+  const tax = readEmployeeSalaryEditNumber('employeeSalaryEditTax');
+  const additionalDeductions = readEmployeeSalaryEditNumber('employeeSalaryEditAdditionalDeductions');
+  const carryIn = readEmployeeSalaryEditNumber('employeeSalaryEditCarryIn');
+
+  const totalDeduction = sss + phlth + pagibig + tax + additionalDeductions;
+  const grossNet = cutoffSalary + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
+  const netPay = Math.max(0, grossNet - carryIn);
+
+  const totalField = document.getElementById('employeeSalaryEditTotalDeduction');
+  const netField = document.getElementById('employeeSalaryEditNetPay');
+  if (totalField) totalField.value = formatCurrency(totalDeduction);
+  if (netField) netField.value = formatCurrency(netPay);
+}
+
+async function saveEmployeeSalaryEditRow() {
+  const employeeId = Number(document.getElementById('employeeSalaryEditEmployeeId')?.value || 0);
+  const dateFromInput = document.getElementById('employeeSalaryDateFrom');
+  const dateToInput = document.getElementById('employeeSalaryDateTo');
+  const fromValue = dateFromInput?.value || '';
+  const toValue = dateToInput?.value || '';
+
+  if (!employeeId || !fromValue || !toValue) {
+    alert('Missing employee or cutoff details.');
+    return;
+  }
+
+  const payload = {
+    action: 'update',
+    from: fromValue,
+    to: toValue,
+    employeeId,
+    cutoffSalary: readEmployeeSalaryEditNumber('employeeSalaryEditCutoffSalary'),
+    grossPayPerDay: readEmployeeSalaryEditNumber('employeeSalaryEditGrossPayPerDay'),
+    hoursWorked: readEmployeeSalaryEditNumber('employeeSalaryEditHoursWorked'),
+    totalOtPay: readEmployeeSalaryEditNumber('employeeSalaryEditTotalOtPay'),
+    legalHoliday: readEmployeeSalaryEditNumber('employeeSalaryEditLegalHoliday'),
+    specialHoliday: readEmployeeSalaryEditNumber('employeeSalaryEditSpecialHoliday'),
+    taxableAdditionalIncome: readEmployeeSalaryEditNumber('employeeSalaryEditTaxableAdditionalIncome'),
+    nonTaxableAdditionalIncome: readEmployeeSalaryEditNumber('employeeSalaryEditNonTaxableAdditionalIncome'),
+    sss: readEmployeeSalaryEditNumber('employeeSalaryEditSss'),
+    phlth: readEmployeeSalaryEditNumber('employeeSalaryEditPhlth'),
+    pagibig: readEmployeeSalaryEditNumber('employeeSalaryEditPagibig'),
+    tax: readEmployeeSalaryEditNumber('employeeSalaryEditTax'),
+    additionalDeductions: readEmployeeSalaryEditNumber('employeeSalaryEditAdditionalDeductions')
+  };
+
+  try {
+    const response = await fetch('cutoff_payroll_api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to update employee salary row.');
+    }
+
+    closeEmployeeSalaryEditModal();
+    await loadEmployeeSalary();
+    await loadPayslip();
+    alert(result.message || 'Employee salary row updated successfully.');
+  } catch (error) {
+    alert(error.message || 'Failed to update employee salary row.');
+  }
+}
+
+async function deleteEmployeeSalaryRow(employeeId) {
+  const dateFromInput = document.getElementById('employeeSalaryDateFrom');
+  const dateToInput = document.getElementById('employeeSalaryDateTo');
+  const fromValue = dateFromInput?.value || '';
+  const toValue = dateToInput?.value || '';
+
+  if (!fromValue || !toValue) {
+    alert('Please select a valid cutoff range before deleting a processed salary row.');
+    return;
+  }
+
+  if (!confirm(`Delete the processed salary row for employee ID ${employeeId}?`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch('cutoff_payroll_api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'delete',
+        from: fromValue,
+        to: toValue,
+        employeeId: Number(employeeId)
+      })
+    });
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to delete employee salary row.');
+    }
+
+    await loadEmployeeSalary();
+    await loadPayslip();
+    alert(result.message || 'Employee salary row deleted successfully.');
+  } catch (error) {
+    alert(error.message || 'Failed to delete employee salary row.');
+  }
 }
 
 function populateBulkEmailList() {
@@ -4436,39 +5365,61 @@ function sendBulkPayslipEmails() {
 
 function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = null) {
   const attendanceByEmployee = new Map();
+  
+  console.log('buildAttendanceWorkMap called with:');
+  console.log('  attendanceData.length:', attendanceData.length);
+  console.log('  dateFrom:', dateFrom);
+  console.log('  dateTo:', dateTo);
 
-  (attendanceData || []).forEach(item => {
-    const employeeId = getAttendanceEmployeeId(item);
-    if (!employeeId) {
-      return;
-    }
+  try {
+    (attendanceData || []).forEach((item, index) => {
+      try {
+        const employeeId = getAttendanceEmployeeId(item);
+        if (!employeeId) {
+          console.log(`Record ${index}: No employeeId`);
+          return;
+        }
 
-    if (dateFrom || dateTo) {
-      const itemDate = getAttendanceItemDate(item);
-      if (!itemDate || Number.isNaN(itemDate.getTime())) {
-        return;
+        if (dateFrom || dateTo) {
+          const itemDate = getAttendanceItemDate(item);
+          if (!itemDate || Number.isNaN(itemDate.getTime())) {
+            console.log(`Record ${index}: Invalid date - itemDate=${itemDate}`);
+            return;
+          }
+
+          if (dateFrom && itemDate < dateFrom) {
+            console.log(`Record ${index} (${employeeId}): Date ${itemDate} is before dateFrom ${dateFrom}`);
+            return;
+          }
+
+          if (dateTo && itemDate > dateTo) {
+            console.log(`Record ${index} (${employeeId}): Date ${itemDate} is after dateTo ${dateTo}`);
+            return;
+          }
+        }
+
+        const durationMinutes = getAttendanceDurationMinutes(item);
+        const isAO = Number(item.AO) === 1;
+        const regularMinutes = Math.max(0, Math.min(durationMinutes, 480));
+        const overtimeMinutes = durationMinutes > 480 && isAO ? (durationMinutes - 480) : 0;
+
+        const existing = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
+        existing.regularMinutes += regularMinutes;
+        existing.overtimeMinutes += overtimeMinutes;
+        attendanceByEmployee.set(employeeId, existing);
+        
+        if (index < 3 || employeeId === '4') {
+          console.log(`Record ${index} added: Emp${employeeId}, duration=${durationMinutes}min, regular=${regularMinutes}min`);
+        }
+      } catch (recordError) {
+        console.error(`Error processing record ${index}:`, recordError);
       }
+    });
+  } catch (mapError) {
+    console.error('Error building attendance map:', mapError);
+  }
 
-      if (dateFrom && itemDate < dateFrom) {
-        return;
-      }
-
-      if (dateTo && itemDate > dateTo) {
-        return;
-      }
-    }
-
-    const durationMinutes = getAttendanceDurationMinutes(item);
-    const isAO = Number(item.AO) === 1;
-    const regularMinutes = Math.max(0, Math.min(durationMinutes, 480));
-    const overtimeMinutes = durationMinutes > 480 && isAO ? (durationMinutes - 480) : 0;
-
-    const existing = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
-    existing.regularMinutes += regularMinutes;
-    existing.overtimeMinutes += overtimeMinutes;
-    attendanceByEmployee.set(employeeId, existing);
-  });
-
+  console.log('buildAttendanceWorkMap complete - map size:', attendanceByEmployee.size);
   return attendanceByEmployee;
 }
 
@@ -4647,152 +5598,21 @@ async function loadPayslip() {
   const dateFrom = parseDateInputValue(dateFromInput?.value, false);
   const dateTo = parseDateInputValue(dateToInput?.value, true);
 
+  savePayslipRangeState();
+
   tableBody.innerHTML = '<tr><td colspan="17" class="text-center">Loading payslip...</td></tr>';
 
   try {
-    const [employeeResponse, attendanceResponse, assignedIncomeResponse, assignedDeductionResponse, incomeTypeResponse, deductionTypeResponse] = await Promise.all([
-      fetch('../Employee_management/employees_api.php'),
-      fetch('attendance_api.php'),
-      fetch('assigned_emp_inc_api.php'),
-      fetch('assigned_emp_deduc_api.php'),
-      fetch('emp_inc_type_api.php'),
-      fetch('emp_deduc_type_api.php')
-    ]);
+    const response = await fetch(`cutoff_payroll_api.php?from=${encodeURIComponent(dateFromInput?.value || '')}&to=${encodeURIComponent(dateToInput?.value || '')}`);
+    const result = await response.json();
 
-    const employeeResult = await employeeResponse.json();
-    const attendanceResult = attendanceResponse.ok ? await attendanceResponse.json() : { success: false, data: [] };
-    const assignedIncomeResult = assignedIncomeResponse.ok ? await assignedIncomeResponse.json() : { success: false, data: [] };
-    const assignedDeductionResult = assignedDeductionResponse.ok ? await assignedDeductionResponse.json() : { success: false, data: [] };
-    const incomeTypeResult = incomeTypeResponse.ok ? await incomeTypeResponse.json() : { success: false, data: [] };
-    const deductionTypeResult = deductionTypeResponse.ok ? await deductionTypeResponse.json() : { success: false, data: [] };
-
-    if (!employeeResult.success) {
-      throw new Error(employeeResult.message || 'Unable to load employee data for payslip.');
-    }
-
-    const employees = employeeResult.data || [];
-    allPayslipEmployees = employees;
-    if (employees.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="19" class="text-center">No employees found.</td></tr>';
-      paginateTable('payslipTable', 'payslipPagination', true);
+    if (!result.success) {
+      renderPayslipRows([]);
       return;
     }
 
-    const attendanceData = attendanceResult.success ? (attendanceResult.data || []) : [];
-    const assignedIncomeData = assignedIncomeResult.success ? (assignedIncomeResult.data || []) : [];
-    const assignedDeductionData = assignedDeductionResult.success ? (assignedDeductionResult.data || []) : [];
-    const incomeTypesData = incomeTypeResult.success ? (incomeTypeResult.data || []) : [];
-    const deductionTypesData = deductionTypeResult.success ? (deductionTypeResult.data || []) : [];
-
-    const applicableAssignedIncomeData = filterAssignedIncomeByCutoff(assignedIncomeData, incomeTypesData, dateFrom, dateTo);
-    const applicableAssignedDeductionData = filterAssignedDeductionsByCutoff(assignedDeductionData, deductionTypesData, dateFrom, dateTo);
-
-    const attendanceByEmployee = buildAttendanceWorkMap(attendanceData, dateFrom, dateTo);
-    const incomeByType = buildIncomeByTypeMap(applicableAssignedIncomeData);
-    const additionalIncomeByEmployee = buildAdditionalIncomeSummaryMap(applicableAssignedIncomeData);
-    const nonTaxableIncomeByEmployee = buildNonTaxableIncomeMap(applicableAssignedIncomeData);
-    const personalCaByEmployee = buildPersonalCaMap(applicableAssignedDeductionData);
-    const enrichedPayslipEmployees = [];
-
-    tableBody.innerHTML = '';
-    employees.forEach(emp => {
-      const employeeId = String(emp.id);
-      const employeeNameKey = String(emp.name || '').trim().toLowerCase();
-      const salary = Number(emp.salary || 0);
-      const grossPayPerDay = salary / 26;
-      const hourlyRate = grossPayPerDay / 8;
-
-      const work = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
-      const hoursWorked = (work.regularMinutes || 0) / 60;
-      const cutoffSalary = hourlyRate * hoursWorked;
-      const totalOtPay = (work.overtimeMinutes / 60) * hourlyRate;
-
-      const employeeIncomeByType = incomeByType[employeeNameKey] || {};
-      const additionalIncomeSummary = additionalIncomeByEmployee[employeeNameKey] || { taxable: 0, nonTaxable: 0 };
-      // Legal holiday = double pay (2x). Special holiday = 1.3x
-      const legalHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /legal\s*holiday/i, 2);
-      const specialHoliday = getComputedIncomeAmountByKeyword(employeeIncomeByType, /special\s*holiday/i, 1.3);
-      const taxableAdditionalIncome = Number(additionalIncomeSummary.taxable) || 0;
-      const nonTaxableAdditionalIncome = Number(additionalIncomeSummary.nonTaxable) || 0;
-
-      const nonTaxableIncome = (nonTaxableIncomeByEmployee[employeeNameKey] || 0) + nonTaxableAdditionalIncome;
-      const {
-        sssContribution,
-        pagibigContribution,
-        philhealthContribution,
-        withholdingTax
-      } = computePremiumDeductions(salary, hoursWorked, nonTaxableIncome);
-
-      const sss = Number(sssContribution) || 0;
-      const phlth = Number(philhealthContribution) || 0;
-      const pagibig = Number(pagibigContribution) || 0;
-      const tax = Number(withholdingTax) || 0;
-      const personalCa = Number(personalCaByEmployee[employeeNameKey]) || 0;
-      const totalDeduction = sss + phlth + pagibig + tax + personalCa;
-
-      const netPay = cutoffSalary + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
-
-      // Apply carry-over for this cutoff
-      const currentCutoffKey = makeCutoffKey(dateFromInput?.value || '', dateToInput?.value || '');
-      const prevCarry = getCarryForCutoff(employeeId, currentCutoffKey) || 0;
-      let netAfterPrevCarry = netPay - prevCarry;
-      let carryOut = 0;
-      let displayedNet = netAfterPrevCarry;
-      if (netAfterPrevCarry < 0) {
-        carryOut = -netAfterPrevCarry;
-        displayedNet = 0;
-      }
-      try { localStorage.removeItem(`payroll_carry_${employeeId}_${currentCutoffKey}`); } catch (e) {}
-      const nextCutoffKey = computeNextCutoffKey(dateFromInput?.value || '', dateToInput?.value || '');
-      if (nextCutoffKey) setCarryForCutoff(employeeId, nextCutoffKey, carryOut);
-
-      enrichedPayslipEmployees.push({
-        ...emp,
-        grossPayPerMonth: salary,
-        grossPayPerDay,
-        hoursWorked,
-        totalOt: totalOtPay,
-        legalHoliday,
-        specialHoliday,
-        riceSubsidy: nonTaxableAdditionalIncome,
-        electricity: taxableAdditionalIncome,
-        sss,
-        phlth,
-        pagibig,
-        tax,
-        personalCa,
-        totalDeduction,
-        netPay: displayedNet
-      });
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${emp.id || ''}</td>
-        <td>${emp.name || ''}</td>
-        <td>${emp.email || ''}</td>
-        <td>${formatCurrency(salary)}</td>
-        <td>${formatCurrency(grossPayPerDay)}</td>
-        <td>${hoursWorked.toFixed(2)}</td>
-        <td>${formatCurrency(totalOtPay)}</td>
-        <td>${formatCurrency(legalHoliday)}</td>
-        <td>${formatCurrency(specialHoliday)}</td>
-        <td>${formatCurrency(taxableAdditionalIncome)}</td>
-        <td>${formatCurrency(nonTaxableAdditionalIncome)}</td>
-        <td>${formatCurrency(sss)}</td>
-        <td>${formatCurrency(phlth)}</td>
-        <td>${formatCurrency(pagibig)}</td>
-        <td>${formatCurrency(tax)}</td>
-        <td>${formatCurrency(personalCa)}</td>
-        <td>${formatCurrency(totalDeduction)}</td>
-        <td>${formatCurrency(displayedNet)}</td>
-      `;
-
-      tableBody.appendChild(row);
-    });
-
-    allPayslipEmployees = enrichedPayslipEmployees;
-
-    paginateTable('payslipTable', 'payslipPagination', true);
+    const rows = result.data?.rows || [];
+    renderPayslipRows(rows);
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('payslipTable', 'payslipPagination', true);

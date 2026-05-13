@@ -261,9 +261,9 @@ try {
     $logoPath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'Employee_attendance' . DIRECTORY_SEPARATOR . 'Images' . DIRECTORY_SEPARATOR . 'logo.jpg';
     $backgroundPath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'Employee_attendance' . DIRECTORY_SEPARATOR . 'Images' . DIRECTORY_SEPARATOR . 'bgimg.jpg';
 
-    $grossPayPerMonth = payload_number($payload, 'grossPayPerMonth', 'salary');
+    $cutoffSalary = payload_number($payload, 'cutoffSalary', 'grossPayPerMonth', 'salary');
     $grossPayPerDay = payload_number($payload, 'grossPayPerDay');
-    $regularDays = payload_number($payload, 'regularDays');
+    $hoursWorked = payload_number($payload, 'hoursWorked', 'regularDays');
     $totalOt = payload_number($payload, 'totalOt', 'totalOtPay');
     $legalHoliday = payload_number($payload, 'legalHoliday');
     $specialHoliday = payload_number($payload, 'specialHoliday');
@@ -273,9 +273,17 @@ try {
     $phlth = payload_number($payload, 'phlth', 'philhealthContribution');
     $pagibig = payload_number($payload, 'pagibig', 'pagibigContribution');
     $tax = payload_number($payload, 'tax', 'withholdingTax');
-    $personalCa = payload_number($payload, 'personalCa');
+    $personalCa = payload_number($payload, 'personalCa', 'additionalDeductions');
     $totalDeduction = payload_number($payload, 'totalDeduction');
     $netPay = payload_number($payload, 'netPay');
+
+    // Additional fields for clearer breakdown (may be present in payload)
+    $basicPay = payload_number($payload, 'basicPay', 'monthlySalary', 'salary');
+    $taxableAllowance = payload_number($payload, 'taxableAllowance');
+    $nonTaxableAllowance = payload_number($payload, 'nonTaxableAllowance');
+    $nightDifferential = payload_number($payload, 'nightDifferential', 'nightDiff');
+    $overtimePay = payload_number($payload, 'overtimePay', 'totalOt');
+    $grossPay = payload_number($payload, 'grossPay', 'grossPayTotal', 'cutoffSalary');
 
     // Plain-text fallback for email clients that do not render HTML
     $plainLines = [
@@ -285,9 +293,9 @@ try {
         'Employee: ' . $employeeName,
         'Email: ' . $email,
         '',
-        'Gross Pay Per Month: ' . currency_format($grossPayPerMonth),
+        'Cutoff Salary: ' . currency_format($cutoffSalary),
         'Gross Pay Per Day: ' . currency_format($grossPayPerDay),
-        'Regular Days: ' . number_format($regularDays, 2),
+        'Hours Worked: ' . number_format($hoursWorked, 2),
         'Total OT: ' . currency_format($totalOt),
         'Legal Holiday: ' . currency_format($legalHoliday),
         'Special Holiday: ' . currency_format($specialHoliday),
@@ -384,21 +392,23 @@ try {
                 . '<div class="section-spacer">&nbsp;</div>'
                 . '<table class="payslip" role="presentation">'
                 . '<tbody>'
-                . '<tr><th>Gross Pay Per Month</th><td>' . htmlspecialchars(currency_format($grossPayPerMonth), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>Gross Pay Per Day</th><td>' . htmlspecialchars(currency_format($grossPayPerDay), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>Regular Days</th><td>' . htmlspecialchars(number_format($regularDays, 2), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>Total OT</th><td>' . htmlspecialchars(currency_format($totalOt), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>Legal Holiday</th><td>' . htmlspecialchars(currency_format($legalHoliday), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>Special Holiday</th><td>' . htmlspecialchars(currency_format($specialHoliday), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>Taxable Additional Income</th><td>' . htmlspecialchars(currency_format($taxableAdditionalIncome), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>Non-Taxable Additional Income</th><td>' . htmlspecialchars(currency_format($nonTaxableAdditionalIncome), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>SSS</th><td>' . htmlspecialchars(currency_format($sss), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>PHLTH</th><td>' . htmlspecialchars(currency_format($phlth), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>PAGIBIG</th><td>' . htmlspecialchars(currency_format($pagibig), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>TAX</th><td>' . htmlspecialchars(currency_format($tax), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>Personal CA</th><td>' . htmlspecialchars(currency_format($personalCa), ENT_QUOTES) . '</td></tr>'
-                . '<tr><th>Total Deduction</th><td>' . htmlspecialchars(currency_format($totalDeduction), ENT_QUOTES) . '</td></tr>'
-                . '<tr class="highlight"><th><strong>Net Pay</strong></th><td><strong>' . htmlspecialchars(currency_format($netPay), ENT_QUOTES) . '</strong></td></tr>'
+                . '<tr><th>Cutoff Salary</th><td style="text-align:right">' . htmlspecialchars(currency_format($cutoffSalary), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>Gross Pay Per Day</th><td style="text-align:right">' . htmlspecialchars(currency_format($grossPayPerDay), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>Hours of Work</th><td style="text-align:right">' . htmlspecialchars(number_format($hoursWorked, 2), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>Total OT</th><td style="text-align:right">' . htmlspecialchars(currency_format($totalOt), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>Legal Holiday</th><td style="text-align:right">' . htmlspecialchars(currency_format($legalHoliday), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>Special Holiday</th><td style="text-align:right">' . htmlspecialchars(currency_format($specialHoliday), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>Taxable Additional Income</th><td style="text-align:right">' . htmlspecialchars(currency_format($taxableAdditionalIncome), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>Non-Taxable Additional Income</th><td style="text-align:right">' . htmlspecialchars(currency_format($nonTaxableAdditionalIncome), ENT_QUOTES) . '</td></tr>'
+                . '<tr class="highlight"><th>Total Additions / Gross</th><th style="text-align:right">' . htmlspecialchars(currency_format($grossPay ?: $cutoffSalary), ENT_QUOTES) . '</th></tr>'
+                . '<tr class="section-spacer"><td colspan="2">&nbsp;</td></tr>'
+                . '<tr><th>SSS</th><td style="text-align:right">' . htmlspecialchars(currency_format($sss), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>PHLTH</th><td style="text-align:right">' . htmlspecialchars(currency_format($phlth), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>PAGIBIG</th><td style="text-align:right">' . htmlspecialchars(currency_format($pagibig), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>Withholding Tax</th><td style="text-align:right">' . htmlspecialchars(currency_format($tax), ENT_QUOTES) . '</td></tr>'
+                . '<tr><th>Additional Deductions</th><td style="text-align:right">' . htmlspecialchars(currency_format($personalCa), ENT_QUOTES) . '</td></tr>'
+                . '<tr class="highlight"><th>Total Ded.</th><th style="text-align:right">' . htmlspecialchars(currency_format($totalDeduction), ENT_QUOTES) . '</th></tr>'
+                . '<tr class="net-row"><th style="font-size:18px;padding-top:12px;">Net Pay</th><th style="text-align:right;font-size:22px;padding-top:12px;color:#0b6efd"><strong>' . htmlspecialchars(currency_format($netPay), ENT_QUOTES) . '</strong></th></tr>'
                 . '</tbody></table>'
                 . '</div>'
                 . '<div class="footer">This message was generated by the Payroll System.</div>'

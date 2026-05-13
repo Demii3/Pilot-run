@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Employee Salary Data Loading</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        pre { background: white; padding: 15px; overflow-x: auto; max-height: 600px; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        .section { margin: 20px 0; background: white; border: 1px solid #ddd; padding: 15px; border-radius: 4px; }
+        .log { background: #222; color: #0f0; padding: 10px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>Test Employee Salary Loading - April 1-15, 2026</h1>
+    
+    <div class="section">
+        <h2>Console Output Capture</h2>
+        <button onclick="testLoad()">Load Employee Salary Data (April 1-15)</button>
+        <div class="log" id="console"></div>
+    </div>
+
+    <div class="section">
+        <h2>Raw Data Inspection</h2>
+        <pre id="dataInspection"></pre>
+    </div>
+
+    <script>
+        // Capture console.log
+        const logs = [];
+        const originalLog = console.log;
+        console.log = function(...args) {
+            logs.push(args.map(arg => {
+                if (typeof arg === 'object') {
+                    return JSON.stringify(arg, null, 2);
+                }
+                return String(arg);
+            }).join(' '));
+            originalLog.apply(console, args);
+        };
+
+        function parseDateInputValue(value, endOfDay = false) {
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+
+            let parsedDate = null;
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                const [year, month, day] = raw.split('-').map(Number);
+                parsedDate = new Date(year, month - 1, day);
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                const [partA, partB, year] = raw.split('/').map(Number);
+                let day = partA;
+                let month = partB;
+
+                if (partA <= 12 && partB > 12) {
+                    month = partA;
+                    day = partB;
+                }
+
+                parsedDate = new Date(year, month - 1, day);
+            } else {
+                const fallback = new Date(raw);
+                if (!Number.isNaN(fallback.getTime())) {
+                    parsedDate = fallback;
+                }
+            }
+
+            if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+                return null;
+            }
+
+            if (endOfDay) {
+                parsedDate.setHours(23, 59, 59, 999);
+            } else {
+                parsedDate.setHours(0, 0, 0, 0);
+            }
+
+            return parsedDate;
+        }
+
+        // Include necessary helper functions from the actual page
+        function getAttendanceEmployeeId(item = {}) {
+            return String(item.Emp_id ?? item.id ?? '').trim();
+        }
+
+        function getAttendanceItemDate(item = {}) {
+            const rawDate = item.Date ?? item.date ?? '';
+            if (!rawDate) return null;
+
+            let date = null;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(String(rawDate).trim())) {
+                const parts = String(rawDate).split('-');
+                const year = Number(parts[0]);
+                const monthIndex = Number(parts[1]) - 1;
+                const day = Number(parts[2]);
+                date = new Date(year, monthIndex, day);
+            } else {
+                date = new Date(rawDate);
+            }
+
+            if (!date || Number.isNaN(date.getTime())) return null;
+            date.setHours(0, 0, 0, 0);
+            return date;
+        }
+
+        function getAttendanceDurationMinutes(item = {}) {
+            return Number(item.Duration ?? item.duration ?? 0) || 0;
+        }
+
+        function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = null) {
+            const attendanceByEmployee = new Map();
+
+            (attendanceData || []).forEach(item => {
+                const employeeId = getAttendanceEmployeeId(item);
+                if (!employeeId) {
+                    return;
+                }
+
+                if (dateFrom || dateTo) {
+                    const itemDate = getAttendanceItemDate(item);
+                    if (!itemDate || Number.isNaN(itemDate.getTime())) {
+                        return;
+                    }
+
+                    if (dateFrom && itemDate < dateFrom) {
+                        return;
+                    }
+
+                    if (dateTo && itemDate > dateTo) {
+                        return;
+                    }
+                }
+
+                const durationMinutes = getAttendanceDurationMinutes(item);
+                const isAO = Number(item.AO) === 1;
+                const regularMinutes = Math.max(0, Math.min(durationMinutes, 480));
+                const overtimeMinutes = durationMinutes > 480 && isAO ? (durationMinutes - 480) : 0;
+
+                const existing = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
+                existing.regularMinutes += regularMinutes;
+                existing.overtimeMinutes += overtimeMinutes;
+                attendanceByEmployee.set(employeeId, existing);
+            });
+
+            return attendanceByEmployee;
+        }
+
+        async function testLoad() {
+            logs.length = 0;
+            const consoleDiv = document.getElementById('console');
+            const inspectionDiv = document.getElementById('dataInspection');
+            
+            consoleDiv.textContent = 'Loading...';
+            
+            try {
+                const dateFrom = parseDateInputValue('2026-04-01', false);
+                const dateTo = parseDateInputValue('2026-04-15', true);
+                
+                console.log('=== TEST DATA LOADING ===');
+                console.log('dateFrom:', dateFrom);
+                console.log('dateTo:', dateTo);
+                
+                // Fetch employees
+                const empRes = await fetch('../Employee_management/employees_api.php');
+                const empData = await empRes.json();
+                console.log('Employees API - success:', empData.success, 'count:', empData.data?.length);
+                
+                // Fetch attendance
+                const attRes = await fetch('attendance_api.php');
+                const attData = await attRes.json();
+                console.log('Attendance API - success:', attData.success, 'count:', attData.data?.length);
+                
+                if (attData.data && attData.data.length > 0) {
+                    console.log('First attendance record:', attData.data[0]);
+                }
+                
+                // Build attendance map
+                const attendanceByEmployee = buildAttendanceWorkMap(attData.data, dateFrom, dateTo);
+                console.log('Attendance map built - size:', attendanceByEmployee.size);
+                
+                Array.from(attendanceByEmployee.entries()).slice(0, 5).forEach(([empId, data]) => {
+                    console.log(`  Employee ${empId}: ${data.regularMinutes}min regular, ${data.overtimeMinutes}min overtime`);
+                });
+                
+                // Check specific employees
+                if (empData.data) {
+                    console.log('\n=== CHECKING EMPLOYEE MAPPING ===');
+                    empData.data.slice(0, 5).forEach(emp => {
+                        const empId = String(emp.id);
+                        const found = attendanceByEmployee.get(empId);
+                        console.log(`Employee ${emp.id} (${emp.name}): found=${!!found}, data=${found ? JSON.stringify(found) : 'NOT FOUND'}`);
+                    });
+                }
+                
+                // Raw data inspection
+                inspectionDiv.textContent = 'Attendance data in range (2026-04-01 to 2026-04-15):\n\n' +
+                    (attData.data || []).filter(r => {
+                        const d = new Date(r.Date + 'T00:00:00');
+                        return d >= dateFrom && d <= dateTo;
+                    }).map((r, i) => `${i+1}. ID=${r.Emp_id}, Date=${r.Date}, Duration=${r.Duration} mins`)
+                    .join('\n');
+                
+            } catch (error) {
+                console.log('ERROR:', error.message);
+                console.log(error);
+            }
+            
+            consoleDiv.innerHTML = logs.map(l => l.replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('\n');
+        }
+    </script>
+</body>
+</html>

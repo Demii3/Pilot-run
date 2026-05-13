@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Employee Salary</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+        .debug { margin: 20px 0; border: 1px solid #ccc; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Debug Employee Salary Calculation</h1>
+    <div class="debug">
+        <h2>Step 1: Parse Dates</h2>
+        <pre id="dateDebug"></pre>
+    </div>
+    <div class="debug">
+        <h2>Step 2: Fetch Attendance Data</h2>
+        <pre id="attendanceDebug"></pre>
+    </div>
+    <div class="debug">
+        <h2>Step 3: Build Attendance Map</h2>
+        <pre id="mapDebug"></pre>
+    </div>
+    <div class="debug">
+        <h2>Step 4: Employee Salary Calculation</h2>
+        <pre id="salaryDebug"></pre>
+    </div>
+
+    <script>
+        // Copy the parsing functions from index.php
+        function parseDateInputValue(value, endOfDay = false) {
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+
+            let parsedDate = null;
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                const [year, month, day] = raw.split('-').map(Number);
+                parsedDate = new Date(year, month - 1, day);
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                const [partA, partB, year] = raw.split('/').map(Number);
+                let day = partA;
+                let month = partB;
+
+                if (partA <= 12 && partB > 12) {
+                    month = partA;
+                    day = partB;
+                }
+
+                parsedDate = new Date(year, month - 1, day);
+            } else {
+                const fallback = new Date(raw);
+                if (!Number.isNaN(fallback.getTime())) {
+                    parsedDate = fallback;
+                }
+            }
+
+            if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+                return null;
+            }
+
+            if (endOfDay) {
+                parsedDate.setHours(23, 59, 59, 999);
+            } else {
+                parsedDate.setHours(0, 0, 0, 0);
+            }
+
+            return parsedDate;
+        }
+
+        function getAttendanceItemDate(item = {}) {
+            const rawDate = item.Date ?? item.date ?? '';
+            if (!rawDate) {
+                return null;
+            }
+
+            const normalized = String(rawDate).trim();
+            const parsedDate = /^\d{4}-\d{2}-\d{2}/.test(normalized)
+                ? new Date(`${normalized.slice(0, 10)}T00:00:00`)
+                : new Date(normalized);
+            return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+        }
+
+        function getAttendanceEmployeeId(item = {}) {
+            return String(item.Emp_id ?? item.id ?? '').trim();
+        }
+
+        function getAttendanceDurationMinutes(item = {}) {
+            const directDuration = Number(item.Duration ?? item.duration);
+            if (Number.isFinite(directDuration) && directDuration > 0) {
+                return directDuration;
+            }
+
+            const clockInValue = item.Clock_in ?? item.clockIn;
+            const clockOutValue = item.Clock_out ?? item.clockOut;
+            if (!clockInValue || !clockOutValue) {
+                return 0;
+            }
+
+            const clockIn = new Date(clockInValue);
+            const clockOut = new Date(clockOutValue);
+            if (Number.isNaN(clockIn.getTime()) || Number.isNaN(clockOut.getTime())) {
+                return 0;
+            }
+
+            let durationMinutes = (clockOut.getTime() - clockIn.getTime()) / 60000;
+            if (durationMinutes < 0) {
+                durationMinutes += 1440;
+            }
+
+            return Number.isFinite(durationMinutes) && durationMinutes > 0 ? durationMinutes : 0;
+        }
+
+        function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = null) {
+            const attendanceByEmployee = new Map();
+            let skippedCount = 0;
+            let includedCount = 0;
+
+            (attendanceData || []).forEach(item => {
+                const employeeId = getAttendanceEmployeeId(item);
+                if (!employeeId) {
+                    return;
+                }
+
+                if (dateFrom || dateTo) {
+                    const itemDate = getAttendanceItemDate(item);
+                    if (!itemDate || Number.isNaN(itemDate.getTime())) {
+                        return;
+                    }
+
+                    if (dateFrom && itemDate < dateFrom) {
+                        skippedCount++;
+                        return;
+                    }
+
+                    if (dateTo && itemDate > dateTo) {
+                        skippedCount++;
+                        return;
+                    }
+                    includedCount++;
+                }
+
+                const durationMinutes = getAttendanceDurationMinutes(item);
+                const isAO = Number(item.AO) === 1;
+                const regularMinutes = Math.max(0, Math.min(durationMinutes, 480));
+                const overtimeMinutes = durationMinutes > 480 && isAO ? (durationMinutes - 480) : 0;
+
+                const existing = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
+                existing.regularMinutes += regularMinutes;
+                existing.overtimeMinutes += overtimeMinutes;
+                attendanceByEmployee.set(employeeId, existing);
+            });
+
+            return { map: attendanceByEmployee, includedCount, skippedCount };
+        }
+
+        // Main debugging flow
+        async function runDebug() {
+            const dateFromStr = "April 16, 2026";
+            const dateToStr = "April 30, 2026";
+
+            // Step 1: Parse dates
+            const dateFrom = parseDateInputValue(dateFromStr, false);
+            const dateTo = parseDateInputValue(dateToStr, true);
+            document.getElementById('dateDebug').textContent = 
+                `Input: "${dateFromStr}" to "${dateToStr}"\n` +
+                `Parsed From: ${dateFrom}\n` +
+                `Parsed To: ${dateTo}\n` +
+                `From ISO: ${dateFrom?.toISOString()}\n` +
+                `To ISO: ${dateTo?.toISOString()}`;
+
+            // Step 2: Fetch attendance data
+            const attendanceResponse = await fetch('attendance_api.php');
+            const attendanceResult = await attendanceResponse.json();
+            const attendanceRows = attendanceResult.data || [];
+            
+            document.getElementById('attendanceDebug').textContent = 
+                `Total attendance records: ${attendanceRows.length}\n` +
+                `Sample records for employee 4:\n` +
+                JSON.stringify(
+                    attendanceRows.filter(r => r.Emp_id == 4 && r.Date >= '2026-04-16' && r.Date <= '2026-04-30'),
+                    null,
+                    2
+                );
+
+            // Step 3: Build attendance map
+            const { map: attendanceMap, includedCount, skippedCount } = 
+                buildAttendanceWorkMap(attendanceRows, dateFrom, dateTo);
+
+            const employee4 = attendanceMap.get('4');
+            document.getElementById('mapDebug').textContent = 
+                `Total included records: ${includedCount}\n` +
+                `Total skipped records: ${skippedCount}\n` +
+                `Employee 4 attendance:\n` +
+                JSON.stringify(employee4, null, 2) + '\n' +
+                `Employee 4 hours: ${employee4 ? (employee4.regularMinutes / 60) : 0}h regular, ${employee4 ? (employee4.overtimeMinutes / 60) : 0}h OT`;
+
+            // Step 4: Show calculation
+            document.getElementById('salaryDebug').textContent = 
+                `Calculated for Employee 4 (Alexis Eron):\n` +
+                `Monthly Salary: 23,333.33\n` +
+                `Gross Pay Per Day: ${(23333.33 / 26).toFixed(2)}\n` +
+                `Hours Worked: ${employee4 ? (employee4.regularMinutes / 60) : 0}\n` +
+                `Hourly Rate: ${(23333.33 / 26 / 8).toFixed(2)}\n` +
+                `Cutoff Salary: ${employee4 ? (23333.33 / 26 / 8 * (employee4.regularMinutes / 60)).toFixed(2) : 0}`;
+        }
+
+        runDebug().catch(err => {
+            document.body.innerHTML += `<h2 style="color:red">Error: ${err.message}</h2>`;
+        });
+    </script>
+</body>
+</html>

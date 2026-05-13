@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Full Employee Salary Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        pre { background: white; padding: 15px; max-height: 800px; overflow: auto; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; font-size: 11px; }
+        .section { margin: 20px 0; background: white; border: 1px solid #ddd; padding: 15px; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 14px; }
+        button:hover { background: #0056b3; }
+        .console { background: #222; color: #0f0; padding: 10px; border-radius: 4px; font-size: 11px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>Full Employee Salary Calculation Test - April 1-15, 2026</h1>
+    
+    <div class="section">
+        <button onclick="runFullTest()">Run Complete Test</button>
+    </div>
+    
+    <div class="section">
+        <h2>Console Output</h2>
+        <div class="console" id="console"></div>
+    </div>
+
+    <script>
+        // Capture console logs
+        const consoleLogs = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
+            consoleLogs.push(msg);
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            const msg = '[ERROR] ' + args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
+            consoleLogs.push(msg);
+            originalError.apply(console, args);
+        };
+        
+        // Helper functions copied from the actual page
+        function parseDateInputValue(value, endOfDay = false) {
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+            let parsedDate = null;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                const [year, month, day] = raw.split('-').map(Number);
+                parsedDate = new Date(year, month - 1, day);
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                const [partA, partB, year] = raw.split('/').map(Number);
+                let day = partA;
+                let month = partB;
+                if (partA <= 12 && partB > 12) {
+                    month = partA;
+                    day = partB;
+                }
+                parsedDate = new Date(year, month - 1, day);
+            } else {
+                const fallback = new Date(raw);
+                if (!Number.isNaN(fallback.getTime())) {
+                    parsedDate = fallback;
+                }
+            }
+            if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+                return null;
+            }
+            if (endOfDay) {
+                parsedDate.setHours(23, 59, 59, 999);
+            } else {
+                parsedDate.setHours(0, 0, 0, 0);
+            }
+            return parsedDate;
+        }
+
+        function getAttendanceEmployeeId(item = {}) {
+            return String(item.Emp_id ?? item.id ?? '').trim();
+        }
+
+        function getAttendanceItemDate(item = {}) {
+            const rawDate = item.Date ?? item.date ?? '';
+            if (!rawDate) {
+                return null;
+            }
+            const normalized = String(rawDate).trim();
+            const parsedDate = /^\d{4}-\d{2}-\d{2}/.test(normalized)
+                ? new Date(`${normalized.slice(0, 10)}T00:00:00`)
+                : new Date(normalized);
+            return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+        }
+
+        function getAttendanceDurationMinutes(item = {}) {
+            const directDuration = Number(item.Duration ?? item.duration);
+            if (Number.isFinite(directDuration) && directDuration > 0) {
+                return directDuration;
+            }
+            const clockInValue = item.Clock_in ?? item.clockIn;
+            const clockOutValue = item.Clock_out ?? item.clockOut;
+            if (!clockInValue || !clockOutValue) {
+                return 0;
+            }
+            const clockIn = new Date(clockInValue);
+            const clockOut = new Date(clockOutValue);
+            if (Number.isNaN(clockIn.getTime()) || Number.isNaN(clockOut.getTime())) {
+                return 0;
+            }
+            let durationMinutes = (clockOut.getTime() - clockIn.getTime()) / 60000;
+            if (durationMinutes < 0) {
+                durationMinutes += 1440;
+            }
+            return Number.isFinite(durationMinutes) && durationMinutes > 0 ? durationMinutes : 0;
+        }
+
+        function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = null) {
+            const attendanceByEmployee = new Map();
+            
+            console.log('buildAttendanceWorkMap called with:');
+            console.log('  attendanceData.length:', attendanceData.length);
+            console.log('  dateFrom:', dateFrom);
+            console.log('  dateTo:', dateTo);
+
+            try {
+                (attendanceData || []).forEach((item, index) => {
+                    try {
+                        const employeeId = getAttendanceEmployeeId(item);
+                        if (!employeeId) {
+                            if (index < 2) console.log(`Record ${index}: No employeeId`);
+                            return;
+                        }
+
+                        if (dateFrom || dateTo) {
+                            const itemDate = getAttendanceItemDate(item);
+                            if (!itemDate || Number.isNaN(itemDate.getTime())) {
+                                if (index < 2) console.log(`Record ${index}: Invalid date`);
+                                return;
+                            }
+
+                            if (dateFrom && itemDate < dateFrom) {
+                                if (index < 2) console.log(`Record ${index} (${employeeId}): Before dateFrom`);
+                                return;
+                            }
+
+                            if (dateTo && itemDate > dateTo) {
+                                if (index < 2) console.log(`Record ${index} (${employeeId}): After dateTo`);
+                                return;
+                            }
+                        }
+
+                        const durationMinutes = getAttendanceDurationMinutes(item);
+                        const isAO = Number(item.AO) === 1;
+                        const regularMinutes = Math.max(0, Math.min(durationMinutes, 480));
+                        const overtimeMinutes = durationMinutes > 480 && isAO ? (durationMinutes - 480) : 0;
+
+                        const existing = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
+                        existing.regularMinutes += regularMinutes;
+                        existing.overtimeMinutes += overtimeMinutes;
+                        attendanceByEmployee.set(employeeId, existing);
+                        
+                        if (index < 3 || employeeId === '4') {
+                            console.log(`Record ${index} added: Emp${employeeId}, duration=${durationMinutes}min`);
+                        }
+                    } catch (recordError) {
+                        console.error(`Error processing record ${index}:`, recordError.message);
+                    }
+                });
+            } catch (mapError) {
+                console.error('Error building attendance map:', mapError.message);
+            }
+
+            console.log('buildAttendanceWorkMap complete - map size:', attendanceByEmployee.size);
+            return attendanceByEmployee;
+        }
+
+        async function runFullTest() {
+            consoleLogs.length = 0;
+            const consoleDiv = document.getElementById('console');
+            consoleDiv.textContent = 'Running test...';
+            
+            try {
+                console.log('=== STARTING FULL TEST ===');
+                
+                const dateFrom = parseDateInputValue('2026-04-01', false);
+                const dateTo = parseDateInputValue('2026-04-15', true);
+                
+                console.log('Parsed dates:');
+                console.log('  dateFrom:', dateFrom?.toISOString());
+                console.log('  dateTo:', dateTo?.toISOString());
+                
+                // Fetch employees
+                console.log('\nFetching employees API...');
+                const empRes = await fetch('../Employee_management/employees_api.php');
+                const empData = await empRes.json();
+                console.log('Employees API returned:', empData.success, 'count:', empData.data?.length);
+                
+                // Fetch attendance
+                console.log('\nFetching attendance API...');
+                const attRes = await fetch('attendance_api.php');
+                const attData = await attRes.json();
+                console.log('Attendance API returned:', attData.success, 'count:', attData.data?.length);
+                
+                if (attData.data) {
+                    console.log('First 3 attendance records:');
+                    attData.data.slice(0, 3).forEach((r, i) => {
+                        console.log(`  ${i}: Emp${r.Emp_id}, Date=${r.Date}, Duration=${r.Duration}`);
+                    });
+                }
+                
+                // Build attendance map
+                console.log('\n=== CALLING buildAttendanceWorkMap ===');
+                const attendanceByEmployee = buildAttendanceWorkMap(attData.data || [], dateFrom, dateTo);
+                
+                console.log('\n=== RESULTS ===');
+                console.log('Map size:', attendanceByEmployee.size);
+                Array.from(attendanceByEmployee.entries()).forEach(([empId, data]) => {
+                    console.log(`Employee ${empId}: ${data.regularMinutes}min regular, ${data.overtimeMinutes}min overtime, ${(data.regularMinutes/60).toFixed(2)}h`);
+                });
+                
+                // Check Employee 4 specifically
+                if (empData.data) {
+                    console.log('\n=== CHECKING EMPLOYEE 4 ===');
+                    const emp4 = empData.data.find(e => String(e.id) === '4');
+                    if (emp4) {
+                        const work = attendanceByEmployee.get('4');
+                        console.log(`Employee ID: ${emp4.id} (${typeof emp4.id})`);
+                        console.log(`Found in map: ${!!work}`);
+                        if (work) {
+                            const hoursWorked = (work.regularMinutes || 0) / 60;
+                            console.log(`Hours worked: ${hoursWorked.toFixed(2)}`);
+                            const hourlyRate = (emp4.salary / 26) / 8;
+                            const cutoffSalary = hourlyRate * hoursWorked;
+                            console.log(`Monthly salary: ${emp4.salary}`);
+                            console.log(`Hourly rate: ${hourlyRate.toFixed(2)}`);
+                            console.log(`Cutoff salary: ${cutoffSalary.toFixed(2)}`);
+                        }
+                    }
+                }
+                
+                console.log('\n=== TEST COMPLETE ===');
+                
+            } catch (error) {
+                console.error('Test error:', error.message);
+                console.error(error);
+            }
+            
+            // Display console output
+            consoleDiv.textContent = consoleLogs.join('\n');
+        }
+    </script>
+</body>
+</html>

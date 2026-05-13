@@ -228,7 +228,7 @@ class TaxTableManager extends PremiumTableManager {
   getColumnDefinitions() {
     return [
       { data: 'description', title: 'Description' },
-      { data: 'tax_rate', title: 'Tax Rate', render: (data) => parseFloat(data).toFixed(2) + '%' },
+      { data: 'tax_rate', title: 'Tax Rate', render: (data) => (parseFloat(data) * 100).toFixed(2) + '%' },
       { data: 'base_tax', title: 'Base Amount', render: (data) => data ? parseFloat(data).toLocaleString('en-US', {minimumFractionDigits: 2}) : 'N/A' },
       {
         data: 'id',
@@ -245,7 +245,7 @@ class TaxTableManager extends PremiumTableManager {
   formatTableRow(row) {
     return `
       <td>${row.description || ''}</td>
-      <td>${parseFloat(row.tax_rate).toFixed(2)}%</td>
+      <td>${(parseFloat(row.tax_rate) * 100).toFixed(2)}%</td>
       <td>${row.base_tax ? parseFloat(row.base_tax).toLocaleString('en-US', {minimumFractionDigits: 2}) : 'N/A'}</td>
       <td>
         <button class="btn btn-sm btn-warning" onclick="taxManager.openEditForm(${row.id})">Edit</button>
@@ -259,7 +259,7 @@ class TaxTableManager extends PremiumTableManager {
     document.getElementById('taxYear').value = record.year;
     document.getElementById('taxIncomeFrom').value = record.income_from;
     document.getElementById('taxIncomeTo').value = record.income_to || '';
-    document.getElementById('taxRate').value = record.tax_rate;
+    document.getElementById('taxRate').value = (parseFloat(record.tax_rate) * 100).toFixed(2);
     document.getElementById('taxBaseAmount').value = record.base_tax || 0;
     document.getElementById('taxDescription').value = record.description || '';
   }
@@ -308,7 +308,7 @@ class TaxTableManager extends PremiumTableManager {
     const year = parseInt(document.getElementById('taxYear').value);
     const incomeFrom = parseFloat(document.getElementById('taxIncomeFrom').value);
     const incomeTo = document.getElementById('taxIncomeTo').value ? parseFloat(document.getElementById('taxIncomeTo').value) : null;
-    const taxRate = parseFloat(document.getElementById('taxRate').value);
+    const taxRate = parseFloat(document.getElementById('taxRate').value) / 100;
     const baseTax = parseFloat(document.getElementById('taxBaseAmount').value);
     const description = document.getElementById('taxDescription').value;
 

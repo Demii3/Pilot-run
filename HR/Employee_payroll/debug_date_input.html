@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Date Input Values</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; max-height: 400px; }
+        .debug { margin: 20px 0; border: 1px solid #ccc; padding: 10px; }
+        input { padding: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>Debug Date Input Fields</h1>
+    
+    <div class="debug">
+        <h2>Current Input Field Values</h2>
+        <p>
+            <label>From: <input type="text" id="employeeSalaryDateFrom" value="April 16, 2026"></label>
+        </p>
+        <p>
+            <label>To: <input type="text" id="employeeSalaryDateTo" value="April 30, 2026"></label>
+        </p>
+        <button onclick="testDateParsing()">Test Date Parsing</button>
+    </div>
+
+    <div class="debug">
+        <h2>Parsing Results</h2>
+        <pre id="parseResults"></pre>
+    </div>
+
+    <div class="debug">
+        <h2>Attendance API Test</h2>
+        <pre id="attendanceResults"></pre>
+    </div>
+
+    <script>
+        function parseDateInputValue(value, endOfDay = false) {
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+
+            let parsedDate = null;
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                const [year, month, day] = raw.split('-').map(Number);
+                parsedDate = new Date(year, month - 1, day);
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                const [partA, partB, year] = raw.split('/').map(Number);
+                let day = partA;
+                let month = partB;
+
+                if (partA <= 12 && partB > 12) {
+                    month = partA;
+                    day = partB;
+                }
+
+                parsedDate = new Date(year, month - 1, day);
+            } else {
+                const fallback = new Date(raw);
+                if (!Number.isNaN(fallback.getTime())) {
+                    parsedDate = fallback;
+                }
+            }
+
+            if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+                return null;
+            }
+
+            if (endOfDay) {
+                parsedDate.setHours(23, 59, 59, 999);
+            } else {
+                parsedDate.setHours(0, 0, 0, 0);
+            }
+
+            return parsedDate;
+        }
+
+        async function testDateParsing() {
+            const fromInput = document.getElementById('employeeSalaryDateFrom');
+            const toInput = document.getElementById('employeeSalaryDateTo');
+
+            const fromValue = fromInput.value;
+            const toValue = toInput.value;
+
+            const dateFrom = parseDateInputValue(fromValue, false);
+            const dateTo = parseDateInputValue(toValue, true);
+
+            let results = `Input Value From: "${fromValue}"\n`;
+            results += `Input Value To: "${toValue}"\n\n`;
+            results += `Parsed From: ${dateFrom}\n`;
+            results += `Parsed To: ${dateTo}\n\n`;
+            results += `From ISO: ${dateFrom?.toISOString()}\n`;
+            results += `To ISO: ${dateTo?.toISOString()}\n\n`;
+
+            // Test attendance filtering
+            results += `\n=== Testing Attendance Filter ===\n`;
+            const testAttendanceDate = "2026-04-22";
+            const testDate = new Date("2026-04-22T00:00:00");
+            results += `Test attendance date: ${testAttendanceDate}\n`;
+            results += `Test date object: ${testDate}\n`;
+            results += `Test date >= dateFrom: ${testDate >= dateFrom}\n`;
+            results += `Test date <= dateTo: ${testDate <= dateTo}\n`;
+            results += `Test date >= dateFrom && <= dateTo: ${testDate >= dateFrom && testDate <= dateTo}\n`;
+
+            // Fetch actual attendance data
+            results += `\n=== Fetching Actual Attendance Data ===\n`;
+            try {
+                const response = await fetch('attendance_api.php');
+                const data = await response.json();
+                results += `Total attendance records: ${data.data?.length || 0}\n`;
+                
+                // Filter for employee 4 in the date range
+                const employee4Records = data.data.filter(r => {
+                    const empId = r.Emp_id?.toString() === '4';
+                    const recordDate = new Date(`${r.Date}T00:00:00`);
+                    return empId && recordDate >= dateFrom && recordDate <= dateTo;
+                });
+                
+                results += `\nEmployee 4 records in date range: ${employee4Records.length}\n`;
+                employee4Records.forEach((rec, idx) => {
+                    results += `Record ${idx + 1}: Date=${rec.Date}, Duration=${rec.Duration}, Emp_id=${rec.Emp_id}\n`;
+                });
+
+                const totalMinutes = employee4Records.reduce((sum, r) => sum + (Number(r.Duration) || 0), 0);
+                results += `Total minutes: ${totalMinutes}\n`;
+                results += `Total hours: ${totalMinutes / 60}\n`;
+
+            } catch (error) {
+                results += `Error: ${error.message}\n`;
+            }
+
+            document.getElementById('parseResults').textContent = results;
+        }
+
+        // Auto-test on load
+        window.onload = function() {
+            testDateParsing();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Attendance Filtering for April 1-15</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        pre { background: white; padding: 15px; overflow-x: auto; max-height: 500px; border: 1px solid #ddd; border-radius: 4px; }
+        .debug-section { margin: 20px 0; background: white; border: 1px solid #ddd; padding: 15px; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Debug Attendance Filtering - April 1-15, 2026</h1>
+    
+    <div class="debug-section">
+        <h2>Step 1: Test Date Parsing</h2>
+        <pre id="dateParsingTest"></pre>
+    </div>
+
+    <div class="debug-section">
+        <h2>Step 2: Fetch and Analyze Attendance Data</h2>
+        <button onclick="analyzeAttendance()">Run Analysis</button>
+        <pre id="attendanceAnalysis"></pre>
+    </div>
+
+    <div class="debug-section">
+        <h2>Step 3: Test buildAttendanceWorkMap Logic</h2>
+        <pre id="mapTest"></pre>
+    </div>
+
+    <script>
+        function parseDateInputValue(value, endOfDay = false) {
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+
+            let parsedDate = null;
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                const [year, month, day] = raw.split('-').map(Number);
+                parsedDate = new Date(year, month - 1, day);
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                const [partA, partB, year] = raw.split('/').map(Number);
+                let day = partA;
+                let month = partB;
+
+                if (partA <= 12 && partB > 12) {
+                    month = partA;
+                    day = partB;
+                }
+
+                parsedDate = new Date(year, month - 1, day);
+            } else {
+                const fallback = new Date(raw);
+                if (!Number.isNaN(fallback.getTime())) {
+                    parsedDate = fallback;
+                }
+            }
+
+            if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+                return null;
+            }
+
+            if (endOfDay) {
+                parsedDate.setHours(23, 59, 59, 999);
+            } else {
+                parsedDate.setHours(0, 0, 0, 0);
+            }
+
+            return parsedDate;
+        }
+
+        // Test date parsing
+        const dateFrom = parseDateInputValue('2026-04-01', false);
+        const dateTo = parseDateInputValue('2026-04-15', true);
+
+        let dateTest = `Date inputs: "2026-04-01" and "2026-04-15"\n\n`;
+        dateTest += `Parsed dateFrom: ${dateFrom}\n`;
+        dateTest += `ISO dateFrom: ${dateFrom?.toISOString()}\n\n`;
+        dateTest += `Parsed dateTo: ${dateTo}\n`;
+        dateTest += `ISO dateTo: ${dateTo?.toISOString()}\n\n`;
+        dateTest += `Date range valid: ${dateFrom && dateTo && dateFrom <= dateTo ? 'YES' : 'NO'}\n`;
+        
+        document.getElementById('dateParsingTest').textContent = dateTest;
+
+        async function analyzeAttendance() {
+            const output = document.getElementById('attendanceAnalysis');
+            output.textContent = 'Fetching attendance API...';
+
+            try {
+                const response = await fetch('attendance_api.php');
+                const data = await response.json();
+
+                if (!data.success) {
+                    output.textContent = `Error: API returned success=false\nMessage: ${data.message}`;
+                    return;
+                }
+
+                const dateFrom = parseDateInputValue('2026-04-01', false);
+                const dateTo = parseDateInputValue('2026-04-15', true);
+
+                let result = `Total attendance records from API: ${data.data?.length || 0}\n\n`;
+                result += `=== RECORDS IN DATE RANGE (2026-04-01 to 2026-04-15) ===\n`;
+
+                const attendanceInRange = (data.data || []).filter(record => {
+                    const recordDate = new Date(`${record.Date}T00:00:00`);
+                    return recordDate >= dateFrom && recordDate <= dateTo;
+                });
+
+                result += `Records in range: ${attendanceInRange.length}\n\n`;
+
+                if (attendanceInRange.length > 0) {
+                    result += `Sample records:\n`;
+                    attendanceInRange.slice(0, 10).forEach((rec, idx) => {
+                        result += `${idx + 1}. Emp_id=${rec.Emp_id}, Date=${rec.Date}, Duration=${rec.Duration}\n`;
+                    });
+                } else {
+                    result += `NO RECORDS FOUND IN DATE RANGE!\n\n`;
+                    result += `Sample of ALL records in database:\n`;
+                    (data.data || []).slice(0, 15).forEach((rec, idx) => {
+                        result += `${idx + 1}. Emp_id=${rec.Emp_id}, Date=${rec.Date}, Duration=${rec.Duration}\n`;
+                    });
+                }
+
+                // Summary by employee for the range
+                result += `\n=== HOURS BY EMPLOYEE (April 1-15) ===\n`;
+                const employeeHours = {};
+                attendanceInRange.forEach(rec => {
+                    const empId = rec.Emp_id;
+                    const minutes = Number(rec.Duration) || 0;
+                    if (!employeeHours[empId]) employeeHours[empId] = 0;
+                    employeeHours[empId] += minutes;
+                });
+
+                if (Object.keys(employeeHours).length > 0) {
+                    Object.entries(employeeHours).forEach(([empId, minutes]) => {
+                        result += `Employee ${empId}: ${(minutes / 60).toFixed(2)} hours (${minutes} minutes)\n`;
+                    });
+                } else {
+                    result += `No employees have hours in this range!\n`;
+                }
+
+                output.textContent = result;
+
+                // Update step 3
+                if (attendanceInRange.length > 0) {
+                    testBuildMap(attendanceInRange, dateFrom, dateTo);
+                }
+
+            } catch (error) {
+                output.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function testBuildMap(attendanceData, dateFrom, dateTo) {
+            function getAttendanceEmployeeId(item) {
+                return Number(item.Emp_id);
+            }
+
+            function getAttendanceItemDate(item) {
+                const raw = String(item.Date || '').trim();
+                if (!raw) return null;
+
+                let date = null;
+                if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                    const [year, month, day] = raw.split('-').map(Number);
+                    date = new Date(year, month - 1, day);
+                } else {
+                    date = new Date(raw);
+                }
+
+                if (!date || Number.isNaN(date.getTime())) return null;
+                date.setHours(0, 0, 0, 0);
+                return date;
+            }
+
+            function getAttendanceDurationMinutes(item) {
+                return Number(item.Duration) || 0;
+            }
+
+            const attendanceByEmployee = new Map();
+
+            attendanceData.forEach(item => {
+                const employeeId = getAttendanceEmployeeId(item);
+                if (!employeeId) return;
+
+                if (dateFrom || dateTo) {
+                    const itemDate = getAttendanceItemDate(item);
+                    if (!itemDate || Number.isNaN(itemDate.getTime())) return;
+
+                    if (dateFrom && itemDate < dateFrom) return;
+                    if (dateTo && itemDate > dateTo) return;
+                }
+
+                const durationMinutes = getAttendanceDurationMinutes(item);
+                const isAO = Number(item.AO) === 1;
+                const regularMinutes = Math.max(0, Math.min(durationMinutes, 480));
+                const overtimeMinutes = durationMinutes > 480 && isAO ? (durationMinutes - 480) : 0;
+
+                const existing = attendanceByEmployee.get(employeeId) || { regularMinutes: 0, overtimeMinutes: 0 };
+                existing.regularMinutes += regularMinutes;
+                existing.overtimeMinutes += overtimeMinutes;
+                attendanceByEmployee.set(employeeId, existing);
+            });
+
+            let mapResult = `=== buildAttendanceWorkMap OUTPUT ===\n`;
+            mapResult += `Processed ${attendanceData.length} records\n`;
+            mapResult += `Result map size: ${attendanceByEmployee.size}\n\n`;
+
+            const entries = Array.from(attendanceByEmployee.entries());
+            if (entries.length > 0) {
+                mapResult += `Employee Hour Summary:\n`;
+                entries.forEach(([empId, { regularMinutes, overtimeMinutes }]) => {
+                    mapResult += `Employee ${empId}: Regular=${(regularMinutes / 60).toFixed(2)}h, Overtime=${(overtimeMinutes / 60).toFixed(2)}h\n`;
+                });
+            } else {
+                mapResult += `MAP IS EMPTY - No employees found!`;
+            }
+
+            document.getElementById('mapTest').textContent = mapResult;
+        }
+
+        // Auto-run analysis on load
+        window.onload = function() {
+            setTimeout(analyzeAttendance, 500);
+        };
+    </script>
+</body>
+</html>
