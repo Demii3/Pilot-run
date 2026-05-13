@@ -106,7 +106,7 @@ function checkTimeInStatus(timeStr) {
         h1 = 0; // Convert 12 AM to 0 hours for easier comparison{
     };
     const timeinMinutes = timeStr[1] == 'PM' ? (h1 * 60 + m1) + 720 : h1 * 60 + m1; // Adjust for PM if needed
-    return timeinMinutes <= 480 ? 'On Time' : 'Late'; // 480 minutes = 8 hours
+    return timeinMinutes <= 480 ? 'On-time' : 'Late'; // 480 minutes = 8 hours
 };
 
 function checkTimeOutStatus(timeStr) {
