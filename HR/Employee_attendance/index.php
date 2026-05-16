@@ -6,7 +6,6 @@
   }
 
   $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
-  echo ''. $baseUrl .'';
 
   
   // Prevent caching to avoid showing logged-in content on back button
@@ -52,6 +51,7 @@
 
 <!-- Navigation Bar -->
 <nav class="custom-navbar">
+  <input type="hidden" id="baseUrl" value="<?php echo $baseUrl; ?>">
 
   <div class="nav-left">
     <a class="logo-circle" href="../" aria-label="Go to Home">
@@ -74,7 +74,7 @@
 
       <a href="#" class="profile-item"> Settings & Privacy </a>
       <a href="#" class="profile-item"> Help & Support </a>
-      <a href="<?php echo $baseUrl; ?>/Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
+      <a class="profile-item" onclick="logout()"> Logout </a>
 
     </div>
 

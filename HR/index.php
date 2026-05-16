@@ -6,6 +6,8 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true || (($_SESSION['em
     exit;
 }
 
+$BASE_URL = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
+
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
@@ -36,11 +38,10 @@ header('Pragma: no-cache');
         <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="./HR_Assets/Logout.js" defer></script>
+        <script src="<?php echo $BASE_URL; ?>/HR/HR_assets/Logout.js" defer></script>
     </head>
 
     <body>
-
         <div class="bg-container">
             <img src="../Images/bgimg.jpg" class="bg-image">
             <div class="overlay"></div>

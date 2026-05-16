@@ -1,6 +1,6 @@
 <?php
     session_start();
-    if (!isset($_SESSION['login']) || $_SESSION['type'] != "Emp") {
+    if (!isset($_SESSION['login']) || $_SESSION['empType'] != "Emp") {
         header("location: ../");
         exit();
     };
@@ -11,14 +11,6 @@
     header('Pragma: no-cache');
     header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
 	//print_r($_SESSION);
-	echo "<input type='hidden' id='userId' value='".$_SESSION['id']."'>";
-	echo "<input type='hidden' id='username' value='".$_SESSION['username']."'>";
-	echo "<input type='hidden' id='workStatus' value='".$_SESSION['work_status']."'>";
-	echo "<input type='hidden' id='locations' value='".json_encode($_SESSION['locations'])."'>";
-	echo "<input type='hidden' id='coordinates' value='".json_encode($_SESSION['coordinates'])."'>";
-	echo "<input type='hidden' id='empLocationLat' value=''>";
-	echo "<input type='hidden' id='empLocationLng' value=''>";
-	echo "<input type='hidden' id='attendanceId' value=''>";
 ?>
 
 <!DOCTYPE html>
@@ -52,6 +44,13 @@
 </head>
 
 <body>
+	<?php
+		echo "<input type='hidden' id='userId' value='".$_SESSION['userId']."'>";
+		echo "<input type='hidden' id='username' value='".$_SESSION['username']."'>";
+		echo "<input type='hidden' id='empLocationLat' value=''>";
+		echo "<input type='hidden' id='empLocationLng' value=''>";
+		echo "<input type='hidden' id='attendanceId' value=''>";
+	?>
 
 <div class="bg-container">
 	<img src="./Images/bgimg.jpg" class="bg-image" alt="Background">

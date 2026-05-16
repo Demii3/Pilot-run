@@ -246,3 +246,19 @@ function saveOptions() {
             window.location.reload();
         }});
 };
+
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        const baseUrl = document.getElementById('baseUrl') ? document.getElementById('baseUrl').value : '';
+        fetch(baseUrl + '/Modules/logout_process.php', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            window.location.href = baseUrl + '/';
+        })
+        .catch(error => {
+            console.error('Error during logout:', error);
+        });
+    }
+}
