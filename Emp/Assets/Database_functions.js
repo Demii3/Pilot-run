@@ -63,7 +63,9 @@ function saveTimeIn () {
         location: location,
         coordinates: coordinates,
         timeIn: timeIn,
-        timeInStatus: checkTimeInStatus([timeIn.split(' ')[0], timeIn.split(' ')[1]])
+        timeInStatus: checkTimeInStatus([timeIn.split(' ')[0], timeIn.split(' ')[1]]),
+        userLoc: JSON.stringify([document.getElementById('empLocationLat').value, document.getElementById('empLocationLng').value]),
+        inGeofence: document.getElementById('inGeofence').value
     }, function(response) {
         console.log('Server response:', response);
     });

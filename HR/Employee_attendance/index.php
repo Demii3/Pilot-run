@@ -39,6 +39,9 @@
   <script src="https://cdn.datatables.net/buttons/3.2.2/js/buttons.print.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+	<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
   <link href="./Assets/Demetri.css" rel="stylesheet">
   <script src="./Assets/Demetri.js"></script>
   <script src="./Assets/Time_functions.js"></script>
@@ -145,12 +148,15 @@
                   <th>Date</th>
                   <th>Location</th>
                   <th>Clock In</th>
-                  <th>Clock In Status</th>
+                  <th>CI Status</th>
                   <th>Clock Out</th>
-                  <th>Clock Out Status</th>
+                  <th>CO Status</th>
                   <th>Duration</th>
                   <th>AO</th>
-                  <th>Work Day Status</th>
+                  <th>Work Day</th>
+                  <th>User Location</th>
+                  <th>In Geofence</th>
+                  <th>Coordinates</th>
               </tr>
           </thead>
           <tbody>
@@ -185,7 +191,12 @@
             <input id="modalDate" type="date" class="form-control" readonly>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Location</label>
+            <div class="col-md-12 d-flex justify-content-between gap-2">
+              <label class="form-label">Location</label>
+              <button type="button" class="btn btn-sm btn-outline-primary" data-bs-target="#userLocModal" onclick="viewLocationOnMap()">
+                View Location
+              </button>
+            </div>
             <input id="modalLocation" type="text" class="form-control" readonly>
           </div>
           <div class="col-md-6">
@@ -227,6 +238,14 @@
                 <option value="LH">Legal Holiday</option>
                 <option value="Custom">Custom</option>
               </select>
+          </div>
+          <div class="col-md-6 d-none">
+            <label class="form-label">User Location</label>
+            <input id="modalUserLoc" type="text" class="form-control" readonly>
+          </div>
+          <div class="col-md-6 d-none">
+            <label class="form-label">Coordinates</label>
+            <input id="modalCoordinates" type="text" class="form-control" readonly>
           </div>
           <!-- <div class="col-md-6">
               <label class="form-label">Duration</label>
@@ -279,21 +298,6 @@
         </div>
       </div>
 
-    <!-- modal separate -->
-
-<!--       <div class="modal-body d-none" id="modalBody2">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Name</label>
-            <input id="modalName" type="text" class="form-control" readonly>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Department</label>
-            <input id="modalDepartment" type="text" class="form-control" readonly>
-          </div>
-          </div>
-        </div>
-      </div> -->
       <div class="modal-footer d-flex justify-content-between">
         <div class="col-md-6 d-flex justify-content-start gap-2">
           <button id="editButton" class="btn btn-warning" onclick = "editAttendance()">Edit</button>
@@ -495,6 +499,23 @@
   </div>
 </div>
 
+<div id="userLocModal" class="modal fade" tabindex="-1" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">User Area and Location</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div id="userLocModalBody" class="modal-body">
+              <span class="d-none">This attendance has no location data available</span>
+              <!-- Map Location is stored here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <!-- Background -->

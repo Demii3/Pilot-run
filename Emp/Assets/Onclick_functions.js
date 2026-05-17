@@ -8,6 +8,7 @@ const settings = document.getElementById('settingsLink');
 let map; // Declare map variable in a scope accessible to all functions
 let markers; // Declare marker variable to manage the marker on the map
 let geofenceLayer;
+let inGeofence = false; // Track geofence status globally
 
 function showLocationErrorModal(message) {
     const modalElement = document.getElementById('locationErrorModal');
@@ -310,6 +311,7 @@ function setAttendanceModuleProperties(querydata) {
                     const option = document.createElement('option');
                     option.value = location.name;
                     option.textContent = location.name;
+                    option.setAttribute('data-id', location.id);
                     option.setAttribute('data-coordinates', location.coordinates);
                     locationSelect.appendChild(option);
                 });
@@ -380,12 +382,14 @@ async function TapIn() {
 
     if (locationName && coordinates) {
         if (!isUserWithinGeofence(coordinates)) {
+            document.getElementById('inGeofence').value = 0;
             const confirmed = await showConfirmationModal('You are outside the selected geofence area. Do you want to proceed with Tap In?');
             if (!confirmed) {
                 return;
             }
         }
 
+        document.getElementById('inGeofence').value = 1;
         saveTimeIn();
     } else {
         showLocationErrorModal('Please select a location first');
@@ -404,12 +408,14 @@ async function TapOut() {
 
     if (locationName && coordinates) {
         if (!isUserWithinGeofence(coordinates)) {
+            document.getElementById('inGeofence').value = 0;
             const confirmed = await showConfirmationModal('You are outside the selected geofence area. Do you want to proceed with Tap Out?');
             if (!confirmed) {
                 return;
             }
         }
 
+        document.getElementById('inGeofence').value = 1;
         saveTimeOut();
     }
 }

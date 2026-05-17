@@ -1,5 +1,8 @@
 let attendanceEditInitialValues = null;
 let allowOvertimeInitialValue = 0;
+let map = null;
+let markersLayer = null;
+let geofenceLayer = null;
 
 document.addEventListener("click", function(e) {
     const menu = document.getElementById("profileMenu");
@@ -244,4 +247,61 @@ function clearCreateAttendanceModal() {
     }
 
     updateReadonlyEmptyState('#createAttendanceModal input[readonly]');
+}
+
+function viewLocationOnMap() {
+    const userLocInput = document.getElementById('modalUserLoc').value;
+    const geofenceLoc = document.getElementById('modalCoordinates').value;
+
+    if (!userLocInput || !geofenceLoc) {
+        if (map) map.remove();
+        document.getElementById('userLocModalBody').querySelector('span').classList.remove('d-none');
+        const userLocModal = document.getElementById('userLocModal');
+        const userLocModalBody = document.getElementById('userLocModalBody');
+        const modal = bootstrap.Modal.getOrCreateInstance(userLocModal);
+        modal.show();
+        return;
+    }
+
+    const userLocArray = userLocInput.slice(1, -1).split(',');
+    const userLat = parseFloat(userLocArray[0].slice(1, -1));
+    const userLng = parseFloat(userLocArray[1].slice(1, -1));
+    const userLocModal = document.getElementById('userLocModal');
+    const userLocModalBody = document.getElementById('userLocModalBody');
+    const modal = bootstrap.Modal.getOrCreateInstance(userLocModal);
+    modal.show();
+
+    if (map) {
+        markersLayer.clearLayers();
+        if (geofenceLayer) {
+            geofenceLayer.remove();
+        }
+        geofenceLayer = L.polygon(JSON.parse(geofenceLoc), {
+        color: 'blue',
+        fillColor: '#3388ff',
+        fillOpacity: 0.2
+    }).addTo(map);
+        const marker = L.marker([userLat, userLng]).addTo(markersLayer);
+        map.setView([userLat, userLng], 18);
+        return;
+    }
+
+    map = L.map(userLocModalBody).setView([userLat, userLng], 18);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    markersLayer = L.layerGroup().addTo(map);
+    const marker = L.marker([userLat, userLng]).addTo(markersLayer);
+
+    geofenceLayer = L.polygon(JSON.parse(geofenceLoc), {
+        color: 'blue',
+        fillColor: '#3388ff',
+        fillOpacity: 0.2
+    }).addTo(map);
+
+    // ensure tiles render correctly after showing modal
+    setTimeout(function() { try { map.invalidateSize(); } catch (e) { console.warn('invalidateSize failed', e); } }, 300);
 }

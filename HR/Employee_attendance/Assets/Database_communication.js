@@ -8,6 +8,7 @@ function searchAttendance(searchTerm, searchDate, table) {
         },
         dataType: 'json',
         success: function(response) {
+            console.log('Search response:', response);
             table.clear().draw();
             if (response.data && response.data.length > 0) {
                 response.data.forEach(function(row) {
@@ -24,7 +25,10 @@ function searchAttendance(searchTerm, searchDate, table) {
                         row.Clockout_status_html,
                         row.Duration,
                         row.AO,
-                        row.Work_day_status
+                        row.Work_day_status,
+                        row.userLoc,
+                        row.inGeofence,
+                        row.coordinates
                     ]).draw();
                 });
             }

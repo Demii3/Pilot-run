@@ -53,6 +53,7 @@
 		echo "<input type='hidden' id='empLocationLat' value=''>";
 		echo "<input type='hidden' id='empLocationLng' value=''>";
 		echo "<input type='hidden' id='attendanceId' value=''>";
+		echo "<input type='hidden' id='inGeofence' value=''>";
 	?>
 
 <div class="bg-container">

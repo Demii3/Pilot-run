@@ -8,7 +8,7 @@
     $querydata = [];
     $error = '';
 
-    $stmt = mysqli_prepare($dbc, "SELECT geofences.name, geofences.coordinates 
+    $stmt = mysqli_prepare($dbc, "SELECT geofences.id, geofences.name, geofences.coordinates
                                   FROM `geofences` 
                                   JOIN employee_location 
                                   ON employee_location.loc_id = geofences.id 

@@ -91,7 +91,10 @@ if ($result && mysqli_num_rows($result) > 0) {
             'Clockout_status_html' => $clockoutStatusHtml,
             'Duration' => $row['Duration'],
             'AO' => $row['AO'],
-            'Work_day_status' => $WorkClassification
+            'Work_day_status' => $WorkClassification,
+            'userLoc' => $row['User_loc'],
+            'inGeofence'=> $row['In_geofence'],
+            'coordinates'=> $row['Coordinates']
         );
     }
 }

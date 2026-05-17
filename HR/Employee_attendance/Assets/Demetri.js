@@ -7,7 +7,7 @@ $(document).ready(function() {
             dataType: 'json'
         }).then(function(response) {
             let count = 0;
-            const columns = [];
+            const columns = [13, 14, 15];
             for (const key in response.settings) {
                 if (key != 'id') {
                     switch(key) {
@@ -54,6 +54,10 @@ $(document).ready(function() {
                 {
                     targets: 10,
                     width: '80px'
+                },
+                {
+                    targets: [6, 8],
+                    width: '100px'
                 }
             ],
             buttons: [
@@ -142,6 +146,8 @@ $(document).ready(function() {
             $('#modalClockOutStatus').val($('<div>').html(rowData[9]).text());
             $('#allowOvertime').prop('checked', rowData[11] == 1);
             $('#modalDuration').val(rowData[10]);
+            $('#modalUserLoc').val(rowData[13]);
+            $('#modalCoordinates').val(rowData[15]);
             $('#Manual-modify').prop('checked', columnsToHide.includes(-1) ? true: false);
             manualMode();
 

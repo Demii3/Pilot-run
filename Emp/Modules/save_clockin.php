@@ -22,14 +22,18 @@
     $coordinates = mysqli_real_escape_string($dbc, $_POST['coordinates']);
     $clockinTime = mysqli_real_escape_string($dbc, $_POST['timeIn']);
     $clockinStatus = mysqli_real_escape_string($dbc, $_POST['timeInStatus']);
+    $userLoc = mysqli_real_escape_string($dbc, $_POST['userLoc']);
+    $inGeofence = mysqli_real_escape_string($dbc, $_POST['inGeofence']);
 
-    $sql1 = "INSERT INTO employee_attendance (Emp_id, `Date`, `Location`, `Coordinates`, `Clock_in`, `Clockin_Status`) 
+    $sql1 = "INSERT INTO employee_attendance (Emp_id, `Date`, `Location`, `Coordinates`, `Clock_in`, `Clockin_Status`, User_loc, In_geofence) 
             VALUES ($empId, 
                     '$date', 
                     '$location', 
                     '$coordinates', 
                     '$clockinTime', 
-                    '$clockinStatus')";
+                    '$clockinStatus', 
+                    '$userLoc', 
+                    '$inGeofence')";
 
     $result1 = mysqli_query($dbc, $sql1);
 

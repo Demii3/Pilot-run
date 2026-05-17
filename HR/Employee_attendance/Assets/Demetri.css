@@ -623,4 +623,42 @@ h2 {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 10px;
-};
+}
+
+/* User Location Modal - Layer above Attendance Modal and fit to body */
+#userLocModal {
+  z-index: 1060 !important;
+  text-align: center; /* allow inline-block centering */
+}
+
+#userLocModal .modal-backdrop {
+  z-index: 1050 !important;
+}
+
+/* Make dialog size itself to the content (#userLocModalBody) */
+#userLocModal .modal-dialog {
+  display: inline-block;
+  max-width: none;
+  width: auto;
+  margin: 1.75rem auto; /* keep vertical spacing */
+  pointer-events: auto;
+}
+
+#userLocModal .modal-content {
+  display: inline-block;
+  width: auto;
+  max-width: none;
+  overflow: hidden;
+}
+
+#userLocModalBody {
+  width: 400px;
+  height: 400px;
+  padding: 0; /* if map, remove inner padding */
+}
+
+@media (max-width: 480px) {
+  /* ensure modal remains responsive on small screens */
+  #userLocModalBody { width: calc(100vw - 40px); height: calc(100vh - 160px); }
+  #userLocModal .modal-dialog { width: 100%; }
+}
