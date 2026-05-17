@@ -42,6 +42,7 @@ header('Pragma: no-cache');
     </head>
 
     <body>
+        <input type="hidden" id="baseUrl" value="<?php echo $BASE_URL; ?>">
         <div class="bg-container">
             <img src="../Images/bgimg.jpg" class="bg-image">
             <div class="overlay"></div>

@@ -303,8 +303,17 @@ async function displayEmployees() {
 
 window.onclick = function(event) {
   const modal = document.getElementById('employeeModal');
+  if (!modal) return;
   if (event.target === modal) {
     closeModal();
+    return;
+  }
+  // If Bootstrap inserted a backdrop and it's clicked, close our modal too
+  if (event.target && event.target.classList && event.target.classList.contains('modal-backdrop')) {
+    closeModal();
+    // remove any bootstrap backdrops left behind
+    const backdrops = document.getElementsByClassName('modal-backdrop');
+    Array.from(backdrops).forEach(b => b.parentNode && b.parentNode.removeChild(b));
   }
 };
 

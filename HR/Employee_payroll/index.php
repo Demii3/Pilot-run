@@ -36,11 +36,13 @@
   <!-- CSS -->
   <link rel="stylesheet" href="payslip_module.css">
 
-  <link rel="icon" type="image/png" href="../../Images/logo.jpg"/>
-  <script src="../../Modules/universal_logout_handler.js"></script>
+  <script src="<?php echo $baseUrl; ?>/Assets/logout.js" defer></script>
+
+  <link rel="icon" type="image/png" href="<?php echo $baseUrl; ?>/Images/logo.jpg"/>
 </head>
 
 <body>
+  <input type="hidden" id="baseUrl" value="<?php echo $baseUrl; ?>"> 
 
 <!-- Navigation Bar -->
 <nav class="custom-navbar">
@@ -66,12 +68,30 @@
 
       <a href="#" class="profile-item"> Settings & Privacy </a>
       <a href="#" class="profile-item"> Help & Support </a>
-      <a href="<?php echo $baseUrl; ?>/Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
+      <a href="#" class="profile-item" onclick="logout()"> Logout </a>
 
     </div>
 
   </div>
 </nav>
+
+<!-- Notification Modal -->
+<div id="notificationModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="notificationMessage">Your notification message here.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <div class="payroll-container">
