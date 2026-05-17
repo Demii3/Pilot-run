@@ -5,12 +5,13 @@
         exit();
     };
 
+	$baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
+
     header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0, private');
     header('Cache-Control: post-check=0, pre-check=0', FALSE);
     header('Pragma: no-cache');
     header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-	//print_r($_SESSION);
 ?>
 
 <!DOCTYPE html>
@@ -31,7 +32,7 @@
 	<script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin ="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-	<link rel="icon" type="image/png" href="./Images/logo.jpg"/>
+	<link rel="icon" type="image/png" href="<?php echo $baseUrl; ?>/Emp/Images/logo.jpg"/>
 	<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 	<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 	<script src="./Assets/Onclick_functions.js" defer></script>
@@ -39,12 +40,13 @@
 	<script src="./Assets/Miscellaneous_functions.js" defer></script>
 	<script src="./Assets/Database_functions.js" defer></script>
 	<script src="./Assets/EmpInfo_functions.js" defer></script>
-	<script src="../Modules/universal_logout_handler.js"></script>
+	<script src="<?php echo $baseUrl; ?>/Assets/logout.js" defer></script>
 
 </head>
 
 <body>
 	<?php
+		echo "<input type='hidden' id='baseUrl' value='".$baseUrl."'>";
 		echo "<input type='hidden' id='userId' value='".$_SESSION['userId']."'>";
 		echo "<input type='hidden' id='username' value='".$_SESSION['username']."'>";
 		echo "<input type='hidden' id='empLocationLat' value=''>";
@@ -53,28 +55,23 @@
 	?>
 
 <div class="bg-container">
-	<img src="./Images/bgimg.jpg" class="bg-image" alt="Background">
+	<img src="<?php echo $baseUrl; ?>/Emp/Images/bgimg.jpg" class="bg-image" alt="Background">
 	<div class="overlay"></div>
 </div>
-
-<?php
-            // Get base URL for universal logout
-            $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
-        ?>
 		<nav class="custom-navbar">
 			<div class="nav-left">
 				<button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
 					<i class="fas fa-bars"></i>
 				</button>
 				<a class="logo-circle" href="../HR/index.php" aria-label="Go to Home">
-					<img src="./Images/logo.jpg" alt="Logo">
+					<img src="<?php echo $baseUrl; ?>/Emp/Images/logo.jpg" alt="Logo">
 				</a>
 				<span class="company-name">Chengshi <br>Construction Corp</span>
 			</div>
 
 			<div class="nav-right">
 				<button class="avatar" type="button" aria-label="User profile">
-					<img src="./Images/profilepic.jpg" alt="User">
+					<img src="<?php echo $baseUrl; ?>/Emp/Images/profilepic.jpg" alt="User">
 				</button>
 
 				<div id="profileMenu" class="dropdown-menu">
@@ -85,7 +82,7 @@
 
 					<a id="settingsLink" class="profile-item"> Settings & Privacy </a>
 					<a href="#" class="profile-item"> Help & Support </a>
-					<a href="<?php echo $baseUrl; ?>/Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
+					<a href="#" class="profile-item" onclick="logout()"> Logout </a>
 				</div>
 			</div>
 		</nav>
@@ -132,6 +129,24 @@
                         <h2 id="time"></h2>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Modal -->
+<div id="notificationModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="notificationMessage">Your notification message here.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
