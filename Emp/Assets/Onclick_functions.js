@@ -287,19 +287,33 @@ function setAttendanceModuleProperties(querydata) {
     }
 
     if (locationSelect) {
-        const locationsData = parseJsonList(document.getElementById('locations')?.value);
-        const coordinatesData = parseJsonList(document.getElementById('coordinates')?.value);
+        fetch('./Modules/Get_locations.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                USER_ID: document.getElementById('userId').value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (Array.isArray(data.querydata)) {
+                const placeholderOption = locationSelect.querySelector('option[value=""]');
+                locationSelect.innerHTML = '';
 
-        locationsData.forEach((location, index) => {
-            const option = document.createElement('option');
-            option.value = location;
-            option.textContent = location;
+                if (placeholderOption) {
+                    locationSelect.appendChild(placeholderOption);
+                }
 
-            if (coordinatesData[index]) {
-                option.setAttribute('data-coordinates', JSON.stringify(coordinatesData[index]));
+                data.querydata.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.name;
+                    option.textContent = location.name;
+                    option.setAttribute('data-coordinates', location.coordinates);
+                    locationSelect.appendChild(option);
+                });
             }
-
-            locationSelect.appendChild(option);
         });
 
         if (querydata.Work_Status == 'Tapped-in') {
@@ -308,13 +322,15 @@ function setAttendanceModuleProperties(querydata) {
         }
     }
 
-    locationSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const coordinates = selectedOption.getAttribute('data-coordinates');
-        if (coordinates) {
-            drawGeofence(JSON.parse(JSON.parse(coordinates)));
-        }
-    });
+    if (locationSelect) {
+        locationSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const coordinates = selectedOption && selectedOption.getAttribute('data-coordinates');
+            if (coordinates) {
+                drawGeofence((JSON.parse(coordinates)));
+            }
+        });
+    }
 
     if(tapInButton) {
         tapInButton.addEventListener('click', TapIn);
@@ -348,7 +364,7 @@ function setAttendanceModuleProperties(querydata) {
         };
 
     if (querydata.Work_Status == 'Tapped-in') {
-        drawGeofence(JSON.parse(JSON.parse(querydata.Coordinates)));
+        drawGeofence((JSON.parse(querydata.Coordinates)));
     };
 }
 

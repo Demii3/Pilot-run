@@ -6,7 +6,7 @@
 
     $msg = 'error';
 
-    if (!isset($_SESSION['login']) || $_SESSION['type'] != 'Emp') {
+    if (!isset($_SESSION['login']) || $_SESSION['empType'] != 'Emp') {
         echo mysqli_error($dbc);
         exit();
     }

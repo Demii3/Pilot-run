@@ -34,6 +34,7 @@
                 $_SESSION['username'] = $username;
                 $_SESSION['empType'] = $empType;
                 $_SESSION['userId'] = $row['User_id'];
+                $_SESSION['workStatus'] = $row['Work_status'];
             } else {    
                 $messagge = "Incorrect password.";
             }

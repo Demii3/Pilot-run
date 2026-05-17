@@ -49,6 +49,7 @@
 		echo "<input type='hidden' id='baseUrl' value='".$baseUrl."'>";
 		echo "<input type='hidden' id='userId' value='".$_SESSION['userId']."'>";
 		echo "<input type='hidden' id='username' value='".$_SESSION['username']."'>";
+		echo "<input type='hidden' id='workStatus' value='".$_SESSION['workStatus']."'>";
 		echo "<input type='hidden' id='empLocationLat' value=''>";
 		echo "<input type='hidden' id='empLocationLng' value=''>";
 		echo "<input type='hidden' id='attendanceId' value=''>";
@@ -155,6 +156,7 @@
 <script>
 	function fillspans() {
 		const userNameElements = document.querySelectorAll('.userName');
+
 		userNameElements.forEach(element => {
 			element.textContent = document.getElementById('username').value;
 		});
