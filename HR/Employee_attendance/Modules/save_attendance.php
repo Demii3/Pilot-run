@@ -114,7 +114,6 @@
 		echo json_encode(['success' => false, 'message' => 'Failed to prepare insert query: ' . mysqli_error($dbc), 'msg' => 'Failed to prepare insert query: ' . mysqli_error($dbc)]);
 		exit;
 	}
-
 	mysqli_stmt_bind_param(
 		$stmt,
 		'isssssssdis',

@@ -1,9 +1,12 @@
 <?php
   session_start();
-  if (!isset($_SESSION['login']) || $_SESSION['type'] != "HR") {
+  if (!isset($_SESSION['login']) || $_SESSION['empType'] != "HR") {
     header("location: ../../");
     exit();
   }
+
+  $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
+
   
   // Prevent caching to avoid showing logged-in content on back button
   header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
@@ -47,10 +50,8 @@
 <body>
 
 <!-- Navigation Bar -->
-<?php
-  $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
-?>
 <nav class="custom-navbar">
+  <input type="hidden" id="baseUrl" value="<?php echo $baseUrl; ?>">
 
   <div class="nav-left">
     <a class="logo-circle" href="../" aria-label="Go to Home">
@@ -73,7 +74,7 @@
 
       <a href="#" class="profile-item"> Settings & Privacy </a>
       <a href="#" class="profile-item"> Help & Support </a>
-      <a href="<?php echo $baseUrl; ?>/Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
+      <a class="profile-item" onclick="logout()"> Logout </a>
 
     </div>
 

@@ -1,9 +1,12 @@
 <?php
   session_start();
-  if (!isset($_SESSION['login']) || $_SESSION['type'] != "HR") {
+  if (!isset($_SESSION['login']) || $_SESSION['empType'] != "HR") {
     header("location: ../../");
     exit();
   }
+
+  $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
+
   
   // Prevent caching to avoid showing logged-in content on back button
   header('Expires: Sun, 01 Jan 2014 00:00:00 GMT');
@@ -37,17 +40,18 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <!-- DataTables JS -->
   <script src="//cdn.datatables.net/2.3.7/js/dataTables.min.js"></script>
+  
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script src="./employee-crud-simple.js?v=3"></script>
-  <script src="../../Modules/universal_logout_handler.js"></script>
+  <script src="<?php echo $baseUrl; ?>/Assets/Logout.js" defer></script>
 </head>
 
 <body>
-
+<input type="hidden" id="baseUrl" value="<?php echo $baseUrl; ?>">
 <!-- Navigation Bar -->
-<?php
-  $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . '/Pilot-run';
-?>
 <nav class="custom-navbar">
 
   <div class="nav-left">
@@ -71,7 +75,7 @@
 
       <a href="#" class="profile-item"> Settings & Privacy </a>
       <a href="#" class="profile-item"> Help & Support </a>
-      <a href="<?php echo $baseUrl; ?>/Modules/logout_process.php" class="profile-item" onclick="return handleLogout(event);"> Logout </a>
+      <a href="#" class="profile-item" onclick="logout()"> Logout </a>
 
     </div>
 
@@ -102,12 +106,28 @@
 
 </div>
 
-
-
   <!-- Background -->
 <div class="bg-container">
     <img src="../../Images/bgimg.jpg" class="bg-image">
     <div class="overlay"></div>
+</div>
+
+<!-- Notification Modal -->
+<div id="notificationModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="notificationMessage">Your notification message here.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 
