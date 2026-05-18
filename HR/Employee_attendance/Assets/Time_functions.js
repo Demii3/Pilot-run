@@ -55,49 +55,20 @@ function convert24HourTimetoMin(time) {
     return hours * 60 + minutes;
 };
 
-function excludeLunchBreak(clockIn, clockOut) {
-    if (!clockIn || !clockOut || clockIn === '--:--' || clockOut === '--:--') {
-        return 0;
-    };
+/* function adjustTime(time){
+    return time + 24*60;
+}  */
 
-    const IncludeLunchBreak = document.getElementById('Include-lunchbreak').checked;
-    const allowOvertime = document.getElementById('allowOvertime').checked;
-    console.log('IncludeLunchBreak:', IncludeLunchBreak);
-    console.log('allowOvertime:', allowOvertime);
-    /* const clockInMin = ((720 <= convert24HourTimetoMin(clockIn)) && (convert24HourTimetoMin(clockIn) <= 780)) ? 0 : convert24HourTimetoMin(clockIn);
-    const clockOutMin = ((720 <= convert24HourTimetoMin(clockOut)) && (convert24HourTimetoMin(clockOut) <= 780)) ? 0 : convert24HourTimetoMin(clockOut); */
-    let clockInMin = 0;
-    let clockOutMin = 0;
-    let result = 0;
+function durationCalculation(startTime, endTime) {
+    if (!startTime || !endTime || startTime === '--:-- --' || endTime === '--:-- --') {
+        return '--:--';
+    }
 
-    if (allowOvertime) {
-        clockOutMin = convert24HourTimetoMin(clockOut);
-        clockInMin = convert24HourTimetoMin(clockIn);
-        console.log('With overtime:', clockOutMin);
-    } else {
-        if (convert24HourTimetoMin(clockOut) > 1020) {
-            clockOutMin = convert24HourTimetoMin('17:00');
-        } else {
-            clockOutMin = convert24HourTimetoMin(clockOut);
-        };
-        clockInMin = convert24HourTimetoMin(clockIn);
-        console.log('Without overtime:', clockOutMin)
-    };
+    const startMin = convert24HourTimetoMin(startTime);
+    const endMin = convert24HourTimetoMin(endTime);
+    const durationMin = endMin - startMin;
 
-
-    if (IncludeLunchBreak) {
-        result = clockOutMin - clockInMin;
-        console.log('With lunch break result:', result);
-    } else {
-        const newClockInMin = (720 <= clockInMin && clockInMin <= 780) ? 0 : clockInMin;
-        const newClockOutMin = (720 <= clockOutMin && clockOutMin <= 780) ? 0 : clockOutMin;
-        result = newClockOutMin - newClockInMin - 60;
-        console.log('No lunch break result:', result);
-    };
-
-    if (result < 0) {
-        result += 24 * 60;
-    };
-
-    return result;
-};
+    if (durationMin < 0) {
+        durationMin += 24 * 60; // Adjust for overnight shifts
+    }
+}

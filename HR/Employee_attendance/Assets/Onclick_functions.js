@@ -254,11 +254,10 @@ function viewLocationOnMap() {
     const geofenceLoc = document.getElementById('modalCoordinates').value;
 
     if (!userLocInput || !geofenceLoc) {
-        if (map) map.remove();
-        document.getElementById('userLocModalBody').querySelector('span').classList.remove('d-none');
-        const userLocModal = document.getElementById('userLocModal');
-        const userLocModalBody = document.getElementById('userLocModalBody');
-        const modal = bootstrap.Modal.getOrCreateInstance(userLocModal);
+        document.getElementById('notificationModalBody').querySelector('span').classList.remove('d-none');
+        const notificationModal = document.getElementById('notificationModal');
+        const notificationModalBody = document.getElementById('notificationModalBody');
+        const modal = bootstrap.Modal.getOrCreateInstance(notificationModal);
         modal.show();
         return;
     }

@@ -7,26 +7,18 @@ $(document).ready(function() {
             dataType: 'json'
         }).then(function(response) {
             let count = 0;
-            const columns = [13, 14, 15];
-            for (const key in response.settings) {
-                if (key != 'id') {
-                    switch(key) {
-                        case 'Manual_mode':
-                            if (response.settings[key] == 1) {
-                                columns.push(-1);
-                            };
-                            break;
-                        default:
-                            if (response.settings[key] == 1) {
-                                console.log('Adding column index to hide:', key, 'at value', count);
-                                columns.push(count);
-                            };
-                            count++;
-                            break;
-                    }
-                } else {
-                    continue;
+            const columns = [];
+            document.getElementById('displayColumns').value = response.settings.Hidden_columns;
+            const settings = response.settings.Hidden_columns.split('').map(Number);
+            const overideAll = response.settings.Manual_mode == 1 ? true : false;
+            for (const key in settings) {
+                if (settings[key] === 1) {
+                    columns.push(count);
                 }
+                count++;
+            };
+            if (overideAll) {
+                columns.push(-1);
             };
             console.log('Columns to hide:', columns);
             return columns;

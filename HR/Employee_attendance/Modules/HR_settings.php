@@ -3,7 +3,7 @@
     /** @var mysqli $dbc */
     if ($_POST['purpose'] == 'get_settings') {
         $settings = array();
-        $sql = "SELECT * FROM hr_attendance_settings WHERE id = 1";
+        $sql = "SELECT Manual_mode, Hidden_columns FROM hr_attendance_settings WHERE id = 1";
         $result = mysqli_query($dbc, $sql);
 
         if (!$result) {
@@ -24,10 +24,8 @@
 
     if ($_POST['purpose'] == 'save_settings') {
         $override = $_POST['override'];
-        $hideDepartment = $_POST['hideDepartment'];
-        $hideLocations = $_POST['hideLocations'];
-        $hideDuration = $_POST['hideDuration'];
-        $sql = "UPDATE hr_attendance_settings SET Manual_mode = $override, Hide_department = $hideDepartment, Hide_locations = $hideLocations, Hide_duration = $hideDuration WHERE id = 1";
+        $hiddenColumns = $_POST['hiddenColumns'];
+        $sql = "UPDATE hr_attendance_settings SET Manual_mode = $override, Hidden_columns = $hiddenColumns WHERE id = 1";
         mysqli_query($dbc, $sql);
         echo json_encode(['msg' => 'Settings saved successfully.']);
         exit();

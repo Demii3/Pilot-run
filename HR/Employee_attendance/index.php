@@ -463,6 +463,11 @@
             <span><h5>Display</h5></span>
           </div>
 
+          <div class="col-md-6">
+            <label class="form-label">displayColumns</label>
+            <input id="displayColumns" type="text" class="form-control" readonly>
+          </div>
+
           <div class="col-md-3 d-flex align-items-center gap-3 mt-3">
             <div class="toggle-switch">
               <input type="checkbox" id="hideDepartment" class="toggle-input">
@@ -509,6 +514,23 @@
             <div id="userLocModalBody" class="modal-body">
               <span class="d-none">This attendance has no location data available</span>
               <!-- Map Location is stored here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="notificationModal" class="modal fade" tabindex="-1" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div id="notificationModalBody" class="modal-body">
+              <span class="d-none" style="font-weight: bold;">This attendance has no location data available</span>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

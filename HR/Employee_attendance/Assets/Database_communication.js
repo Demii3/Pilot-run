@@ -8,7 +8,6 @@ function searchAttendance(searchTerm, searchDate, table) {
         },
         dataType: 'json',
         success: function(response) {
-            console.log('Search response:', response);
             table.clear().draw();
             if (response.data && response.data.length > 0) {
                 response.data.forEach(function(row) {
@@ -232,16 +231,25 @@ function saveAttendance() {
     });
 };
 
+function userDefinedXOR() {
+    const bits = parseInt(document.getElementById('displayColumns').value, 2);
+    let result = 0;
+    if (document.getElementById('hideDepartment').checked) result = result | (1 << 12);
+    if (document.getElementById('hideLocations').checked) result = result | (1 << 10);
+    if (document.getElementById('hideDuration').checked) result = result | (1 << 5);
+
+    document.getElementById('displayColumns').value = (bits ^ result).toString(2).padStart(16, '0');
+}
+
 function saveOptions() {
+    userDefinedXOR();
     $.ajax({
         url: './Modules/HR_settings.php',
         method: 'POST',
         data: {
                 purpose: 'save_settings',
                 override: $('#overideAll').is(':checked') ? 1 : 0,
-                hideDepartment: $('#hideDepartment').is(':checked') ? 1 : 0,
-                hideLocations: $('#hideLocations').is(':checked') ? 1 : 0,
-                hideDuration: $('#hideDuration').is(':checked') ? 1 : 0
+                hiddenColumns: document.getElementById('displayColumns').value
               },        
         dataType: 'json',
         success: function(response) {

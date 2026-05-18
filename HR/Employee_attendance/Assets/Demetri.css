@@ -657,6 +657,16 @@ h2 {
   padding: 0; /* if map, remove inner padding */
 }
 
+/* Notification Modal - override styles */
+#notificationModal .modal-content {
+  background-color: rgb(180, 180, 180);
+  color: #fff;
+}
+
+#notificationModal #notificationModalBody span {
+  color: #d30116;
+}
+
 @media (max-width: 480px) {
   /* ensure modal remains responsive on small screens */
   #userLocModalBody { width: calc(100vw - 40px); height: calc(100vh - 160px); }
