@@ -699,7 +699,6 @@
           <div>
             <h2>Manage Employee Deductions</h2>
             restorePayslipRangeState();
-            loadPayslip();
             <span class="text-muted">Search employees stored in simpletest_db</span>
           </div>
           <button class="btn btn-success" onclick="openEmployeeDeductionForm()">Add Deduction to Employee</button>
@@ -1322,7 +1321,7 @@
                 type="text"
                 id="searchEmployeeSalary"
                 class="form-control"
-                placeholder="Search by ID, name, gross pay, allowance, deduction, holiday, or net pay..."
+                placeholder="Search by employee or net pay..."
                 onkeyup="filterEmployeeSalary()"
               >
             </div>
@@ -1349,23 +1348,7 @@
             <table class="table table-hover" id="employeeSalaryTable">
               <thead class="table-dark">
                 <tr>
-                  <th>Employee ID</th>
                   <th>Employee</th>
-                  <th>Email</th>
-                  <th>Cutoff Salary</th>
-                  <th>Gross Pay Per Day</th>
-                  <th>Hours of Work</th>
-                  <th>Total OT</th>
-                  <th>Legal Holiday</th>
-                  <th>Special Holiday</th>
-                  <th>Taxable Additional Income</th>
-                  <th>Non-Taxable Additional Income</th>
-                  <th>SSS</th>
-                  <th>PHLTH</th>
-                  <th>PAGIBIG</th>
-                  <th>TAX</th>
-                  <th>Additional Deductions</th>
-                  <th>Total Ded.</th>
                   <th>Net Pay</th>
                   <th>Actions</th>
                 </tr>
@@ -1559,7 +1542,6 @@
                 type="text"
                 id="payslipDateFrom"
                 class="form-control"
-                onchange="loadPayslip()"
               >
             </div>
             <div class="col-md-3">
@@ -1568,7 +1550,6 @@
                 type="text"
                 id="payslipDateTo"
                 class="form-control"
-                onchange="loadPayslip()"
               >
             </div>
           </div>
@@ -1644,9 +1625,25 @@
                     >
                     <button type="button" class="btn btn-info" onclick="selectAllBulkEmailEmployees()">Select All</button>
                   </div>
+                  <div class="mb-2">
+                    <div id="bulkEmailQueueStatus" class="small text-muted fw-semibold">Queue is idle.</div>
+                    <div class="progress mt-2" id="bulkEmailQueueProgressWrap" style="height: 10px; background: #e9ecef; border-radius: 999px; overflow: hidden; border: 1px solid #d6dbe1;">
+                      <div
+                        class="progress-bar progress-bar-striped progress-bar-animated"
+                        id="bulkEmailQueueProgressBar"
+                        role="progressbar"
+                        style="width: 0%; height: 100%; display: block; background: linear-gradient(90deg, #198754 0%, #20c997 100%); transition: width 0.25s ease;"
+                        aria-valuenow="0"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      ></div>
+                    </div>
+                    <div id="bulkEmailQueueProgressText" class="small text-muted mt-1">0% (0/0)</div>
+                  </div>
                   <div id="bulkEmailEmployeeList" style="overflow-y: auto;">
                     <!-- Employee table will be populated here -->
                   </div>
+                  <div id="bulkEmailQueueLog" class="mt-3 small border rounded bg-light d-none" style="max-height: 140px; overflow-y: auto;"></div>
                 </div>
                 <div class="card-footer d-flex justify-content-end gap-2">
                   <button type="button" class="btn btn-outline-secondary" onclick="closeBulkEmailModal()">Cancel</button>
@@ -1879,7 +1876,7 @@ function initDatePickersForRanges() {
     ['attendanceDateFrom', 'attendanceDateTo', 'attendanceDateRangeText', null],
     ['premiumDateFrom', 'premiumDateTo', 'premiumDateRangeText', null],
     ['employeeSalaryDateFrom', 'employeeSalaryDateTo', 'employeeSalaryDateRangeText', loadEmployeeSalary],
-    ['payslipDateFrom', 'payslipDateTo', 'payslipDateRangeText', loadPayslip]
+    ['payslipDateFrom', 'payslipDateTo', 'payslipDateRangeText', null]
   ];
 
   rangeConfigs.forEach(([fromId, toId, outputId, reloadFn]) => {
@@ -1980,6 +1977,8 @@ let attendanceRows = [];
 let filteredAttendanceRows = [];
 let month13ListingRows = [];
 let currentEmployeeSalaryRows = [];
+let employeeSalaryDraftRows = {};
+let employeeSalaryExpandedRowId = null;
 let attendanceCurrentPage = 1;
 const attendancePageSize = 10;
 const tablePageSize = 10;
@@ -1989,6 +1988,66 @@ let bulkEmailEmployees = [];
 let allPayslipEmployees = [];
 let selectedBulkEmailEmployees = new Set();
 const processedCutoffPayrollCache = {};
+
+function getEmployeeSalaryDraftStorageKey(fromValue, toValue) {
+  return `payroll_employee_salary_drafts::${String(fromValue || '').trim()}::${String(toValue || '').trim()}`;
+}
+
+function loadEmployeeSalaryDraftRows(fromValue, toValue) {
+  if (typeof localStorage === 'undefined') {
+    return {};
+  }
+
+  try {
+    const raw = localStorage.getItem(getEmployeeSalaryDraftStorageKey(fromValue, toValue));
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (error) {
+    console.warn('Unable to load employee salary drafts:', error);
+    return {};
+  }
+}
+
+function saveEmployeeSalaryDraftRows(fromValue, toValue, draftRows) {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.setItem(getEmployeeSalaryDraftStorageKey(fromValue, toValue), JSON.stringify(draftRows || {}));
+  } catch (error) {
+    console.warn('Unable to persist employee salary drafts:', error);
+  }
+}
+
+function clearEmployeeSalaryDraftRows(fromValue, toValue) {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(getEmployeeSalaryDraftStorageKey(fromValue, toValue));
+  } catch (error) {
+    console.warn('Unable to clear employee salary drafts:', error);
+  }
+}
+
+function applyEmployeeSalaryDraftRows(rows, fromValue, toValue) {
+  employeeSalaryDraftRows = loadEmployeeSalaryDraftRows(fromValue, toValue);
+
+  if (!Array.isArray(rows) || Object.keys(employeeSalaryDraftRows).length === 0) {
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  return rows.map(row => {
+    const draft = employeeSalaryDraftRows[String(row.id)];
+    return draft ? { ...row, ...draft } : row;
+  });
+}
 
 function saveProcessedCutoffPayroll(cutoffKey, rows = []) {
   if (!cutoffKey) return;
@@ -4614,10 +4673,13 @@ function renderEmployeeSalaryRows(rows = []) {
   const tableBody = document.querySelector('#employeeSalaryTable tbody');
   if (!tableBody) return;
 
+  destroyPayrollDataTable('employeeSalaryTable');
+  employeeSalaryExpandedRowId = null;
   currentEmployeeSalaryRows = Array.isArray(rows) ? rows.map(item => ({ ...item })) : [];
 
   if (!rows.length) {
-    tableBody.innerHTML = '<tr><td colspan="19" class="text-center">No employees found.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center">No employees found.</td></tr>';
+    bindEmployeeSalaryInteractions();
     paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
     return;
   }
@@ -4625,36 +4687,206 @@ function renderEmployeeSalaryRows(rows = []) {
   tableBody.innerHTML = '';
   rows.forEach(item => {
     const row = document.createElement('tr');
+    const employeeIdJs = JSON.stringify(String(item.id || ''));
+    row.classList.add('employee-salary-row');
+    row.style.cursor = 'pointer';
+    row.dataset.employeeId = String(item.id || '');
+    row.tabIndex = 0;
+    row.setAttribute('role', 'button');
+    row.setAttribute('aria-expanded', 'false');
     row.innerHTML = `
-      <td>${item.id}</td>
-      <td>${item.name}</td>
-      <td>${item.email}</td>
-      <td>${formatCurrency(item.cutoffSalary)}</td>
-      <td>${formatCurrency(item.grossPayPerDay)}</td>
-      <td>${Number(item.hoursWorked || 0).toFixed(2)}</td>
-      <td>${formatCurrency(item.totalOtPay)}</td>
-      <td>${formatCurrency(item.legalHoliday)}</td>
-      <td>${formatCurrency(item.specialHoliday)}</td>
-      <td>${formatCurrency(item.taxableAdditionalIncome)}</td>
-      <td>${formatCurrency(item.nonTaxableAdditionalIncome)}</td>
-      <td>${formatCurrency(item.sss)}</td>
-      <td>${formatCurrency(item.phlth)}</td>
-      <td>${formatCurrency(item.pagibig)}</td>
-      <td>${formatCurrency(item.tax)}</td>
-      <td>${formatCurrency(item.additionalDeductions)}</td>
-      <td>${formatCurrency(item.totalDeduction)}</td>
+      <td>
+        <div class="fw-semibold">${escapeHtml(item.name || '-')}</div>
+        <div class="small text-muted">Employee ID: ${escapeHtml(item.id || '-')}</div>
+      </td>
       <td>${formatCurrency(item.netPay)}</td>
       <td>
         <div class="d-flex gap-1 flex-wrap">
-          <button type="button" class="btn btn-warning btn-sm" onclick="editEmployeeSalaryRow('${item.id}')">Edit</button>
-          <button type="button" class="btn btn-danger btn-sm" onclick="deleteEmployeeSalaryRow('${item.id}')">Delete</button>
+          <button type="button" class="btn btn-info btn-sm" onclick='toggleEmployeeSalaryBreakdown(${employeeIdJs}, this, event)'>Show Full Breakdown</button>
+          <button type="button" class="btn btn-warning btn-sm" onclick='editEmployeeSalaryRow(${employeeIdJs})'>Edit</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick='deleteEmployeeSalaryRow(${employeeIdJs})'>Delete</button>
         </div>
       </td>
     `;
     tableBody.appendChild(row);
   });
 
+  bindEmployeeSalaryInteractions();
   paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatEmployeeSalaryBreakdown(item) {
+  const fields = [
+    ['Cutoff Salary', formatCurrency(item.cutoffSalary)],
+    ['Gross Pay Per Day', formatCurrency(item.grossPayPerDay)],
+    ['Hours of Work', `${Number(item.hoursWorked || 0).toFixed(2)} hrs`],
+    ['Total OT', formatCurrency(item.totalOtPay)],
+    ['Legal Holiday', formatCurrency(item.legalHoliday)],
+    ['Special Holiday', formatCurrency(item.specialHoliday)],
+    ['Taxable Additional Income', formatCurrency(item.taxableAdditionalIncome)],
+    ['Non-Taxable Additional Income', formatCurrency(item.nonTaxableAdditionalIncome)],
+    ['SSS', formatCurrency(item.sss)],
+    ['PHLTH', formatCurrency(item.phlth)],
+    ['PAGIBIG', formatCurrency(item.pagibig)],
+    ['TAX', formatCurrency(item.tax)],
+    ['Additional Deductions', formatCurrency(item.additionalDeductions)],
+    ['Total Deduction', formatCurrency(item.totalDeduction)],
+    ['Net Pay', formatCurrency(item.netPay)]
+  ];
+
+  return `
+    <div class="p-3 p-md-4 bg-body-tertiary border rounded-3">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+        <div>
+          <div class="text-uppercase small text-muted fw-semibold">Full Salary Breakdown</div>
+          <div class="h6 mb-1">${escapeHtml(item.name || '-')}</div>
+          <div class="small text-muted">Employee ID: ${escapeHtml(item.id || '-')} ${item.email ? `&middot; ${escapeHtml(item.email)}` : ''}</div>
+        </div>
+        <div class="text-end">
+          <div class="text-uppercase small text-muted fw-semibold">Net Pay</div>
+          <div class="h4 mb-0 text-primary">${formatCurrency(item.netPay)}</div>
+        </div>
+      </div>
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
+        ${fields.map(([label, value]) => `
+          <div class="col">
+            <div class="border rounded-3 bg-white h-100 p-3">
+              <div class="small text-muted">${label}</div>
+              <div class="fw-semibold">${value}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+function bindEmployeeSalaryInteractions() {
+  const tableBody = document.querySelector('#employeeSalaryTable tbody');
+  if (!tableBody || tableBody.dataset.salaryInteractionsBound === 'true') {
+    return;
+  }
+
+  tableBody.dataset.salaryInteractionsBound = 'true';
+
+  tableBody.addEventListener('click', event => {
+    const clickedButton = event.target.closest('button, a, input, select, textarea');
+    if (clickedButton) {
+      return;
+    }
+
+    const row = event.target.closest('tr[data-employee-id]');
+    if (!row) {
+      return;
+    }
+
+    toggleEmployeeSalaryBreakdown(row.dataset.employeeId, null, event);
+  });
+
+  tableBody.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    const row = event.target.closest('tr[data-employee-id]');
+    if (!row || event.target.closest('button, a, input, select, textarea')) {
+      return;
+    }
+
+    event.preventDefault();
+    toggleEmployeeSalaryBreakdown(row.dataset.employeeId, null, event);
+  });
+}
+
+function toggleEmployeeSalaryBreakdown(employeeId, triggerElement = null, event = null) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const rowData = currentEmployeeSalaryRows.find(item => String(item.id) === String(employeeId));
+  if (!rowData) {
+    return;
+  }
+
+  const table = getPayrollDataTable('employeeSalaryTable');
+  const rowElement = Array.from(document.querySelectorAll('#employeeSalaryTable tbody tr[data-employee-id]')).find(row => String(row.dataset.employeeId) === String(employeeId));
+  if (!rowElement) {
+    return;
+  }
+
+  const setExpandedState = (expanded) => {
+    rowElement.classList.toggle('table-active', expanded);
+    rowElement.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    if (triggerElement) {
+      triggerElement.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+  };
+
+  const closeCurrentBreakdown = () => {
+    if (table && typeof table.row === 'function') {
+      const currentRow = table.row(rowElement);
+      if (currentRow.child && currentRow.child.isShown()) {
+        currentRow.child.hide();
+      }
+    } else {
+      const nextRow = rowElement.nextElementSibling;
+      if (nextRow && nextRow.dataset && nextRow.dataset.employeeBreakdownFor === String(employeeId)) {
+        nextRow.remove();
+      }
+    }
+    setExpandedState(false);
+    employeeSalaryExpandedRowId = null;
+  };
+
+  if (String(employeeSalaryExpandedRowId) === String(employeeId)) {
+    closeCurrentBreakdown();
+    return;
+  }
+
+  if (employeeSalaryExpandedRowId !== null && String(employeeSalaryExpandedRowId) !== String(employeeId)) {
+    const openRow = Array.from(document.querySelectorAll('#employeeSalaryTable tbody tr[data-employee-id]')).find(row => String(row.dataset.employeeId) === String(employeeSalaryExpandedRowId));
+    if (openRow) {
+      const openRowApi = table && typeof table.row === 'function' ? table.row(openRow) : null;
+      if (openRowApi && openRowApi.child && openRowApi.child.isShown()) {
+        openRowApi.child.hide();
+      } else {
+        const openDetailRow = openRow.nextElementSibling;
+        if (openDetailRow && openDetailRow.dataset && openDetailRow.dataset.employeeBreakdownFor === String(employeeSalaryExpandedRowId)) {
+          openDetailRow.remove();
+        }
+      }
+      openRow.classList.remove('table-active');
+      openRow.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  if (table && typeof table.row === 'function') {
+    const dataRow = table.row(rowElement);
+    if (dataRow.child && dataRow.child.isShown()) {
+      dataRow.child.hide();
+      closeCurrentBreakdown();
+      return;
+    }
+
+    dataRow.child(formatEmployeeSalaryBreakdown(rowData)).show();
+  } else {
+    const detailRow = document.createElement('tr');
+    detailRow.dataset.employeeBreakdownFor = String(employeeId);
+    detailRow.innerHTML = `<td colspan="3">${formatEmployeeSalaryBreakdown(rowData)}</td>`;
+    rowElement.insertAdjacentElement('afterend', detailRow);
+  }
+
+  setExpandedState(true);
+  employeeSalaryExpandedRowId = employeeId;
 }
 
 function renderPayslipRows(rows = []) {
@@ -4841,10 +5073,11 @@ async function confirmProcessPayroll() {
   }
 
   try {
+    const salaryDraftRows = Object.values(loadEmployeeSalaryDraftRows(fromRaw, toRaw));
     const response = await fetch('cutoff_payroll_api.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: fromRaw, to: toRaw })
+      body: JSON.stringify({ from: fromRaw, to: toRaw, salaryDraftRows })
     });
     const result = await response.json();
     if (!result.success) {
@@ -4853,6 +5086,7 @@ async function confirmProcessPayroll() {
 
     const rows = result.data?.rows || [];
     renderEmployeeSalaryRows(rows);
+  clearEmployeeSalaryDraftRows(fromRaw, toRaw);
 
     const payslipFrom = document.getElementById('payslipDateFrom');
     const payslipTo = document.getElementById('payslipDateTo');
@@ -4892,10 +5126,11 @@ async function processEmployeeSalaryForCutoff() {
   }
 
   try {
+    const salaryDraftRows = Object.values(loadEmployeeSalaryDraftRows(fromRaw, toRaw));
     const response = await fetch('cutoff_payroll_api.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: fromRaw, to: toRaw })
+      body: JSON.stringify({ from: fromRaw, to: toRaw, salaryDraftRows })
     });
     const result = await response.json();
     if (!result.success) {
@@ -4904,6 +5139,7 @@ async function processEmployeeSalaryForCutoff() {
 
     const rows = result.data?.rows || [];
     renderEmployeeSalaryRows(rows);
+  clearEmployeeSalaryDraftRows(fromRaw, toRaw);
 
     const payslipFrom = document.getElementById('payslipDateFrom');
     const payslipTo = document.getElementById('payslipDateTo');
@@ -4940,17 +5176,19 @@ async function loadEmployeeSalary() {
 
   const dateFromInput = document.getElementById('employeeSalaryDateFrom');
   const dateToInput = document.getElementById('employeeSalaryDateTo');
+  const fromValue = dateFromInput?.value || '';
+  const toValue = dateToInput?.value || '';
   const dateFrom = parseDateInputValue(dateFromInput?.value, false);
   const dateTo = parseDateInputValue(dateToInput?.value, true);
 
-  tableBody.innerHTML = '<tr><td colspan="19" class="text-center">Loading employees...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading employees...</td></tr>';
 
   try {
     const response = await fetch(`cutoff_payroll_api.php?from=${encodeURIComponent(dateFromInput?.value || '')}&to=${encodeURIComponent(dateToInput?.value || '')}`);
     const result = await response.json();
 
     if (result.success && Array.isArray(result.data?.rows) && result.data.rows.length > 0) {
-      renderEmployeeSalaryRows(result.data.rows);
+      renderEmployeeSalaryRows(applyEmployeeSalaryDraftRows(result.data.rows, fromValue, toValue));
       return;
     }
   } catch (error) {
@@ -4965,9 +5203,9 @@ async function loadEmployeeSalary() {
       dateToInput?.value || '',
       false
     );
-    renderEmployeeSalaryRows(rows);
+    renderEmployeeSalaryRows(applyEmployeeSalaryDraftRows(rows, fromValue, toValue));
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-danger">${error.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
   }
 }
@@ -5155,11 +5393,14 @@ async function saveEmployeeSalaryEditRow() {
     return;
   }
 
-  const payload = {
-    action: 'update',
-    from: fromValue,
-    to: toValue,
-    employeeId,
+  const currentRow = currentEmployeeSalaryRows.find(row => String(row.id) === String(employeeId));
+  if (!currentRow) {
+    alert('Unable to stage this employee salary row.');
+    return;
+  }
+
+  const updatedRow = {
+    ...currentRow,
     cutoffSalary: readEmployeeSalaryEditNumber('employeeSalaryEditCutoffSalary'),
     grossPayPerDay: readEmployeeSalaryEditNumber('employeeSalaryEditGrossPayPerDay'),
     hoursWorked: readEmployeeSalaryEditNumber('employeeSalaryEditHoursWorked'),
@@ -5175,25 +5416,22 @@ async function saveEmployeeSalaryEditRow() {
     additionalDeductions: readEmployeeSalaryEditNumber('employeeSalaryEditAdditionalDeductions')
   };
 
-  try {
-    const response = await fetch('cutoff_payroll_api.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+  const totalDeduction = updatedRow.sss + updatedRow.phlth + updatedRow.pagibig + updatedRow.tax + updatedRow.additionalDeductions;
+  const grossNet = updatedRow.cutoffSalary + updatedRow.totalOtPay + updatedRow.legalHoliday + updatedRow.specialHoliday + updatedRow.taxableAdditionalIncome + updatedRow.nonTaxableAdditionalIncome - totalDeduction;
+  const carryIn = Number(currentRow.carryIn || 0);
+  const netPay = Math.max(0, grossNet - carryIn);
+  updatedRow.carryIn = carryIn;
+  updatedRow.totalDeduction = totalDeduction;
+  updatedRow.carryOut = grossNet - carryIn < 0 ? Math.abs(grossNet - carryIn) : 0;
+  updatedRow.netPay = netPay;
 
-    const result = await response.json();
-    if (!result.success) {
-      throw new Error(result.message || 'Failed to update employee salary row.');
-    }
+  currentEmployeeSalaryRows = currentEmployeeSalaryRows.map(row => String(row.id) === String(employeeId) ? updatedRow : row);
+  employeeSalaryDraftRows[String(employeeId)] = updatedRow;
+  saveEmployeeSalaryDraftRows(fromValue, toValue, employeeSalaryDraftRows);
 
-    closeEmployeeSalaryEditModal();
-    await loadEmployeeSalary();
-    await loadPayslip();
-    alert(result.message || 'Employee salary row updated successfully.');
-  } catch (error) {
-    alert(error.message || 'Failed to update employee salary row.');
-  }
+  closeEmployeeSalaryEditModal();
+  renderEmployeeSalaryRows(currentEmployeeSalaryRows);
+  alert('Salary edit saved locally. Click Process Employee Salary for the cut-off to update the payslip.');
 }
 
 async function deleteEmployeeSalaryRow(employeeId) {
@@ -5229,7 +5467,6 @@ async function deleteEmployeeSalaryRow(employeeId) {
     }
 
     await loadEmployeeSalary();
-    await loadPayslip();
     alert(result.message || 'Employee salary row deleted successfully.');
   } catch (error) {
     alert(error.message || 'Failed to delete employee salary row.');
@@ -5245,16 +5482,9 @@ function populateBulkEmailList() {
   table.innerHTML = `
     <thead class="table-light">
       <tr>
+        <th style="width: 50%;">Employee</th>
         <th style="width: 50%;">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(event)">
-            <label class="form-check-label" for="selectAllCheckbox">Employee</label>
-          </div>
-        </th>
-        <th style="width: 50%;">
-          <div class="form-check">
-            <label class="form-check-label">Email</label>
-          </div>
+          Email
         </th>
       </tr>
     </thead>
@@ -5287,10 +5517,9 @@ function populateBulkEmailList() {
     const checkbox = row.querySelector('input');
     checkbox.addEventListener('change', (e) => {
       if (e.target.checked) {
-        selectedBulkEmailEmployees.add(emp.id);
+        selectedBulkEmailEmployees.add(String(emp.id));
       } else {
-        selectedBulkEmailEmployees.delete(emp.id);
-        document.getElementById('selectAllCheckbox').checked = false;
+        selectedBulkEmailEmployees.delete(String(emp.id));
       }
     });
   });
@@ -5301,19 +5530,96 @@ function toggleSelectAll(event) {
   checkboxes.forEach(checkbox => {
     checkbox.checked = event.target.checked;
     if (event.target.checked) {
-      selectedBulkEmailEmployees.add(checkbox.dataset.employeeId);
+      selectedBulkEmailEmployees.add(String(checkbox.dataset.employeeId));
     } else {
-      selectedBulkEmailEmployees.delete(checkbox.dataset.employeeId);
+      selectedBulkEmailEmployees.delete(String(checkbox.dataset.employeeId));
     }
   });
 }
 
 function selectAllBulkEmailEmployees() {
-  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-  if (selectAllCheckbox) {
-    selectAllCheckbox.checked = true;
-    toggleSelectAll({ target: selectAllCheckbox });
+  document.querySelectorAll('.bulk-email-checkbox').forEach(checkbox => {
+    checkbox.checked = true;
+    selectedBulkEmailEmployees.add(String(checkbox.dataset.employeeId || ''));
+  });
+}
+
+function setBulkEmailQueueStatus(message) {
+  const status = document.getElementById('bulkEmailQueueStatus');
+  if (status) {
+    status.textContent = message;
   }
+}
+
+function setBulkEmailQueueProgress(completed, total) {
+  const progressWrap = document.getElementById('bulkEmailQueueProgressWrap');
+  const progressBar = document.getElementById('bulkEmailQueueProgressBar');
+  const progressText = document.getElementById('bulkEmailQueueProgressText');
+  if (!progressWrap || !progressBar) {
+    return;
+  }
+
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+  progressBar.style.width = `${percent}%`;
+  progressBar.setAttribute('aria-valuenow', String(percent));
+  if (progressText) {
+    progressText.textContent = `${percent}% (${completed}/${total})`;
+  }
+}
+
+function appendBulkEmailQueueLog(message, type = 'info') {
+  const log = document.getElementById('bulkEmailQueueLog');
+  if (!log) {
+    return;
+  }
+
+  log.classList.remove('d-none');
+  const entry = document.createElement('div');
+  entry.className = `py-1 px-2 border-bottom ${type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-body'}`;
+  entry.textContent = message;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function resetBulkEmailQueueFeedback() {
+  const log = document.getElementById('bulkEmailQueueLog');
+  const progressBar = document.getElementById('bulkEmailQueueProgressBar');
+  const progressText = document.getElementById('bulkEmailQueueProgressText');
+
+  if (log) {
+    log.innerHTML = '';
+    log.classList.add('d-none');
+  }
+
+  if (progressBar) {
+    progressBar.style.width = '0%';
+    progressBar.setAttribute('aria-valuenow', '0');
+  }
+
+  if (progressText) {
+    progressText.textContent = '0% (0/0)';
+  }
+
+  setBulkEmailQueueStatus('Queue is idle.');
+}
+
+async function sendPayslipEmailForEmployee(emp) {
+  const response = await fetch('send_payslip_email.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(emp)
+  });
+
+  const result = await response.json();
+  return {
+    ok: Boolean(result.success),
+    message: result.message || (response.ok ? 'Sent.' : 'Failed to send.'),
+    status: response.status
+  };
+}
+
+function yieldToUi() {
+  return new Promise(resolve => window.setTimeout(resolve, 0));
 }
 
 function filterBulkEmailEmployees() {
@@ -5328,15 +5634,15 @@ function filterBulkEmailEmployees() {
   populateBulkEmailList();
 }
 
-function sendBulkPayslipEmails() {
-  if (selectedBulkEmailEmployees.size === 0) {
+async function sendBulkPayslipEmails() {
+  const selectedCheckboxes = Array.from(document.querySelectorAll('#bulkEmailTableBody .bulk-email-checkbox:checked'));
+  const selectedIds = new Set(selectedCheckboxes.map(checkbox => String(checkbox.dataset.employeeId || '')));
+  const selectedEmployees = allPayslipEmployees.filter(emp => selectedIds.has(String(emp.id)));
+
+  if (selectedEmployees.length === 0) {
     alert('Please select at least one employee.');
     return;
   }
-
-  const selectedEmployees = allPayslipEmployees.filter(emp =>
-    selectedBulkEmailEmployees.has(emp.id)
-  );
 
   const sendButton = document.querySelector('#bulkEmailModal .card-footer .btn-success');
   if (sendButton) {
@@ -5344,43 +5650,67 @@ function sendBulkPayslipEmails() {
     sendButton.textContent = 'Sending...';
   }
 
+  resetBulkEmailQueueFeedback();
+  setBulkEmailQueueStatus(`Sending payslips... 0 out of ${selectedEmployees.length} sent`);
+  setBulkEmailQueueProgress(0, selectedEmployees.length);
+  await yieldToUi();
+
   let successCount = 0;
   let failureCount = 0;
+  const failures = [];
 
-  Promise.all(
-    selectedEmployees.map(emp =>
-      fetch('send_payslip_email.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(emp)
-      })
-        .then(response => response.json())
-        .then(result => {
-          if (result.success) {
-            successCount++;
-          } else {
-            failureCount++;
-            console.error(`Failed to send to ${emp.email}:`, result.message);
-          }
-        })
-        .catch(error => {
+  try {
+    for (let index = 0; index < selectedEmployees.length; index++) {
+      const emp = selectedEmployees[index];
+      setBulkEmailQueueStatus(`Sending payslips... ${index} out of ${selectedEmployees.length} sent`);
+
+      try {
+        const result = await sendPayslipEmailForEmployee(emp);
+        if (result.ok) {
+          successCount++;
+          appendBulkEmailQueueLog(`Sent to ${emp.name} <${emp.email}>`, 'success');
+        } else {
           failureCount++;
-          console.error(`Error sending to ${emp.email}:`, error.message);
-        })
-    )
-  ).then(() => {
+          const failureMessage = result.message || 'Failed to send.';
+          failures.push({ employee: emp, message: failureMessage });
+          appendBulkEmailQueueLog(`Failed for ${emp.name} <${emp.email}>: ${failureMessage}`, 'error');
+          console.error(`Failed to send to ${emp.email}:`, failureMessage);
+        }
+      } catch (error) {
+        failureCount++;
+        const failureMessage = error.message || 'Unexpected error while sending.';
+        failures.push({ employee: emp, message: failureMessage });
+        appendBulkEmailQueueLog(`Error for ${emp.name} <${emp.email}>: ${failureMessage}`, 'error');
+        console.error(`Error sending to ${emp.email}:`, failureMessage);
+      }
+
+      setBulkEmailQueueStatus(`Sending payslips... ${index + 1} out of ${selectedEmployees.length} sent`);
+      setBulkEmailQueueProgress(index + 1, selectedEmployees.length);
+      await yieldToUi();
+    }
+
+    setBulkEmailQueueStatus('Completed sending payslips');
+  } finally {
     if (sendButton) {
       sendButton.disabled = false;
       sendButton.textContent = 'Send Payslips';
     }
 
-    let message = `Sent ${successCount} payslip${successCount !== 1 ? 's' : ''}`;
-    if (failureCount > 0) {
-      message += ` (${failureCount} failed)`;
-    }
-    alert(message);
-    closeBulkEmailModal();
-  });
+    selectedBulkEmailEmployees.clear();
+  }
+
+  const summaryLines = [
+    `Total selected employees: ${selectedEmployees.length}`,
+    `Successfully sent payslips: ${successCount}`,
+    `Failed payslips: ${failureCount}`
+  ];
+
+  if (failures.length > 0) {
+    summaryLines.push('', 'Failures:', ...failures.map(item => `${item.employee.name} <${item.employee.email}> - ${item.message}`));
+  }
+
+  alert(summaryLines.join('\n'));
+  closeBulkEmailModal();
 }
 
 function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = null) {

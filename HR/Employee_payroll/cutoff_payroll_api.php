@@ -448,7 +448,29 @@ function getComputedIncomeAmountByKeyword($employeeIncomeByType = [], $keywordPa
     return round($total * (float)$multiplier, 2);
 }
 
-function processPayroll($dbc, $fromDate, $toDate) {
+function normalizeSalaryDraftRows($draftRows) {
+    $normalized = [];
+    if (!is_array($draftRows)) {
+        return $normalized;
+    }
+
+    foreach ($draftRows as $draftRow) {
+        if (!is_array($draftRow)) {
+            continue;
+        }
+
+        $employeeId = (int)($draftRow['id'] ?? $draftRow['employeeId'] ?? 0);
+        if ($employeeId <= 0) {
+            continue;
+        }
+
+        $normalized[(string)$employeeId] = $draftRow;
+    }
+
+    return $normalized;
+}
+
+function processPayroll($dbc, $fromDate, $toDate, $salaryDraftRows = []) {
     $employees = loadEmployees($dbc);
     $attendance = loadAttendance($dbc, $fromDate, $toDate);
     $assignedIncome = loadAssignedIncome($dbc);
@@ -521,6 +543,18 @@ function processPayroll($dbc, $fromDate, $toDate) {
             throw new RuntimeException('Unable to determine payroll run ID.');
         }
 
+        $salaryDraftMap = normalizeSalaryDraftRows($salaryDraftRows);
+        $existingRows = getProcessedPayroll($dbc, $fromDate, $toDate);
+        $existingRowsById = [];
+        foreach ($existingRows as $existingRow) {
+            $existingRowsById[(string)($existingRow['id'] ?? '')] = $existingRow;
+        }
+
+        if (empty($salaryDraftMap) && !empty($existingRows)) {
+            mysqli_commit($dbc);
+            return ['cutoff_key' => $cutoffKey, 'from' => $fromDate, 'to' => $toDate, 'rows' => $existingRows];
+        }
+
         $itemSql = "INSERT INTO payroll_cutoff_items
             (run_id, employee_id, employee_name, employee_email, monthly_salary, cutoff_salary, gross_pay_per_day, hours_worked, total_ot_pay,
              legal_holiday, special_holiday, taxable_additional_income, non_taxable_additional_income, sss, phlth, pagibig, tax, additional_deductions, total_deduction, carry_in, carry_out, net_pay)
@@ -537,42 +571,72 @@ function processPayroll($dbc, $fromDate, $toDate) {
             $employeeId = (int)($employee['id'] ?? 0);
             $employeeName = (string)($employee['name'] ?? '');
             $employeeEmail = (string)($employee['email'] ?? '');
-            $monthlySalary = (float)($employee['salary'] ?? 0);
-            $grossPayPerDay = $monthlySalary / 26;
-            $hourlyRate = $grossPayPerDay / 8;
-
-            $work = $attendanceMap[(string)$employeeId] ?? ['regularMinutes' => 0, 'overtimeMinutes' => 0];
-            $hoursWorked = ((float)($work['regularMinutes'] ?? 0)) / 60;
-            $cutoffSalary = $hourlyRate * $hoursWorked;
-            $totalOtPay = (((float)($work['overtimeMinutes'] ?? 0)) / 60) * $hourlyRate;
-
             $employeeKey = strtolower(trim($employeeName));
-            $incomeByEmployee = $incomeMap[$employeeKey] ?? [];
-            $additionalIncomeSummary = $additionalMap[$employeeKey] ?? ['taxable' => 0, 'nonTaxable' => 0];
-            $legalHoliday = getComputedIncomeAmountByKeyword($incomeByEmployee, '/legal\\s*holiday/i', 2);
-            $specialHoliday = getComputedIncomeAmountByKeyword($incomeByEmployee, '/special\\s*holiday/i', 1.3);
-            $taxableAdditionalIncome = (float)($additionalIncomeSummary['taxable'] ?? 0);
-            $nonTaxableAdditionalIncome = (float)($additionalIncomeSummary['nonTaxable'] ?? 0);
-            $nonTaxableTotal = ((float)($nonTaxableIncome[$employeeKey] ?? 0)) + $nonTaxableAdditionalIncome;
+            $draftRow = $salaryDraftMap[(string)$employeeId] ?? null;
+            $existingRow = $existingRowsById[(string)$employeeId] ?? null;
 
-            if ($hoursWorked > 0) {
-                // Employee salary is bi-monthly. Convert to monthly for mandatory premium formulas,
-                // then allocate half to each cutoff payroll.
-                $monthlyEquivalentSalary = $monthlySalary * 2;
-                $sss = round(computeSss($monthlyEquivalentSalary) / 2, 2);
-                $phlth = round(computePhilhealth($monthlyEquivalentSalary) / 2, 2);
-                $pagibig = round(computePagibig($monthlyEquivalentSalary) / 2, 2);
-                $tax = computeTax($cutoffSalary, $sss, $phlth, $pagibig, $nonTaxableTotal);
+            if ($existingRow) {
+                $monthlySalary = (float)($existingRow['monthlySalary'] ?? 0);
+                $grossPayPerDay = (float)($existingRow['grossPayPerDay'] ?? 0);
+                $hoursWorked = (float)($existingRow['hoursWorked'] ?? 0);
+                $cutoffSalary = (float)($existingRow['cutoffSalary'] ?? 0);
+                $totalOtPay = (float)($existingRow['totalOtPay'] ?? 0);
+                $legalHoliday = (float)($existingRow['legalHoliday'] ?? 0);
+                $specialHoliday = (float)($existingRow['specialHoliday'] ?? 0);
+                $taxableAdditionalIncome = (float)($existingRow['taxableAdditionalIncome'] ?? 0);
+                $nonTaxableAdditionalIncome = (float)($existingRow['nonTaxableAdditionalIncome'] ?? 0);
+                $sss = (float)($existingRow['sss'] ?? 0);
+                $phlth = (float)($existingRow['phlth'] ?? 0);
+                $pagibig = (float)($existingRow['pagibig'] ?? 0);
+                $tax = (float)($existingRow['tax'] ?? 0);
+                $additionalDeductions = (float)($existingRow['additionalDeductions'] ?? 0);
+                $carryIn = (float)($existingRow['carryIn'] ?? 0);
             } else {
-                $sss = 0;
-                $phlth = 0;
-                $pagibig = 0;
-                $tax = 0;
+                $monthlySalary = (float)($employee['salary'] ?? 0);
+                $grossPayPerDay = $monthlySalary / 26;
+                $hourlyRate = $grossPayPerDay / 8;
+
+                $work = $attendanceMap[(string)$employeeId] ?? ['regularMinutes' => 0, 'overtimeMinutes' => 0];
+                $hoursWorked = ((float)($work['regularMinutes'] ?? 0)) / 60;
+                $cutoffSalary = $hourlyRate * $hoursWorked;
+                $totalOtPay = (((float)($work['overtimeMinutes'] ?? 0)) / 60) * $hourlyRate;
+
+                $incomeByEmployee = $incomeMap[$employeeKey] ?? [];
+                $additionalIncomeSummary = $additionalMap[$employeeKey] ?? ['taxable' => 0, 'nonTaxable' => 0];
+                $legalHoliday = getComputedIncomeAmountByKeyword($incomeByEmployee, '/legal\s*holiday/i', 2);
+                $specialHoliday = getComputedIncomeAmountByKeyword($incomeByEmployee, '/special\s*holiday/i', 1.3);
+                $taxableAdditionalIncome = (float)($additionalIncomeSummary['taxable'] ?? 0);
+                $nonTaxableAdditionalIncome = (float)($additionalIncomeSummary['nonTaxable'] ?? 0);
+                $nonTaxableTotal = ((float)($nonTaxableIncome[$employeeKey] ?? 0)) + $nonTaxableAdditionalIncome;
+
+                if ($hoursWorked > 0) {
+                    // Employee salary is bi-monthly. Convert to monthly for mandatory premium formulas,
+                    // then allocate half to each cutoff payroll.
+                    $monthlyEquivalentSalary = $monthlySalary * 2;
+                    $sss = round(computeSss($monthlyEquivalentSalary) / 2, 2);
+                    $phlth = round(computePhilhealth($monthlyEquivalentSalary) / 2, 2);
+                    $pagibig = round(computePagibig($monthlyEquivalentSalary) / 2, 2);
+                    $tax = computeTax($cutoffSalary, $sss, $phlth, $pagibig, $nonTaxableTotal);
+                } else {
+                    $sss = 0;
+                    $phlth = 0;
+                    $pagibig = 0;
+                    $tax = 0;
+                }
+                $additionalDeductions = $hoursWorked > 0 ? (float)($personalCa[$employeeKey] ?? 0) : 0;
+                $carryIn = previousCarryOut($dbc, $employeeId, $fromDate);
             }
-            $additionalDeductions = $hoursWorked > 0 ? (float)($personalCa[$employeeKey] ?? 0) : 0;
+
+            if ($draftRow) {
+                foreach (['cutoffSalary', 'grossPayPerDay', 'hoursWorked', 'totalOtPay', 'legalHoliday', 'specialHoliday', 'taxableAdditionalIncome', 'nonTaxableAdditionalIncome', 'sss', 'phlth', 'pagibig', 'tax', 'additionalDeductions'] as $field) {
+                    if (array_key_exists($field, $draftRow)) {
+                        ${$field} = (float)$draftRow[$field];
+                    }
+                }
+            }
+
             $totalDeduction = $sss + $phlth + $pagibig + $tax + $additionalDeductions;
             $grossNet = $cutoffSalary + $totalOtPay + $legalHoliday + $specialHoliday + $taxableAdditionalIncome + $nonTaxableAdditionalIncome - $totalDeduction;
-            $carryIn = previousCarryOut($dbc, $employeeId, $fromDate);
             $netPay = $grossNet - $carryIn;
             $carryOut = 0;
             if ($netPay < 0) {
@@ -915,7 +979,7 @@ try {
             respond(false, null, 'Invalid cutoff range.', 400);
         }
 
-        $result = processPayroll($dbc, $fromDate, $toDate);
+        $result = processPayroll($dbc, $fromDate, $toDate, $payload['salaryDraftRows'] ?? []);
         respond(true, $result, 'Cutoff payroll processed successfully.');
     }
 
