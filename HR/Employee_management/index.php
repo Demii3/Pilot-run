@@ -42,8 +42,9 @@
   <script src="//cdn.datatables.net/2.3.7/js/dataTables.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <script src="./employee-crud-simple.js?v=3"></script>
+  <script src="./employee-crud-simple.js?v=5"></script>
   <script src="<?php echo $baseUrl; ?>/Assets/Logout.js" defer></script>
 </head>
 
@@ -171,10 +172,13 @@
       })
       .then(html => {
         content.innerHTML = html;
-        const modal = document.getElementById('employeeModal');
-        if (modal && modal.parentElement !== document.body) {
-          document.body.appendChild(modal);
-        }
+        const modals = ['employeeModal', 'employeeDetailModal'];
+        modals.forEach(function(modalId) {
+          const modal = document.getElementById(modalId);
+          if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+          }
+        });
         // Call displayEmployees after content is loaded
         if (typeof displayEmployees === 'function') {
           displayEmployees();

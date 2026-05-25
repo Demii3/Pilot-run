@@ -103,16 +103,20 @@
           <div style="flex:1; min-width:300px;">
             <form id="assignForm">
               <div style="margin-bottom: 15px;">
-                <label style="display:block; margin-bottom:8px; font-weight:500;">Select Geofence Site</label>
-                <select id="siteSelect" name="geofence_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
-                  <option value="">-- choose site --</option>
-                </select>
+                <label for="siteSearch" style="display:block; margin-bottom:8px; font-weight:500;">Select Geofence Site</label>
+                <div style="position:relative;">
+                  <input id="siteSearch" type="text" autocomplete="off" placeholder="Type to search sites" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
+                  <input id="siteSelect" name="geofence_id" type="hidden">
+                  <div id="siteSuggestions" style="display:none; position:absolute; left:0; right:0; top:calc(100% + 4px); background:#fff; border:1px solid #d1d5db; border-radius:6px; box-shadow:0 10px 15px rgba(0,0,0,0.08); max-height:220px; overflow-y:auto; z-index:20;"></div>
+                </div>
               </div>
               <div style="margin-bottom: 15px;">
-                <label style="display:block; margin-bottom:8px; font-weight:500;">Select Employee</label>
-                <select id="employeeSelect" name="employee_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
-                  <option value="">-- choose employee --</option>
-                </select>
+                <label for="employeeSearch" style="display:block; margin-bottom:8px; font-weight:500;">Select Employee</label>
+                <div style="position:relative;">
+                  <input id="employeeSearch" type="text" autocomplete="off" placeholder="Type to search employees" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-family:'Poppins',sans-serif;">
+                  <input id="employeeSelect" name="employee_id" type="hidden">
+                  <div id="employeeSuggestions" style="display:none; position:absolute; left:0; right:0; top:calc(100% + 4px); background:#fff; border:1px solid #d1d5db; border-radius:6px; box-shadow:0 10px 15px rgba(0,0,0,0.08); max-height:220px; overflow-y:auto; z-index:20;"></div>
+                </div>
               </div>
               <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer; width:100%; margin-bottom:10px;">Assign Employee</button>
               <button type="button" id="viewAssignedBtn" style="background:#10b981; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:600; cursor:pointer; width:100%;">View Assigned Employees</button>
@@ -166,6 +170,7 @@
   <script>
     let savedGeofences = [];
     let geofencesForAssign = [];
+    let employeesForAssign = [];
     let assignmentMapInstance = null;
 
     function toggleMenu() {
@@ -383,6 +388,128 @@
       loadEmployeesForAssign();
     }
 
+    function getGeofenceOptions() {
+      return geofencesForAssign.map(function(gf) {
+        return {
+          id: String(gf.id),
+          label: gf.name || ''
+        };
+      });
+    }
+
+    function getEmployeeOptions() {
+      return employeesForAssign.map(function(emp) {
+        return {
+          id: String(emp.id),
+          label: emp.name || ''
+        };
+      });
+    }
+
+    function renderSuggestionMenu(kind, items) {
+      const menu = document.getElementById(kind + 'Suggestions');
+      menu.innerHTML = '';
+
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.textContent = 'No matches found';
+        empty.style.cssText = 'padding:10px 12px; color:#999; font-size:13px;';
+        menu.appendChild(empty);
+        menu.style.display = 'block';
+        return;
+      }
+
+      items.forEach(function(item) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = item.label;
+        button.style.cssText = 'display:block; width:100%; text-align:left; padding:10px 12px; border:none; background:#fff; cursor:pointer; font-family:\'Poppins\',sans-serif; font-size:14px;';
+        button.addEventListener('mouseenter', function() {
+          button.style.background = '#eff6ff';
+        });
+        button.addEventListener('mouseleave', function() {
+          button.style.background = '#fff';
+        });
+        button.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          if (kind === 'site') {
+            selectGeofence(item);
+          } else {
+            selectEmployee(item);
+          }
+        });
+        menu.appendChild(button);
+      });
+
+      menu.style.display = 'block';
+    }
+
+    function filterSuggestionMenu(kind) {
+      const input = document.getElementById(kind + 'Search');
+      const menu = document.getElementById(kind + 'Suggestions');
+      const hidden = document.getElementById(kind === 'site' ? 'siteSelect' : 'employeeSelect');
+      const term = input.value.trim().toLowerCase();
+      const options = kind === 'site' ? getGeofenceOptions() : getEmployeeOptions();
+
+      hidden.value = '';
+      menu.innerHTML = '';
+
+      if (!term) {
+        menu.style.display = 'none';
+        if (kind === 'site') {
+          document.getElementById('mapContainer').style.display = 'none';
+        }
+        return;
+      }
+
+      const filtered = options.filter(function(item) {
+        return item.label.toLowerCase().includes(term);
+      }).slice(0, 8);
+
+      renderSuggestionMenu(kind, filtered);
+    }
+
+    function selectGeofence(item) {
+      document.getElementById('siteSearch').value = item.label;
+      document.getElementById('siteSelect').value = item.id;
+      document.getElementById('siteSuggestions').style.display = 'none';
+      handleSiteSelectChange();
+    }
+
+    function selectEmployee(item) {
+      document.getElementById('employeeSearch').value = item.label;
+      document.getElementById('employeeSelect').value = item.id;
+      document.getElementById('employeeSuggestions').style.display = 'none';
+    }
+
+    function clearSuggestionMenu(kind) {
+      const menu = document.getElementById(kind + 'Suggestions');
+      setTimeout(function() {
+        menu.style.display = 'none';
+      }, 150);
+    }
+
+    function attachTypeaheadHandlers(kind) {
+      const input = document.getElementById(kind + 'Search');
+      const hidden = document.getElementById(kind === 'site' ? 'siteSelect' : 'employeeSelect');
+
+      input.addEventListener('input', function() {
+        hidden.value = '';
+        filterSuggestionMenu(kind);
+      });
+
+      input.addEventListener('focus', function() {
+        filterSuggestionMenu(kind);
+      });
+
+      input.addEventListener('blur', function() {
+        clearSuggestionMenu(kind);
+      });
+    }
+
+    attachTypeaheadHandlers('site');
+    attachTypeaheadHandlers('employee');
+
     function showSitesSection() {
       document.getElementById('sitesSection').style.display = 'block';
       document.getElementById('assignSection').style.display = 'none';
@@ -409,23 +536,25 @@
           // Handle both array response and object with success flag
           const geofences = Array.isArray(data) ? data : (data.geofences || []);
           geofencesForAssign = geofences;
-          
-          const select = document.getElementById('siteSelect');
-          select.innerHTML = '<option value="">-- choose site --</option>';
-          geofences.forEach(function(gf) {
-            const option = document.createElement('option');
-            option.value = gf.id;
-            option.textContent = gf.name;
-            select.appendChild(option);
-          });
-          
-          // Add change event listener
-          select.removeEventListener('change', handleSiteSelectChange);
-          select.addEventListener('change', handleSiteSelectChange);
+
+          filterSuggestionMenu('site');
         })
         .catch(function(err) {
           console.error('Error loading geofences:', err);
-          document.getElementById('siteSelect').innerHTML = '<option>Error loading sites</option>';
+          document.getElementById('siteSuggestions').innerHTML = '<div style="padding:10px 12px; color:#999; font-size:13px;">Error loading sites</div>';
+        });
+    }
+
+    function loadEmployeesForAssign() {
+      fetch('../api_employees.php')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          employeesForAssign = Array.isArray(data) ? data : (data.data || data.employees || []);
+          filterSuggestionMenu('employee');
+        })
+        .catch(function(err) {
+          console.error('Error loading employees:', err);
+          document.getElementById('employeeSuggestions').innerHTML = '<div style="padding:10px 12px; color:#999; font-size:13px;">Error loading employees</div>';
         });
     }
 
@@ -518,28 +647,10 @@
       }, 50);
     }
 
-    function loadEmployeesForAssign() {
-      fetch('../api_employees.php')
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          const select = document.getElementById('employeeSelect');
-          select.innerHTML = '<option value="">-- choose employee --</option>';
-          data.forEach(function(emp) {
-            const option = document.createElement('option');
-            option.value = emp.id;
-            option.textContent = emp.name;
-            select.appendChild(option);
-          });
-        })
-        .catch(function(err) {
-          console.error('Error loading employees:', err);
-        });
-    }
-
     document.getElementById('assignForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      const geofenceId = document.getElementById('siteSelect').options[document.getElementById('siteSelect').selectedIndex].getAttribute('value');
-      const employeeId = document.getElementById('employeeSelect').options[document.getElementById('employeeSelect').selectedIndex].getAttribute('value');
+      const geofenceId = document.getElementById('siteSelect').value;
+      const employeeId = document.getElementById('employeeSelect').value;
       const msgDiv = document.getElementById('assignMsg');
       const payload = { geofence_id: geofenceId, employee_id: employeeId };
       console.log('Selected geofence ID:', geofenceId);
@@ -692,12 +803,26 @@
           document.querySelectorAll('.edit-assignment-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
               editAssignmentId = parseInt(this.getAttribute('data-id'));
-              document.getElementById('employeeSelect').value = this.getAttribute('data-employee');
-              document.getElementById('siteSelect').value = this.getAttribute('data-site');
+              const employeeMatch = employeesForAssign.find(function(emp) {
+                return String(emp.id) === String(this.getAttribute('data-employee'));
+              }, this);
+              const siteMatch = geofencesForAssign.find(function(gf) {
+                return String(gf.id) === String(this.getAttribute('data-site'));
+              }, this);
+
+              if (employeeMatch) {
+                document.getElementById('employeeSearch').value = employeeMatch.name;
+                document.getElementById('employeeSelect').value = employeeMatch.id;
+              }
+              if (siteMatch) {
+                document.getElementById('siteSearch').value = siteMatch.name;
+                document.getElementById('siteSelect').value = siteMatch.id;
+                handleSiteSelectChange();
+              }
               
               // Highlight the select fields
-              document.getElementById('employeeSelect').style.borderColor = '#f59e0b';
-              document.getElementById('siteSelect').style.borderColor = '#f59e0b';
+              document.getElementById('employeeSearch').style.borderColor = '#f59e0b';
+              document.getElementById('siteSearch').style.borderColor = '#f59e0b';
               
               document.getElementById('assignMsg').innerHTML = '<div style="background:#fef3c7; color:#92400e; padding:10px; border-radius:6px; font-size:13px;">Editing assignment. Update fields and click "Assign Employee" to save or refresh to cancel.</div>';
               closeAssignedEmployeesModal();

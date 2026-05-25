@@ -33,6 +33,232 @@ function showNotification(message, type = 'info') {
   alert(message);
 }
 
+function normalizeText(value) {
+  return value === null || value === undefined ? '' : String(value).trim();
+}
+
+function getRowValue(row, possibleNames) {
+  if (!row || typeof row !== 'object') {
+    return '';
+  }
+
+  const entries = Object.entries(row);
+  for (const name of possibleNames) {
+    const match = entries.find(([key]) => key.trim().toLowerCase() === name.trim().toLowerCase());
+    if (match) {
+      return match[1];
+    }
+  }
+
+  return '';
+}
+
+function deriveUsername(name, email, fallbackIndex) {
+  const fromEmail = normalizeText(email).split('@')[0];
+  if (fromEmail) {
+    return fromEmail;
+  }
+
+  const fromName = normalizeText(name)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '.')
+    .replace(/^\.+|\.+$/g, '');
+
+  if (fromName) {
+    return fromName;
+  }
+
+  return `employee${fallbackIndex + 1}`;
+}
+
+function normalizeImportedDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  if (typeof value === 'number' && window.XLSX && XLSX.SSF && typeof XLSX.SSF.parse_date_code === 'function') {
+    const parsed = XLSX.SSF.parse_date_code(value);
+    if (parsed) {
+      const year = String(parsed.y).padStart(4, '0');
+      const month = String(parsed.m).padStart(2, '0');
+      const day = String(parsed.d).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  return normalizeText(value);
+}
+
+function normalizeImportedEmployees(rows) {
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+
+  const employees = [];
+
+  rows.forEach((row, index) => {
+    const name = normalizeText(getRowValue(row, ['Name', 'Full Name', 'name']));
+    const email = normalizeText(getRowValue(row, ['Email', 'email']));
+    const position = normalizeText(getRowValue(row, ['Position', 'position']));
+    const department = normalizeText(getRowValue(row, ['Department', 'department']));
+    const salary = normalizeText(getRowValue(row, ['Salary', 'salary']));
+    const joinDate = normalizeImportedDate(getRowValue(row, ['Join Date', 'join_date', 'JoinDate', 'joinDate']));
+    const status = normalizeText(getRowValue(row, ['Status', 'status'])) || 'Active';
+    const username = normalizeText(getRowValue(row, ['Username', 'username'])) || deriveUsername(name, email, index);
+    const type = normalizeText(getRowValue(row, ['Type', 'type'])) || 'Emp';
+    const password = normalizeText(getRowValue(row, ['Password', 'password'])) || username;
+    const idValue = normalizeText(getRowValue(row, ['ID', 'Id', 'id', 'Emp_id', 'emp_id']));
+
+    if (!name || !email || !position || !department || !salary || !joinDate) {
+      return;
+    }
+
+    const employee = {
+      name,
+      email,
+      username,
+      password,
+      type,
+      position,
+      department,
+      salary: parseFloat(salary),
+      joinDate,
+      status
+    };
+
+    if (idValue !== '' && !Number.isNaN(Number(idValue))) {
+      employee.id = parseInt(idValue, 10);
+    }
+
+    employees.push(employee);
+  });
+
+  return employees;
+}
+
+async function parseImportedFile(file) {
+  const fileName = (file && file.name ? file.name : '').toLowerCase();
+  if (!window.XLSX) {
+    throw new Error('Spreadsheet parser is not loaded. Refresh the page and try again.');
+  }
+
+  if (fileName.endsWith('.csv')) {
+    const text = await file.text();
+    const workbook = XLSX.read(text, { type: 'string' });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      return [];
+    }
+
+    return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+  }
+
+  const buffer = await file.arrayBuffer();
+  const workbook = XLSX.read(buffer, { type: 'array' });
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) {
+    return [];
+  }
+
+  return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+}
+
+async function importFromExcel(input) {
+  const file = input && input.files ? input.files[0] : null;
+  if (!file) {
+    return;
+  }
+
+  try {
+    const rawRows = await parseImportedFile(file);
+    const employees = normalizeImportedEmployees(rawRows);
+
+    if (employees.length === 0) {
+      showNotification('No valid employee rows were found in the file. Make sure the file includes Name, Email, Position, Department, Salary, and Join Date.', 'error');
+      input.value = '';
+      return;
+    }
+
+    const result = await fetchJson(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'replace_all',
+        employees
+      })
+    });
+
+    if (!result.success) {
+      throw new Error(result.message || 'Unable to import employees');
+    }
+
+    showNotification(`Imported ${employees.length} employee(s) successfully.`, 'success');
+    input.value = '';
+    displayEmployees();
+  } catch (error) {
+    console.error(error);
+    showNotification('Import failed: ' + error.message, 'error');
+    input.value = '';
+  }
+}
+
+function formatCurrency(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return '—';
+  }
+
+  return '₱' + numericValue.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function setDetailField(fieldId, value) {
+  const field = document.getElementById(fieldId);
+  if (field) {
+    field.textContent = value === null || value === undefined || value === '' ? '—' : value;
+  }
+}
+
+function openEmployeeDetails(employee) {
+  if (!employee) {
+    return;
+  }
+
+  setDetailField('detailId', employee.id);
+  setDetailField('detailName', employee.name);
+  setDetailField('detailEmail', employee.email);
+  setDetailField('detailUsername', employee.username);
+  setDetailField('detailType', employee.type);
+  setDetailField('detailPosition', employee.position);
+  setDetailField('detailDepartment', employee.department);
+  setDetailField('detailSalary', formatCurrency(employee.salary));
+  setDetailField('detailJoinDate', employee.join_date || employee.joinDate);
+  setDetailField('detailStatus', employee.status);
+
+  const title = document.getElementById('detailTitle');
+  if (title) {
+    title.textContent = `Employee Details - ${employee.name || 'Employee'}`;
+  }
+
+  const modal = document.getElementById('employeeDetailModal');
+  if (modal) {
+    modal.classList.add('show');
+    document.body.classList.add('modal-open');
+  }
+}
+
+function closeEmployeeDetails() {
+  const modal = document.getElementById('employeeDetailModal');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+  document.body.classList.remove('modal-open');
+}
+
 async function getEmployeeById(id) {
   const parsedId = parseInt(id, 10);
   let employee = employeesData.find(emp => parseInt(emp.id, 10) === parsedId);
@@ -191,14 +417,14 @@ function saveEmployee() {
     });
 }
 
-function exportToExcel() {
+async function exportToExcel() {
   const employees = employeesData;
   if (employees.length === 0) {
     showNotification('No employee data to export', 'error');
     return;
   }
 
-  const headers = ['ID', 'Name', 'Email', 'Username', 'Position', 'Department', 'Salary', 'Type', 'Status'];
+  const headers = ['ID', 'Name', 'Email', 'Username', 'Position', 'Department', 'Salary', 'Join Date', 'Type', 'Status'];
   const csvContent = [
     headers.join(','),
     ...employees.map(emp => [
@@ -209,12 +435,40 @@ function exportToExcel() {
       `"${emp.position}"`,
       `"${emp.department}"`,
       emp.salary,
+      emp.join_date || emp.joinDate || '',
       emp.type || '',
       emp.status || 'Inactive'
     ].join(','))
   ].join('\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+  if (window.showSaveFilePicker) {
+    try {
+      const fileHandle = await window.showSaveFilePicker({
+        suggestedName: `employees_${new Date().toISOString().split('T')[0]}.csv`,
+        types: [
+          {
+            description: 'CSV files',
+            accept: { 'text/csv': ['.csv'] }
+          }
+        ]
+      });
+
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      showNotification('Employee data exported successfully!', 'success');
+      return;
+    } catch (error) {
+      if (error && error.name === 'AbortError') {
+        return;
+      }
+
+      console.error('Save dialog export failed, falling back to browser download.', error);
+    }
+  }
+
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
 
@@ -224,7 +478,6 @@ function exportToExcel() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-  showNotification('Employee data exported successfully!', 'success');
 }
 
 async function displayEmployees() {
@@ -253,22 +506,6 @@ async function displayEmployees() {
     autoWidth: true,
     responsive: false,
     columns: [
-      { data: 'id', title: 'ID', width: '60px' },
-      { data: 'name', title: 'Name', width: '180px' },
-      { data: 'email', title: 'Email', width: '240px' },
-      { data: 'username', title: 'Username', width: '150px' },
-      { data: 'position', title: 'Position', width: '170px' },
-      { data: 'department', title: 'Department', width: '160px' },
-      { 
-        data: 'salary',
-        title: 'Salary',
-        width: '120px',
-        render: function(data) {
-          return '₱' + parseFloat(data).toLocaleString();
-        }
-      },
-      { data: 'type', title: 'Type', width: '90px' },
-      { data: 'status', title: 'Status', width: '90px' },
       {
         data: null,
         title: 'Actions',
@@ -277,11 +514,38 @@ async function displayEmployees() {
         searchable: false,
         render: function(data, type, row) {
           return `
-            <button class="btn btn-sm btn-warning" onclick="editEmployee(${row.id})">Edit</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${row.id})">Delete</button>
+            <div class="employee-actions">
+              <button class="btn btn-sm btn-warning" onclick="editEmployee(${row.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${row.id})">Delete</button>
+            </div>
           `;
         }
-      }
+      },
+      {
+        data: null,
+        title: 'Employee',
+        width: '320px',
+        render: function(data, type, row) {
+          return `
+            <div class="employee-summary">
+              <strong>${row.name || ''}</strong>
+              <span>${row.email || ''}</span>
+              <small>${row.position ? `Position: ${row.position}` : ''}</small>
+            </div>
+          `;
+        }
+      },
+      { data: 'department', title: 'Department', width: '160px' },
+      { 
+        data: 'salary',
+        title: 'Salary',
+        width: '120px',
+        render: function(data) {
+          return formatCurrency(data);
+        }
+      },
+      { data: 'type', title: 'Type', width: '90px' },
+      { data: 'status', title: 'Status', width: '90px' },
     ],
     pageLength: 10,
     lengthMenu: [5, 10, 25, 50],
@@ -297,8 +561,25 @@ async function displayEmployees() {
         next: "Next",
         previous: "Previous"
       }
+    },
+    createdRow: function(row) {
+      row.style.cursor = 'pointer';
+      row.title = 'Double-click to view employee details';
     }
   });
+
+  $('#employeeTable tbody')
+    .off('dblclick.employeeDetails')
+    .on('dblclick.employeeDetails', 'tr', function(event) {
+      if ($(event.target).closest('button').length) {
+        return;
+      }
+
+      const rowData = employeeTable.row(this).data();
+      if (rowData) {
+        openEmployeeDetails(rowData);
+      }
+    });
 }
 
 window.onclick = function(event) {
@@ -314,6 +595,11 @@ window.onclick = function(event) {
     // remove any bootstrap backdrops left behind
     const backdrops = document.getElementsByClassName('modal-backdrop');
     Array.from(backdrops).forEach(b => b.parentNode && b.parentNode.removeChild(b));
+  }
+
+  const detailModal = document.getElementById('employeeDetailModal');
+  if (detailModal && event.target === detailModal) {
+    closeEmployeeDetails();
   }
 };
 

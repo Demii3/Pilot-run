@@ -6,6 +6,7 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) {
 });
 
 include 'dbcon.php';
+/** @var mysqli $dbc */
 
 try {
 // Ensure the employees table exists.
@@ -138,6 +139,47 @@ function ensureUserRow($dbc, $id, $username, $password, $type) {
     }
 }
 
+function normalizeImportValue($value) {
+    return is_string($value) ? trim($value) : $value;
+}
+
+function importEmployeeRow($dbc, $employee) {
+    $id = isset($employee['id']) && is_numeric($employee['id']) ? intval($employee['id']) : null;
+    $name = trim($employee['name'] ?? '');
+    $email = trim($employee['email'] ?? '');
+    $username = trim($employee['username'] ?? '');
+    $password = array_key_exists('password', $employee) ? $employee['password'] : '';
+    $type = trim($employee['type'] ?? 'Emp');
+    $position = trim($employee['position'] ?? '');
+    $department = trim($employee['department'] ?? '');
+    $salary = isset($employee['salary']) ? floatval($employee['salary']) : null;
+    $joinDate = trim($employee['joinDate'] ?? $employee['join_date'] ?? '');
+    $status = trim($employee['status'] ?? 'Active');
+
+    if (!$name || !$email || !$username || $password === '' || !$position || !$department || $salary === null || $joinDate === '') {
+        throw new Exception('Imported file is missing required employee fields.');
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        throw new Exception('Imported file contains an invalid email address.');
+    }
+
+    if ($id !== null) {
+        $stmt = mysqli_prepare($dbc, "INSERT INTO employees (id, name, email, username, password, type, position, department, salary, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, 'isssssssdss', $id, $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status);
+    } else {
+        $stmt = mysqli_prepare($dbc, "INSERT INTO employees (name, email, username, password, type, position, department, salary, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, 'sssssssdss', $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status);
+    }
+
+    if (!$stmt || !mysqli_stmt_execute($stmt)) {
+        throw new Exception('Failed to import employee: ' . mysqli_error($dbc));
+    }
+
+    $employeeId = $id !== null ? $id : mysqli_insert_id($dbc);
+    ensureUserRow($dbc, $employeeId, $username, $password, $type);
+}
+
 // Legacy migration is disabled here because `employees` is the source of truth.
 // Existing data in `employee` should not repopulate `employees`.
 // migrateLegacyEmployeeTable($dbc);
@@ -151,6 +193,44 @@ function respond($success, $data = null, $message = '') {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!$input) {
+        $input = $_POST;
+    }
+
+    if (($input['action'] ?? '') === 'replace_all') {
+        $importedEmployees = $input['employees'] ?? [];
+        if (!is_array($importedEmployees) || count($importedEmployees) === 0) {
+            respond(false, null, 'No employees were provided for import.');
+        }
+
+        mysqli_begin_transaction($dbc);
+        try {
+            mysqli_query($dbc, "DELETE FROM `users`");
+            if (!mysqli_query($dbc, "DELETE FROM `employees`")) {
+                throw new Exception('Unable to clear existing employees: ' . mysqli_error($dbc));
+            }
+            mysqli_query($dbc, "ALTER TABLE `employees` AUTO_INCREMENT = 1");
+
+            $importedCount = 0;
+            foreach ($importedEmployees as $employee) {
+                if (!is_array($employee)) {
+                    continue;
+                }
+                importEmployeeRow($dbc, $employee);
+                $importedCount++;
+            }
+
+            mysqli_commit($dbc);
+            respond(true, ['imported' => $importedCount], 'Employees imported successfully.');
+        } catch (Throwable $e) {
+            mysqli_rollback($dbc);
+            respond(false, null, $e->getMessage());
+        }
+    }
+}
 
 if ($method === 'GET') {
     if (isset($_GET['id']) && is_numeric($_GET['id'])) {

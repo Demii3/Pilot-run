@@ -1,5 +1,101 @@
 $(function(){
   let editAssignmentId = null;
+  const siteOptions = window.assignmentSites || [];
+  const employeeOptions = window.assignmentEmployees || [];
+
+  function escapeHtml(value) {
+    return $('<div>').text(value == null ? '' : String(value)).html();
+  }
+
+  function setupTypeahead(inputSelector, hiddenSelector, menuSelector, items) {
+    const $input = $(inputSelector);
+    const $hidden = $(hiddenSelector);
+    const $menu = $(menuSelector);
+
+    function hideMenu() {
+      $menu.addClass('d-none');
+    }
+
+    function showMenu() {
+      $menu.removeClass('d-none');
+    }
+
+    function render(itemsToRender) {
+      $menu.empty();
+      if (!itemsToRender.length) {
+        $menu.append('<div class="list-group-item text-muted">No matches found</div>');
+        return;
+      }
+
+      itemsToRender.forEach(function(item) {
+        $menu.append(
+          '<button type="button" class="list-group-item list-group-item-action" data-id="' + escapeHtml(item.id) + '" data-label="' + escapeHtml(item.label) + '">' +
+            escapeHtml(item.label) +
+          '</button>'
+        );
+      });
+    }
+
+    function setValue(id, label) {
+      $hidden.val(id || '');
+      $input.val(label || '');
+      hideMenu();
+    }
+
+    function clear() {
+      $hidden.val('');
+      $input.val('');
+      $menu.empty();
+      hideMenu();
+    }
+
+    function filter() {
+      const term = $input.val().toLowerCase().trim();
+      if (!term) {
+        $hidden.val('');
+        $menu.empty();
+        hideMenu();
+        return;
+      }
+
+      const matches = items.filter(function(item) {
+        return item.label.toLowerCase().includes(term);
+      }).slice(0, 8);
+
+      render(matches);
+      showMenu();
+    }
+
+    $input.on('input', function() {
+      $hidden.val('');
+      filter();
+    });
+
+    $input.on('focus', function() {
+      if ($menu.children().length) {
+        showMenu();
+      } else if ($input.val().trim()) {
+        filter();
+      }
+    });
+
+    $input.on('blur', function() {
+      setTimeout(hideMenu, 150);
+    });
+
+    $menu.on('mousedown', '.list-group-item-action', function(e) {
+      e.preventDefault();
+      setValue($(this).data('id'), $(this).data('label'));
+    });
+
+    return {
+      setValue: setValue,
+      clear: clear
+    };
+  }
+
+  const siteTypeahead = setupTypeahead('#siteSearch', '#siteId', '#siteSuggestions', siteOptions);
+  const employeeTypeahead = setupTypeahead('#employeeSearch', '#employeeId', '#employeeSuggestions', employeeOptions);
 
   function showMessage(text, type) {
     $('#msg').removeClass().addClass(type ? 'alert ' + type : '').text(text);
@@ -7,8 +103,8 @@ $(function(){
 
   function resetForm() {
     editAssignmentId = null;
-    $('#siteSelect').val('');
-    $('#employeeSelect').val('');
+    siteTypeahead.clear();
+    employeeTypeahead.clear();
     $('#assignBtn').text('Assign');
     $('#cancelEditBtn').addClass('d-none');
   }
@@ -47,10 +143,10 @@ $(function(){
   }
 
   function saveAssignment() {
-    const userId = $('#employeeSelect').val();
-    const locId = $('#siteSelect').val();
+    const userId = $('#employeeId').val();
+    const locId = $('#siteId').val();
     if (!userId || !locId) {
-      showMessage('Select both site and employee.', 'alert-warning');
+      showMessage('Select both site and employee from the suggestions.', 'alert-warning');
       return;
     }
 
@@ -80,8 +176,19 @@ $(function(){
 
   $(document).on('click', '.edit-assignment', function(){
     editAssignmentId = $(this).data('id');
-    $('#employeeSelect').val($(this).data('employee'));
-    $('#siteSelect').val($(this).data('site'));
+    const employeeMatch = employeeOptions.find(function(item) {
+      return String(item.id) === String($(this).data('employee'));
+    }.bind(this));
+    const siteMatch = siteOptions.find(function(item) {
+      return String(item.id) === String($(this).data('site'));
+    }.bind(this));
+
+    if (employeeMatch) {
+      employeeTypeahead.setValue(employeeMatch.id, employeeMatch.label);
+    }
+    if (siteMatch) {
+      siteTypeahead.setValue(siteMatch.id, siteMatch.label);
+    }
     $('#assignBtn').text('Update');
     $('#cancelEditBtn').removeClass('d-none');
     showMessage('Editing assignment. Update both fields and click Update or Cancel.', 'alert-info');

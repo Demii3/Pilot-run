@@ -20,6 +20,79 @@
   .table-responsive {
     overflow-x: auto;
   }
+
+  #employeeTable tbody td:last-child {
+    display: table-cell;
+    flex-direction: initial;
+    gap: 0;
+    justify-content: initial;
+    align-items: initial;
+  }
+
+  .employee-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .employee-summary strong {
+    font-size: 0.98rem;
+    color: #1f2d3d;
+  }
+
+  .employee-summary span,
+  .employee-summary small {
+    color: #5a6472;
+  }
+
+  .employee-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .employee-detail-body {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(80vh - 120px);
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .detail-item {
+    background: #f8f9fa;
+    border: 1px solid #e3e6ea;
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .detail-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6c757d;
+    margin-bottom: 4px;
+  }
+
+  .detail-value {
+    font-size: 0.95rem;
+    color: #212529;
+    word-break: break-word;
+  }
+
+  @media screen and (max-width: 768px) {
+    .detail-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 
 <div class="card">
@@ -111,5 +184,29 @@
         <button type="submit" class="btn btn-primary">Save Employee</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div id="employeeDetailModal" class="modal employee-detail-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="detailTitle">Employee Details</h2>
+      <span class="close" onclick="closeEmployeeDetails()">&times;</span>
+    </div>
+
+    <div class="employee-detail-body">
+      <div class="detail-grid">
+        <div class="detail-item"><span class="detail-label">ID</span><span id="detailId" class="detail-value"></span></div>
+        <div class="detail-item"><span class="detail-label">Name</span><span id="detailName" class="detail-value"></span></div>
+        <div class="detail-item"><span class="detail-label">Email</span><span id="detailEmail" class="detail-value"></span></div>
+        <div class="detail-item"><span class="detail-label">Username</span><span id="detailUsername" class="detail-value"></span></div>
+        <div class="detail-item"><span class="detail-label">Type</span><span id="detailType" class="detail-value"></span></div>
+        <div class="detail-item"><span class="detail-label">Position</span><span id="detailPosition" class="detail-value"></span></div>
+        <div class="detail-item"><span class="detail-label">Department</span><span id="detailDepartment" class="detail-value"></span></div>
+        <div class="detail-item"><span class="detail-label">Salary</span><span id="detailSalary" class="detail-value"></span></div>
+        <div class="detail-item"><span class="detail-label">Join Date</span><span id="detailJoinDate" class="detail-value"></span></div>
+        <div class="detail-item"><span class="detail-label">Status</span><span id="detailStatus" class="detail-value"></span></div>
+      </div>
+    </div>
   </div>
 </div>
