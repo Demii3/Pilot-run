@@ -1344,7 +1344,8 @@
               >
             </div>
           </div>
-          <div class="table-responsive">
+          <div id="employeeSalaryEmptyState" class="alert alert-info d-none">No processed salary for this cutoff.</div>
+          <div class="table-responsive" id="employeeSalaryTableWrap">
             <table class="table table-hover" id="employeeSalaryTable">
               <thead class="table-dark">
                 <tr>
@@ -1542,6 +1543,7 @@
                 type="text"
                 id="payslipDateFrom"
                 class="form-control"
+                onchange="loadPayslip()"
               >
             </div>
             <div class="col-md-3">
@@ -1550,12 +1552,13 @@
                 type="text"
                 id="payslipDateTo"
                 class="form-control"
+                onchange="loadPayslip()"
               >
             </div>
           </div>
 
-          <div id="payslipEmptyState" class="alert alert-info mb-3 d-none">
-            No processed payroll found for this cutoff. Go to Employee Salary, select the cutoff, then click Process Employee Salary for the cut-off.
+          <div id="payslipEmptyState" class="alert alert-warning mb-3 d-none border-warning" style="font-weight: 600;">
+            No processed salary exists for this cutoff yet. Process the selected cutoff in Employee Salary first.
           </div>
 
           <div id="payslipTableWrap" class="table-responsive">
@@ -1640,6 +1643,18 @@
                     </div>
                     <div id="bulkEmailQueueProgressText" class="small text-muted mt-1">0% (0/0)</div>
                   </div>
+                  <div id="bulkEmailSendReview" class="alert alert-warning mt-3 d-none mb-0">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                      <div>
+                        <div class="fw-semibold" id="bulkEmailSendReviewText">Send payslips to selected employees?</div>
+                        <div class="small text-muted">This will send the emails immediately to the selected recipients.</div>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary" onclick="cancelBulkEmailSendReview()">Back</button>
+                        <button type="button" class="btn btn-success" onclick="confirmBulkEmailSend()">Confirm Send</button>
+                      </div>
+                    </div>
+                  </div>
                   <div id="bulkEmailEmployeeList" style="overflow-y: auto;">
                     <!-- Employee table will be populated here -->
                   </div>
@@ -1647,7 +1662,23 @@
                 </div>
                 <div class="card-footer d-flex justify-content-end gap-2">
                   <button type="button" class="btn btn-outline-secondary" onclick="closeBulkEmailModal()">Cancel</button>
-                  <button type="button" class="btn btn-success" onclick="sendBulkPayslipEmails()">Send Payslips</button>
+                  <button type="button" class="btn btn-success" onclick="openBulkEmailSendReview()">Review Send</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal fade" id="bulkEmailResultModal" tabindex="-1" aria-labelledby="bulkEmailResultModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+              <div class="modal-content shadow border-0">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="bulkEmailResultModalLabel">Payslip Email Summary</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div id="bulkEmailResultMessage" class="small" style="white-space: pre-wrap;"></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                 </div>
               </div>
             </div>
@@ -1876,7 +1907,7 @@ function initDatePickersForRanges() {
     ['attendanceDateFrom', 'attendanceDateTo', 'attendanceDateRangeText', null],
     ['premiumDateFrom', 'premiumDateTo', 'premiumDateRangeText', null],
     ['employeeSalaryDateFrom', 'employeeSalaryDateTo', 'employeeSalaryDateRangeText', loadEmployeeSalary],
-    ['payslipDateFrom', 'payslipDateTo', 'payslipDateRangeText', null]
+    ['payslipDateFrom', 'payslipDateTo', 'payslipDateRangeText', loadPayslip]
   ];
 
   rangeConfigs.forEach(([fromId, toId, outputId, reloadFn]) => {
@@ -1930,6 +1961,27 @@ function savePayslipRangeState() {
     localStorage.setItem(getPayslipRangeStorageKey(), JSON.stringify(value));
   } catch (error) {
     console.warn('Unable to persist payslip range state:', error);
+  }
+}
+
+function clearPayslipRangeState() {
+  const fromInput = document.getElementById('payslipDateFrom');
+  const toInput = document.getElementById('payslipDateTo');
+  if (fromInput) {
+    fromInput.value = '';
+  }
+  if (toInput) {
+    toInput.value = '';
+  }
+
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(getPayslipRangeStorageKey());
+  } catch (error) {
+    console.warn('Unable to clear payslip range state:', error);
   }
 }
 
@@ -5094,6 +5146,21 @@ async function confirmProcessPayroll() {
       renderPayslipRows(rows);
     }
 
+    if (payslipFrom) {
+      payslipFrom.value = fromRaw;
+    }
+    if (payslipTo) {
+      payslipTo.value = toRaw;
+    }
+
+    const payslipButton = Array.from(document.querySelectorAll('.sidebar button')).find(btn => btn.getAttribute('onclick') === "showContent(this,'payslip')");
+    if (payslipButton) {
+      showContent(payslipButton, 'payslip');
+      if (typeof loadPayslip === 'function') {
+        loadPayslip();
+      }
+    }
+
     alert('Employee salary has been processed for the selected cutoff. Payslip is updated for this cutoff.');
   } catch (error) {
     alert(error.message || 'Failed to process employee salary.');
@@ -5147,6 +5214,21 @@ async function processEmployeeSalaryForCutoff() {
       renderPayslipRows(rows);
     }
 
+    if (payslipFrom) {
+      payslipFrom.value = fromRaw;
+    }
+    if (payslipTo) {
+      payslipTo.value = toRaw;
+    }
+
+    const payslipButton = Array.from(document.querySelectorAll('.sidebar button')).find(btn => btn.getAttribute('onclick') === "showContent(this,'payslip')");
+    if (payslipButton) {
+      showContent(payslipButton, 'payslip');
+      if (typeof loadPayslip === 'function') {
+        loadPayslip();
+      }
+    }
+
     alert('Employee salary has been processed for the selected cutoff. Payslip is updated for this cutoff.');
   } catch (error) {
     alert(error.message || 'Failed to process employee salary.');
@@ -5172,6 +5254,8 @@ function filterEmployeeSalary() {
 
 async function loadEmployeeSalary() {
   const tableBody = document.querySelector('#employeeSalaryTable tbody');
+  const tableWrap = document.getElementById('employeeSalaryTableWrap');
+  const emptyState = document.getElementById('employeeSalaryEmptyState');
   if (!tableBody) return;
 
   const dateFromInput = document.getElementById('employeeSalaryDateFrom');
@@ -5188,22 +5272,21 @@ async function loadEmployeeSalary() {
     const result = await response.json();
 
     if (result.success && Array.isArray(result.data?.rows) && result.data.rows.length > 0) {
+      if (tableWrap) tableWrap.classList.remove('d-none');
+      if (emptyState) emptyState.classList.add('d-none');
       renderEmployeeSalaryRows(applyEmployeeSalaryDraftRows(result.data.rows, fromValue, toValue));
       return;
     }
-  } catch (error) {
-    console.warn('Unable to load stored employee salary rows, falling back to live computation:', error);
-  }
 
-  try {
-    const { rows } = await buildCutoffPayrollRows(
-      dateFrom,
-      dateTo,
-      dateFromInput?.value || '',
-      dateToInput?.value || '',
-      false
-    );
-    renderEmployeeSalaryRows(applyEmployeeSalaryDraftRows(rows, fromValue, toValue));
+    tableBody.innerHTML = '';
+    if (tableWrap) tableWrap.classList.add('d-none');
+    if (emptyState) emptyState.classList.remove('d-none');
+    const pagination = document.getElementById('employeeSalaryPagination');
+    if (pagination) pagination.innerHTML = '';
+    currentEmployeeSalaryRows = [];
+    employeesForSalary = [];
+    employeeSalaryExpandedRowId = null;
+    return;
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">${error.message}</td></tr>`;
     paginateTable('employeeSalaryTable', 'employeeSalaryPagination', true);
@@ -5291,6 +5374,7 @@ function closeBulkEmailModal() {
   if (!modal) return;
 
   modal.classList.add('d-none');
+  hideBulkEmailSendReview();
   selectedBulkEmailEmployees.clear();
 }
 
@@ -5622,6 +5706,56 @@ function yieldToUi() {
   return new Promise(resolve => window.setTimeout(resolve, 0));
 }
 
+let bulkEmailConfirmResolver = null;
+
+function openBulkEmailSendReview() {
+  const selectedCount = Array.from(document.querySelectorAll('#bulkEmailTableBody .bulk-email-checkbox:checked')).length;
+  if (selectedCount === 0) {
+    showBulkEmailResultModal(['Please select at least one employee.']);
+    return;
+  }
+
+  const review = document.getElementById('bulkEmailSendReview');
+  const reviewText = document.getElementById('bulkEmailSendReviewText');
+  if (review) {
+    if (reviewText) {
+      reviewText.textContent = `Send payslips to ${selectedCount} selected employee(s)?`;
+    }
+
+    review.classList.remove('d-none');
+  }
+}
+
+function hideBulkEmailSendReview() {
+  const review = document.getElementById('bulkEmailSendReview');
+  if (review) {
+    review.classList.add('d-none');
+  }
+}
+
+function cancelBulkEmailSendReview() {
+  hideBulkEmailSendReview();
+}
+
+function confirmBulkEmailSend() {
+  hideBulkEmailSendReview();
+  sendBulkPayslipEmails();
+}
+
+function showBulkEmailResultModal(summaryLines) {
+  const modalElement = document.getElementById('bulkEmailResultModal');
+  const messageElement = document.getElementById('bulkEmailResultMessage');
+
+  if (!modalElement || !messageElement || typeof bootstrap === 'undefined') {
+    alert(summaryLines.join('\n'));
+    return;
+  }
+
+  messageElement.textContent = summaryLines.join('\n');
+  const modal = new bootstrap.Modal(modalElement, { backdrop: false });
+  modal.show();
+}
+
 function filterBulkEmailEmployees() {
   const searchInput = document.getElementById('bulkEmailSearchInput');
   if (!searchInput) return;
@@ -5640,7 +5774,7 @@ async function sendBulkPayslipEmails() {
   const selectedEmployees = allPayslipEmployees.filter(emp => selectedIds.has(String(emp.id)));
 
   if (selectedEmployees.length === 0) {
-    alert('Please select at least one employee.');
+    showBulkEmailResultModal(['Please select at least one employee.']);
     return;
   }
 
@@ -5709,8 +5843,10 @@ async function sendBulkPayslipEmails() {
     summaryLines.push('', 'Failures:', ...failures.map(item => `${item.employee.name} <${item.employee.email}> - ${item.message}`));
   }
 
-  alert(summaryLines.join('\n'));
-  closeBulkEmailModal();
+  showBulkEmailResultModal(summaryLines);
+  // Keep the bulk modal open for monitoring; reset the progress bar to 0
+  setBulkEmailQueueProgress(0, 0);
+  setBulkEmailQueueStatus('Queue is idle.');
 }
 
 function buildAttendanceWorkMap(attendanceData = [], dateFrom = null, dateTo = null) {
@@ -5962,6 +6098,12 @@ async function loadPayslip() {
     }
 
     const rows = result.data?.rows || [];
+    if (rows.length === 0) {
+      clearPayslipRangeState();
+      renderPayslipRows([]);
+      return;
+    }
+
     renderPayslipRows(rows);
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-danger">${error.message}</td></tr>`;
