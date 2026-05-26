@@ -942,7 +942,7 @@
                 type="text"
                 id="premiumDateFrom"
                 class="form-control"
-                onchange="filterEmployeesForPremiums()"
+                onchange="loadEmployeesForPremiums()"
               >
             </div>
             <div class="col-md-3">
@@ -951,12 +951,15 @@
                 type="text"
                 id="premiumDateTo"
                 class="form-control"
-                onchange="filterEmployeesForPremiums()"
+                onchange="loadEmployeesForPremiums()"
               >
             </div>
           </div>
 
-          <div class="table-responsive">
+          <div id="employeePremiumEmptyState" class="alert alert-warning d-none border-warning" style="font-weight: 600;">
+            No processed premiums exist for this period yet. Process the selected cutoff first.
+          </div>
+          <div class="table-responsive" id="employeePremiumSearchTableWrap">
             <table class="table table-hover" id="employeePremiumSearchTable">
               <thead class="table-dark">
                 <tr>
@@ -975,6 +978,7 @@
         </div>
       </div>`;
     initBiMonthlyRanges();
+    restorePremiumRangeState();
     loadEmployeesForPremiums();
   }
 
@@ -2011,6 +2015,57 @@ function restorePayslipRangeState() {
     return true;
   } catch (error) {
     console.warn('Unable to restore payslip range state:', error);
+    return false;
+  }
+}
+
+function getPremiumRangeStorageKey() {
+  return 'payroll_premium_range';
+}
+
+function savePremiumRangeState() {
+  const fromInput = document.getElementById('premiumDateFrom');
+  const toInput = document.getElementById('premiumDateTo');
+  if (!fromInput || !toInput || typeof localStorage === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.setItem(getPremiumRangeStorageKey(), JSON.stringify({
+      from: fromInput.value || '',
+      to: toInput.value || ''
+    }));
+  } catch (error) {
+    console.warn('Unable to persist premium range state:', error);
+  }
+}
+
+function restorePremiumRangeState() {
+  const fromInput = document.getElementById('premiumDateFrom');
+  const toInput = document.getElementById('premiumDateTo');
+  if (!fromInput || !toInput || typeof localStorage === 'undefined') {
+    return false;
+  }
+
+  try {
+    const raw = localStorage.getItem(getPremiumRangeStorageKey());
+    if (!raw) {
+      return false;
+    }
+
+    const parsed = JSON.parse(raw);
+    const fromValue = typeof parsed.from === 'string' ? parsed.from : '';
+    const toValue = typeof parsed.to === 'string' ? parsed.to : '';
+    if (!fromValue || !toValue) {
+      return false;
+    }
+
+    fromInput.value = fromValue;
+    toInput.value = toValue;
+    updateDateRangeText('premiumDateFrom', 'premiumDateTo', 'premiumDateRangeText');
+    return true;
+  } catch (error) {
+    console.warn('Unable to restore premium range state:', error);
     return false;
   }
 }
@@ -3264,113 +3319,63 @@ async function loadEmployeesForDeductions() {
 
 async function loadEmployeesForPremiums() {
   const tableBody = document.querySelector('#employeePremiumSearchTable tbody');
+  const tableWrap = document.getElementById('employeePremiumSearchTableWrap');
+  const emptyState = document.getElementById('employeePremiumEmptyState');
   if (!tableBody) return;
 
   tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading employees...</td></tr>';
 
   try {
-    const [employeeResponse, assignedIncomeResponse] = await Promise.all([
-      fetch('../Employee_management/employees_api.php'),
-      fetch('assigned_emp_inc_api.php')
-    ]);
+    const dateFromInput = document.getElementById('premiumDateFrom');
+    const dateToInput = document.getElementById('premiumDateTo');
+    const periodSource = dateFromInput?.value || dateToInput?.value || '';
+    let url = 'premiums_api.php';
+    if (periodSource) {
+      const parsed = parseDateInputValue(periodSource, false);
+      if (parsed) {
+        url += `?year=${parsed.getFullYear()}&month=${parsed.getMonth() + 1}`;
+      }
+    }
 
-    const result = await employeeResponse.json();
-    const assignedIncomeResult = await assignedIncomeResponse.json();
+    const response = await fetch(url);
+    const result = await response.json();
 
     if (!result.success) {
-      throw new Error(result.message || 'Unable to load employees.');
+      throw new Error(result.message || 'Unable to load premiums data.');
     }
-    if (!assignedIncomeResult.success) {
-      throw new Error(assignedIncomeResult.message || 'Unable to load assigned employee income data.');
-    }
-
-    const nonTaxableCostByEmployee = buildNonTaxableIncomeMap(assignedIncomeResult.data || []);
 
     const rows = result.data || [];
     employeesForPremiums = rows;
 
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No employees found.</td></tr>';
+      tableBody.innerHTML = '';
+      if (tableWrap) tableWrap.classList.add('d-none');
+      if (emptyState) emptyState.classList.remove('d-none');
+      const pagination = document.getElementById('employeePremiumSearchPagination');
+      if (pagination) pagination.innerHTML = '';
       paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
       return;
     }
 
-    const premiumRecords = [];
+    savePremiumRangeState();
+
+    if (tableWrap) tableWrap.classList.remove('d-none');
+    if (emptyState) emptyState.classList.add('d-none');
+
     tableBody.innerHTML = '';
     rows.forEach(emp => {
-      const salaryBiMonthly = Number(emp.salary || 0);
-      // Employee salary in this module is bi-monthly; convert to monthly for premium tables.
-      const monthlySalary = salaryBiMonthly * 2;
-      const employeeNameKey = String(emp.name || '').trim().toLowerCase();
-      const nonTaxableIncome = nonTaxableCostByEmployee[employeeNameKey] || 0;
-      const {
-        sssContribution,
-        pagibigContribution,
-        philhealthContribution,
-        withholdingTax,
-        totalDeductions
-      } = computePremiumDeductions(monthlySalary, null, nonTaxableIncome);
-
-      // Determine selected period for these premium records (default to current month)
-      const periodInput = document.getElementById('premiumDateFrom') || document.getElementById('remittanceSssMonth');
-      let periodYear = null;
-      let periodMonth = null;
-      if (periodInput && periodInput.value) {
-        const d = new Date(periodInput.value);
-        if (!Number.isNaN(d.getTime())) {
-          periodYear = d.getFullYear();
-          periodMonth = d.getMonth() + 1;
-        } else if (periodInput.value.indexOf('-') !== -1) {
-          const parts = periodInput.value.split('-');
-          if (parts.length >= 2) {
-            periodYear = parseInt(parts[0], 10);
-            periodMonth = parseInt(parts[1], 10);
-          }
-        }
-      }
-
-      premiumRecords.push({
-        employee_id: Number(emp.id),
-        employee_name: emp.name,
-        salary: monthlySalary,
-        sss: sssContribution === null ? 0 : sssContribution,
-        sss_employee: computeSssSplit(sssContribution === null ? 0 : sssContribution).employee,
-        sss_employer: computeSssSplit(sssContribution === null ? 0 : sssContribution).employer,
-        philhealth: philhealthContribution === null ? 0 : philhealthContribution,
-        philhealth_employee: computePhilhealthSplit(philhealthContribution === null ? 0 : philhealthContribution).employee,
-        philhealth_employer: computePhilhealthSplit(philhealthContribution === null ? 0 : philhealthContribution).employer,
-        pagibig: pagibigContribution === null ? 0 : pagibigContribution,
-        pagibig_employee: computePagibigSplit(pagibigContribution === null ? 0 : pagibigContribution).employee,
-        pagibig_employer: computePagibigSplit(pagibigContribution === null ? 0 : pagibigContribution).employer,
-        withholding_tax: withholdingTax === null ? 0 : withholdingTax,
-        total_premium: totalDeductions,
-        period_year: periodYear,
-        period_month: periodMonth
-      });
-
       const row = document.createElement('tr');
-      row.dataset.joinDate = emp.join_date || '';
       row.innerHTML = `
-        <td>${emp.id}</td>
-        <td>${emp.name}</td>
-        <td>${sssContribution === null ? '' : formatCurrency(sssContribution)}</td>
-        <td>${philhealthContribution === null ? '' : formatCurrency(philhealthContribution)}</td>
-        <td>${pagibigContribution === null ? '' : formatCurrency(pagibigContribution)}</td>
-        <td>${formatCurrency(withholdingTax)}</td>
+        <td>${emp.employee_id}</td>
+        <td>${emp.employee_name}</td>
+        <td>${formatCurrency(emp.sss)}</td>
+        <td>${formatCurrency(emp.philhealth)}</td>
+        <td>${formatCurrency(emp.pagibig)}</td>
+        <td>${formatCurrency(emp.withholding_tax)}</td>
       `;
       tableBody.appendChild(row);
     });
 
-    // Persist computed premiums into a separate table for reporting and auditing.
-    try {
-      await fetch('premiums_api.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ records: premiumRecords })
-      });
-    } catch (persistError) {
-      console.error('Unable to persist premiums snapshot:', persistError);
-    }
     paginateTable('employeePremiumSearchTable', 'employeePremiumSearchPagination', true);
   } catch (error) {
     tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`;
@@ -3380,14 +3385,10 @@ async function loadEmployeesForPremiums() {
 
 function filterEmployeesForPremiums() {
   const searchInput = document.getElementById('searchPremiumEmployees');
-  const dateFromInput = document.getElementById('premiumDateFrom');
-  const dateToInput = document.getElementById('premiumDateTo');
   const filter = (searchInput?.value || '').toLowerCase();
   const tableBody = document.querySelector('#employeePremiumSearchTable tbody');
   if (!tableBody) return;
   const rows = tableBody.getElementsByTagName('tr');
-  const dateFrom = parseDateInputValue(dateFromInput?.value, false);
-  const dateTo = parseDateInputValue(dateToInput?.value, true);
 
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i].getElementsByTagName('td');
@@ -3398,12 +3399,7 @@ function filterEmployeesForPremiums() {
       const pagibig = cells[4].textContent.toLowerCase();
       const withholdingTax = cells[5].textContent.toLowerCase();
       const textMatches = name.includes(filter) || sss.includes(filter) || philhealth.includes(filter) || pagibig.includes(filter) || withholdingTax.includes(filter);
-
-      const joinDateText = rows[i].dataset.joinDate || '';
-      const joinDate = joinDateText ? new Date(`${joinDateText}T00:00:00`) : null;
-      const dateMatches = (!dateFrom && !dateTo) || (joinDate && !Number.isNaN(joinDate.getTime()) && (!dateFrom || joinDate >= dateFrom) && (!dateTo || joinDate <= dateTo));
-
-      rows[i].dataset.filterVisible = textMatches && dateMatches ? '1' : '0';
+      rows[i].dataset.filterVisible = textMatches ? '1' : '0';
     }
   }
 
