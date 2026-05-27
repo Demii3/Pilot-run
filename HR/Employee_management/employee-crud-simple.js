@@ -126,10 +126,6 @@ function normalizeImportedEmployees(rows) {
       status
     };
 
-    if (idValue !== '' && !Number.isNaN(Number(idValue))) {
-      employee.id = parseInt(idValue, 10);
-    }
-
     employees.push(employee);
   });
 
@@ -185,7 +181,7 @@ async function importFromExcel(input) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        action: 'replace_all',
+        action: 'upsert_many',
         employees
       })
     });
@@ -194,7 +190,7 @@ async function importFromExcel(input) {
       throw new Error(result.message || 'Unable to import employees');
     }
 
-    showNotification(`Imported ${employees.length} employee(s) successfully.`, 'success');
+    showNotification(`Imported ${employees.length} employee(s) successfully. Existing rows were updated and new rows were added.`, 'success');
     input.value = '';
     displayEmployees();
   } catch (error) {
@@ -216,10 +212,15 @@ function formatCurrency(value) {
   });
 }
 
-function setDetailField(fieldId, value) {
+function setDetailField(fieldId, value, emptyValue = '—') {
   const field = document.getElementById(fieldId);
   if (field) {
-    field.textContent = value === null || value === undefined || value === '' ? '—' : value;
+    const normalizedValue = value === null || value === undefined || value === '' ? emptyValue : value;
+    if ('value' in field) {
+      field.value = normalizedValue;
+    } else {
+      field.textContent = normalizedValue;
+    }
   }
 }
 
@@ -232,12 +233,12 @@ function openEmployeeDetails(employee) {
   setDetailField('detailName', employee.name);
   setDetailField('detailEmail', employee.email);
   setDetailField('detailUsername', employee.username);
-  setDetailField('detailType', employee.type);
+  setDetailField('detailType', employee.type, '');
   setDetailField('detailPosition', employee.position);
   setDetailField('detailDepartment', employee.department);
   setDetailField('detailSalary', formatCurrency(employee.salary));
-  setDetailField('detailJoinDate', employee.join_date || employee.joinDate);
-  setDetailField('detailStatus', employee.status);
+  setDetailField('detailJoinDate', employee.join_date || employee.joinDate, '');
+  setDetailField('detailStatus', employee.status, '');
 
   const title = document.getElementById('detailTitle');
   if (title) {
@@ -508,21 +509,6 @@ async function displayEmployees() {
     columns: [
       {
         data: null,
-        title: 'Actions',
-        width: '140px',
-        orderable: false,
-        searchable: false,
-        render: function(data, type, row) {
-          return `
-            <div class="employee-actions">
-              <button class="btn btn-sm btn-warning" onclick="editEmployee(${row.id})">Edit</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${row.id})">Delete</button>
-            </div>
-          `;
-        }
-      },
-      {
-        data: null,
         title: 'Employee',
         width: '320px',
         render: function(data, type, row) {
@@ -546,6 +532,21 @@ async function displayEmployees() {
       },
       { data: 'type', title: 'Type', width: '90px' },
       { data: 'status', title: 'Status', width: '90px' },
+      {
+        data: null,
+        title: 'Actions',
+        width: '140px',
+        orderable: false,
+        searchable: false,
+        render: function(data, type, row) {
+          return `
+            <div class="employee-actions">
+              <button class="btn btn-sm btn-warning" onclick="editEmployee(${row.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${row.id})">Delete</button>
+            </div>
+          `;
+        }
+      },
     ],
     pageLength: 10,
     lengthMenu: [5, 10, 25, 50],

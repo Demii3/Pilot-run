@@ -97,10 +97,10 @@ function ensureUsersTable($dbc) {
 
 ensureUsersTable($dbc);
 
-function ensureUserRow($dbc, $id, $username, $password, $type) {
+function ensureUserRow($dbc, $id, $username, $password, $type, $workStatus = 'Tapped-out') {
     $id = intval($id);
     $existingPassword = '';
-    $workStatus = 'Tapped-out';
+    $workStatus = $workStatus ?: 'Tapped-out';
 
     $stmt = mysqli_prepare($dbc, "SELECT `User_id`, `Password`, `Work_status` FROM `users` WHERE `User_id` = ?");
     if ($stmt) {
@@ -115,6 +115,10 @@ function ensureUserRow($dbc, $id, $username, $password, $type) {
                 $password = $existingPassword;
             }
             mysqli_stmt_close($stmt);
+
+            if ($password !== null && password_get_info($password)['algo'] === 0) {
+                $password = password_hash($password, PASSWORD_DEFAULT);
+            }
 
             $updateStmt = mysqli_prepare($dbc, "UPDATE `users` SET `Username` = ?, `Password` = ?, `Type` = ? WHERE `User_id` = ?");
             if ($updateStmt) {
@@ -131,6 +135,10 @@ function ensureUserRow($dbc, $id, $username, $password, $type) {
         $password = '';
     }
 
+    if ($password !== '' && password_get_info($password)['algo'] === 0) {
+        $password = password_hash($password, PASSWORD_DEFAULT);
+    }
+
     $insertStmt = mysqli_prepare($dbc, "INSERT INTO `users` (`User_id`, `Username`, `Password`, `Type`, `Work_status`) VALUES (?, ?, ?, ?, ?)");
     if ($insertStmt) {
         mysqli_stmt_bind_param($insertStmt, 'issss', $id, $username, $password, $type, $workStatus);
@@ -139,12 +147,66 @@ function ensureUserRow($dbc, $id, $username, $password, $type) {
     }
 }
 
+function fetchExistingAuthMap($dbc) {
+    $byId = [];
+    $byUsername = [];
+
+    $result = mysqli_query($dbc, "SELECT `User_id`, `Username`, `Password`, `Work_status` FROM `users`");
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $userId = intval($row['User_id']);
+            $username = trim($row['Username'] ?? '');
+            $byId[$userId] = $row;
+            if ($username !== '') {
+                $byUsername[strtolower($username)] = $row;
+            }
+        }
+        mysqli_free_result($result);
+    }
+
+    return [$byId, $byUsername];
+}
+
 function normalizeImportValue($value) {
     return is_string($value) ? trim($value) : $value;
 }
 
-function importEmployeeRow($dbc, $employee) {
-    $id = isset($employee['id']) && is_numeric($employee['id']) ? intval($employee['id']) : null;
+function findExistingEmployeeRow($dbc, $employee) {
+    $username = trim($employee['username'] ?? '');
+    $email = trim($employee['email'] ?? '');
+
+    if ($email !== '') {
+        $stmt = mysqli_prepare($dbc, "SELECT id, name, email, username, password, type, position, department, salary, DATE_FORMAT(join_date, '%Y-%m-%d') AS join_date, status FROM employees WHERE email = ? LIMIT 1");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 's', $email);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $row = $result ? mysqli_fetch_assoc($result) : null;
+            mysqli_stmt_close($stmt);
+            if ($row) {
+                return $row;
+            }
+        }
+    }
+
+    if ($username !== '') {
+        $stmt = mysqli_prepare($dbc, "SELECT id, name, email, username, password, type, position, department, salary, DATE_FORMAT(join_date, '%Y-%m-%d') AS join_date, status FROM employees WHERE username = ? LIMIT 1");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 's', $username);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $row = $result ? mysqli_fetch_assoc($result) : null;
+            mysqli_stmt_close($stmt);
+            if ($row) {
+                return $row;
+            }
+        }
+    }
+
+    return null;
+}
+
+function importEmployeeRow($dbc, $employee, $existingPassword = null, $existingWorkStatus = null, $existingRow = null) {
     $name = trim($employee['name'] ?? '');
     $email = trim($employee['email'] ?? '');
     $username = trim($employee['username'] ?? '');
@@ -156,6 +218,12 @@ function importEmployeeRow($dbc, $employee) {
     $joinDate = trim($employee['joinDate'] ?? $employee['join_date'] ?? '');
     $status = trim($employee['status'] ?? 'Active');
 
+    if ($existingPassword !== null && $existingPassword !== '') {
+        $password = $existingPassword;
+    } elseif ($password === '') {
+        $password = $username;
+    }
+
     if (!$name || !$email || !$username || $password === '' || !$position || !$department || $salary === null || $joinDate === '') {
         throw new Exception('Imported file is missing required employee fields.');
     }
@@ -164,20 +232,49 @@ function importEmployeeRow($dbc, $employee) {
         throw new Exception('Imported file contains an invalid email address.');
     }
 
-    if ($id !== null) {
-        $stmt = mysqli_prepare($dbc, "INSERT INTO employees (id, name, email, username, password, type, position, department, salary, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'isssssssdss', $id, $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status);
-    } else {
-        $stmt = mysqli_prepare($dbc, "INSERT INTO employees (name, email, username, password, type, position, department, salary, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'sssssssdss', $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status);
+    if ($password !== '' && password_get_info($password)['algo'] === 0) {
+        $password = password_hash($password, PASSWORD_DEFAULT);
     }
+
+    if ($existingRow && isset($existingRow['id']) && is_numeric($existingRow['id'])) {
+        $existingId = intval($existingRow['id']);
+        $existingPassword = $existingPassword !== null && $existingPassword !== '' ? $existingPassword : ($existingRow['password'] ?? null);
+        $existingWorkStatus = $existingWorkStatus !== null && $existingWorkStatus !== '' ? $existingWorkStatus : null;
+
+        if ($existingPassword !== null && $existingPassword !== '') {
+            $password = $existingPassword;
+        } elseif ($password === '') {
+            $password = $existingRow['password'] ?? $username;
+        }
+
+        if ($password !== '' && password_get_info($password)['algo'] === 0) {
+            $password = password_hash($password, PASSWORD_DEFAULT);
+        }
+
+        $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, username = ?, password = ?, type = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
+        if (!$stmt) {
+            throw new Exception('Failed to prepare employee update: ' . mysqli_error($dbc));
+        }
+        mysqli_stmt_bind_param($stmt, 'sssssssdssi', $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status, $existingId);
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception('Failed to update employee: ' . mysqli_error($dbc));
+        }
+        mysqli_stmt_close($stmt);
+
+        ensureUserRow($dbc, $existingId, $username, $password, $type, $existingWorkStatus ?: ($existingRow['Work_status'] ?? 'Tapped-out'));
+        return ['id' => $existingId, 'action' => 'updated'];
+    }
+
+    $stmt = mysqli_prepare($dbc, "INSERT INTO employees (name, email, username, password, type, position, department, salary, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, 'sssssssdss', $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status);
 
     if (!$stmt || !mysqli_stmt_execute($stmt)) {
         throw new Exception('Failed to import employee: ' . mysqli_error($dbc));
     }
 
-    $employeeId = $id !== null ? $id : mysqli_insert_id($dbc);
-    ensureUserRow($dbc, $employeeId, $username, $password, $type);
+    $employeeId = mysqli_insert_id($dbc);
+    ensureUserRow($dbc, $employeeId, $username, $password, $type, $existingWorkStatus);
+    return ['id' => $employeeId, 'action' => 'inserted'];
 }
 
 // Legacy migration is disabled here because `employees` is the source of truth.
@@ -201,30 +298,57 @@ if ($method === 'POST') {
     }
 
     if (($input['action'] ?? '') === 'replace_all') {
+        respond(false, null, 'Replace-all import is disabled. Use upsert_many so existing employees are updated and new employees are added.');
+    }
+
+    if (in_array(($input['action'] ?? ''), ['upsert_many', 'import_merge'], true)) {
         $importedEmployees = $input['employees'] ?? [];
         if (!is_array($importedEmployees) || count($importedEmployees) === 0) {
             respond(false, null, 'No employees were provided for import.');
         }
 
+        list($existingAuthById, $existingAuthByUsername) = fetchExistingAuthMap($dbc);
+
         mysqli_begin_transaction($dbc);
         try {
-            mysqli_query($dbc, "DELETE FROM `users`");
-            if (!mysqli_query($dbc, "DELETE FROM `employees`")) {
-                throw new Exception('Unable to clear existing employees: ' . mysqli_error($dbc));
-            }
-            mysqli_query($dbc, "ALTER TABLE `employees` AUTO_INCREMENT = 1");
-
             $importedCount = 0;
+            $updatedCount = 0;
+            $insertedCount = 0;
             foreach ($importedEmployees as $employee) {
                 if (!is_array($employee)) {
                     continue;
                 }
-                importEmployeeRow($dbc, $employee);
+                $existingRow = findExistingEmployeeRow($dbc, $employee);
+                $authId = null;
+                $authUsername = strtolower(trim($employee['username'] ?? ''));
+                $existingPassword = null;
+                $existingWorkStatus = null;
+
+                if ($existingRow && isset($existingRow['id']) && is_numeric($existingRow['id'])) {
+                    $authId = intval($existingRow['id']);
+                } elseif (isset($employee['id']) && is_numeric($employee['id'])) {
+                    $authId = intval($employee['id']);
+                }
+
+                if ($authId !== null && isset($existingAuthById[$authId])) {
+                    $existingPassword = $existingAuthById[$authId]['Password'] ?? null;
+                    $existingWorkStatus = $existingAuthById[$authId]['Work_status'] ?? null;
+                } elseif ($authUsername !== '' && isset($existingAuthByUsername[$authUsername])) {
+                    $existingPassword = $existingAuthByUsername[$authUsername]['Password'] ?? null;
+                    $existingWorkStatus = $existingAuthByUsername[$authUsername]['Work_status'] ?? null;
+                }
+
+                $result = importEmployeeRow($dbc, $employee, $existingPassword, $existingWorkStatus, $existingRow);
+                if (($result['action'] ?? '') === 'updated') {
+                    $updatedCount++;
+                } else {
+                    $insertedCount++;
+                }
                 $importedCount++;
             }
 
             mysqli_commit($dbc);
-            respond(true, ['imported' => $importedCount], 'Employees imported successfully.');
+            respond(true, ['imported' => $importedCount, 'updated' => $updatedCount, 'inserted' => $insertedCount], 'Employees imported successfully.');
         } catch (Throwable $e) {
             mysqli_rollback($dbc);
             respond(false, null, $e->getMessage());

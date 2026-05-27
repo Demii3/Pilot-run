@@ -56,42 +56,14 @@
   .employee-detail-body {
     padding: 20px;
     overflow-y: auto;
-    max-height: calc(80vh - 120px);
+    max-height: calc(85vh - 120px);
   }
 
-  .detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .detail-item {
-    background: #f8f9fa;
-    border: 1px solid #e3e6ea;
-    border-radius: 10px;
-    padding: 12px 14px;
-  }
-
-  .detail-label {
-    display: block;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #6c757d;
-    margin-bottom: 4px;
-  }
-
-  .detail-value {
-    font-size: 0.95rem;
-    color: #212529;
-    word-break: break-word;
-  }
-
-  @media screen and (max-width: 768px) {
-    .detail-grid {
-      grid-template-columns: 1fr;
-    }
+  .employee-detail-body .form-control,
+  .employee-detail-body .form-control:disabled,
+  .employee-detail-body .form-control[readonly] {
+    background-color: #f8f9fa;
+    opacity: 1;
   }
 </style>
 
@@ -195,17 +167,64 @@
     </div>
 
     <div class="employee-detail-body">
-      <div class="detail-grid">
-        <div class="detail-item"><span class="detail-label">ID</span><span id="detailId" class="detail-value"></span></div>
-        <div class="detail-item"><span class="detail-label">Name</span><span id="detailName" class="detail-value"></span></div>
-        <div class="detail-item"><span class="detail-label">Email</span><span id="detailEmail" class="detail-value"></span></div>
-        <div class="detail-item"><span class="detail-label">Username</span><span id="detailUsername" class="detail-value"></span></div>
-        <div class="detail-item"><span class="detail-label">Type</span><span id="detailType" class="detail-value"></span></div>
-        <div class="detail-item"><span class="detail-label">Position</span><span id="detailPosition" class="detail-value"></span></div>
-        <div class="detail-item"><span class="detail-label">Department</span><span id="detailDepartment" class="detail-value"></span></div>
-        <div class="detail-item"><span class="detail-label">Salary</span><span id="detailSalary" class="detail-value"></span></div>
-        <div class="detail-item"><span class="detail-label">Join Date</span><span id="detailJoinDate" class="detail-value"></span></div>
-        <div class="detail-item"><span class="detail-label">Status</span><span id="detailStatus" class="detail-value"></span></div>
+      <div class="form-group">
+        <label for="detailId">ID:</label>
+        <input type="text" id="detailId" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="detailName">Full Name:</label>
+        <input type="text" id="detailName" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="detailEmail">Email:</label>
+        <input type="email" id="detailEmail" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="detailUsername">Username:</label>
+        <input type="text" id="detailUsername" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="detailType">Type:</label>
+        <select id="detailType" class="form-control" disabled>
+          <option value="HR">HR</option>
+          <option value="Emp">Emp</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="detailPosition">Position:</label>
+        <input type="text" id="detailPosition" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="detailDepartment">Department:</label>
+        <input type="text" id="detailDepartment" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="detailSalary">Salary:</label>
+        <input type="text" id="detailSalary" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="detailJoinDate">Join Date:</label>
+        <input type="date" id="detailJoinDate" class="form-control" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="detailStatus">Status:</label>
+        <select id="detailStatus" class="form-control" disabled>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEmployeeDetails()">Close</button>
       </div>
     </div>
   </div>
