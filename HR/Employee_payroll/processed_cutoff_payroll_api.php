@@ -411,11 +411,13 @@ function computePhilhealthContribution($salary) {
     return round($premiumBasis * 0.05, 2);
 }
 
-function computeWithholdingTax($salary, $sss, $philhealth, $pagibig, $nonTaxable) {
+function computeWithholdingTax($salary, $sss, $philhealth, $pagibig, $nonTaxable, $taxableAdditional = 0) {
     $salary = (float)$salary;
-    if ($salary <= 0) return 0;
+    $taxableAdditional = (float)$taxableAdditional;
 
-    $taxableIncome = max(0, $salary - (float)$nonTaxable - (float)$sss - (float)$philhealth - (float)$pagibig);
+    $taxableIncome = max(0, $salary + $taxableAdditional - (float)$nonTaxable - (float)$sss - (float)$philhealth - (float)$pagibig);
+
+    if ($taxableIncome <= 0) return 0;
 
     if ($taxableIncome <= 20833) return 0;
     if ($taxableIncome <= 33333) return ($taxableIncome - 20833) * 0.15;
@@ -425,14 +427,14 @@ function computeWithholdingTax($salary, $sss, $philhealth, $pagibig, $nonTaxable
     return 183541.8 + ($taxableIncome - 666667) * 0.35;
 }
 
-function computePremiumDeductions($monthlySalary, $hoursWorked, $nonTaxableIncome) {
+function computePremiumDeductions($monthlySalary, $hoursWorked, $nonTaxableIncome, $taxableAdditionalIncome = 0) {
     $cutoffBaseSalary = (float)$monthlySalary;
 
     $dailyRate = $cutoffBaseSalary / 26;
     $hourlyRate = $dailyRate / 8;
     $cutoffSalary = $hourlyRate * (float)$hoursWorked;
 
-    if ($cutoffSalary <= 0) {
+    if ($cutoffSalary <= 0 && $taxableAdditionalIncome <= 0) {
         return [
             'sss' => 0,
             'phlth' => 0,
@@ -448,12 +450,12 @@ function computePremiumDeductions($monthlySalary, $hoursWorked, $nonTaxableIncom
     $phlthMonthly = computePhilhealthContribution($monthlyEquivalentSalary);
     $pagibigMonthly = computePagibigContribution($monthlyEquivalentSalary);
 
-    $sss = round($sssMonthly / 2, 2);
-    $phlth = round($phlthMonthly / 2, 2);
-    $pagibig = round($pagibigMonthly / 2, 2);
+    $sss = $cutoffSalary > 0 ? round($sssMonthly / 2, 2) : 0;
+    $phlth = $cutoffSalary > 0 ? round($phlthMonthly / 2, 2) : 0;
+    $pagibig = $cutoffSalary > 0 ? round($pagibigMonthly / 2, 2) : 0;
 
     // Keep withholding tax computed on cutoff earnings.
-    $tax = computeWithholdingTax($cutoffSalary, $sss, $phlth, $pagibig, $nonTaxableIncome);
+    $tax = computeWithholdingTax($cutoffSalary, $sss, $phlth, $pagibig, $nonTaxableIncome, $taxableAdditionalIncome);
 
     return [
         'sss' => $sss,
@@ -567,7 +569,7 @@ function processCutoffPayroll($dbc, $dateFrom, $dateTo) {
             $nonTaxableIncome = (float)($nonTaxableIncomeMap[$employeeNameKey] ?? 0) + $nonTaxableAdditionalIncome;
 
             $hasWorkedHours = $hoursWorked > 0;
-            $premium = $hasWorkedHours ? computePremiumDeductions($monthlySalary, $hoursWorked, $nonTaxableIncome) : ['sss' => 0, 'phlth' => 0, 'pagibig' => 0, 'tax' => 0];
+            $premium = computePremiumDeductions($monthlySalary, $hoursWorked, $nonTaxableIncome, $taxableAdditionalIncome);
             $sss = (float)$premium['sss'];
             $phlth = (float)$premium['phlth'];
             $pagibig = (float)$premium['pagibig'];

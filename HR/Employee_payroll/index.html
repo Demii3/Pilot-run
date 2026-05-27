@@ -2007,19 +2007,20 @@ function computePhilhealthContribution(salaryValue) {
   return 1375;
 }
 
-function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, pagibigValue = 0, nonTaxableValue = 0) {
+function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, pagibigValue = 0, nonTaxableValue = 0, taxableAdditionalValue = 0) {
   const salary = Number(String(salaryValue ?? '').replace(/,/g, ''));
   const sss = Number(sssValue) || 0;
   const philhealth = Number(philhealthValue) || 0;
   const pagibig = Number(pagibigValue) || 0;
   const nonTaxable = Number(nonTaxableValue) || 0;
+  const taxableAdditional = Number(taxableAdditionalValue) || 0;
 
   if (!Number.isFinite(salary) || salary < 0) {
     return null;
   }
 
-  // Taxable Income = Gross - Non-taxable - Mandatory Contributions.
-  const taxableIncome = Math.max(0, salary - nonTaxable - sss - philhealth - pagibig);
+  // Taxable Income = Gross + taxable additional income - non-taxable - mandatory contributions.
+  const taxableIncome = Math.max(0, salary + taxableAdditional - nonTaxable - sss - philhealth - pagibig);
 
   // Monthly BIR TRAIN tax table equivalent.
   if (taxableIncome <= 20833) return 0;
@@ -2065,7 +2066,7 @@ function buildTotalIncomeMap(assignedIncomeData = []) {
   return totalIncomeByEmployee;
 }
 
-function computePremiumDeductions(salaryValue, nonTaxableIncome = 0) {
+function computePremiumDeductions(salaryValue, nonTaxableIncome = 0, taxableAdditionalIncome = 0) {
   const sssContribution = computeSssContribution(salaryValue);
   const pagibigContribution = computePagibigContribution(salaryValue);
   const philhealthContribution = computePhilhealthContribution(salaryValue);
@@ -2074,7 +2075,8 @@ function computePremiumDeductions(salaryValue, nonTaxableIncome = 0) {
     sssContribution,
     philhealthContribution,
     pagibigContribution,
-    nonTaxableIncome
+    nonTaxableIncome,
+    taxableAdditionalIncome
   );
   const totalDeductions =
     (Number(sssContribution) || 0) +
@@ -3948,7 +3950,7 @@ async function loadEmployeeSalary() {
       const rows = result.data.rows;
       employeesForSalary = rows;
       currentEmployeeSalaryRows = rows.map(item => ({ ...item }));
-      renderEmployeeSalaryRows(applyEmployeeSalaryDraftRows(rows, fromValue, toValue));
+      renderEmployeeSalaryRows(rows);
       return;
     }
 
