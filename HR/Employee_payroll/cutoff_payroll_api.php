@@ -394,10 +394,11 @@ function computePhilhealth($salary) {
     return round($premiumBasis * 0.05, 2);
 }
 
-function computeTax($salary, $sss, $ph, $pagibig, $nonTaxable) {
+function computeTax($salary, $sss, $ph, $pagibig, $nonTaxable, $taxableAdditional = 0) {
     $salary = (float)$salary;
-    if ($salary <= 0) return 0;
-    $taxable = max(0, $salary - (float)$nonTaxable - (float)$sss - (float)$ph - (float)$pagibig);
+    $taxableAdditional = (float)$taxableAdditional;
+    $taxable = max(0, $salary + $taxableAdditional - (float)$nonTaxable - (float)$sss - (float)$ph - (float)$pagibig);
+    if ($taxable <= 0) return 0;
     if ($taxable <= 20833) return 0;
     if ($taxable <= 33333) return ($taxable - 20833) * 0.15;
     if ($taxable <= 66667) return 1875 + ($taxable - 33333) * 0.20;
@@ -585,6 +586,7 @@ function processPayroll($dbc, $fromDate, $toDate, $salaryDraftRows = []) {
                 $specialHoliday = (float)($existingRow['specialHoliday'] ?? 0);
                 $taxableAdditionalIncome = (float)($existingRow['taxableAdditionalIncome'] ?? 0);
                 $nonTaxableAdditionalIncome = (float)($existingRow['nonTaxableAdditionalIncome'] ?? 0);
+                $nonTaxableTotal = $nonTaxableAdditionalIncome;
                 $sss = (float)($existingRow['sss'] ?? 0);
                 $phlth = (float)($existingRow['phlth'] ?? 0);
                 $pagibig = (float)($existingRow['pagibig'] ?? 0);
@@ -616,13 +618,12 @@ function processPayroll($dbc, $fromDate, $toDate, $salaryDraftRows = []) {
                     $sss = round(computeSss($monthlyEquivalentSalary) / 2, 2);
                     $phlth = round(computePhilhealth($monthlyEquivalentSalary) / 2, 2);
                     $pagibig = round(computePagibig($monthlyEquivalentSalary) / 2, 2);
-                    $tax = computeTax($cutoffSalary, $sss, $phlth, $pagibig, $nonTaxableTotal);
                 } else {
                     $sss = 0;
                     $phlth = 0;
                     $pagibig = 0;
-                    $tax = 0;
                 }
+                $tax = computeTax($cutoffSalary, $sss, $phlth, $pagibig, $nonTaxableTotal, $taxableAdditionalIncome);
                 $additionalDeductions = $hoursWorked > 0 ? (float)($personalCa[$employeeKey] ?? 0) : 0;
                 $carryIn = previousCarryOut($dbc, $employeeId, $fromDate);
             }
@@ -849,6 +850,7 @@ try {
                 }
 
                 $carryIn = (float)($existingRow['carry_in'] ?? 0);
+                $tax = computeTax($cutoffSalary, $sss, $phlth, $pagibig, $nonTaxableTotal, $taxableAdditionalIncome);
                 $totalDeduction = $sss + $phlth + $pagibig + $tax + $additionalDeductions;
                 $grossNet = $cutoffSalary + $totalOtPay + $legalHoliday + $specialHoliday + $taxableAdditionalIncome + $nonTaxableAdditionalIncome - $totalDeduction;
                 $netPay = $grossNet - $carryIn;

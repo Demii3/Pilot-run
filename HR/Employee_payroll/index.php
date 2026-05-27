@@ -2152,7 +2152,12 @@ function applyEmployeeSalaryDraftRows(rows, fromValue, toValue) {
 
   return rows.map(row => {
     const draft = employeeSalaryDraftRows[String(row.id)];
-    return draft ? { ...row, ...draft } : row;
+    if (!draft) {
+      return row;
+    }
+
+    const { tax: draftTax, ...draftWithoutTax } = draft;
+    return { ...row, ...draftWithoutTax };
   });
 }
 
@@ -2414,24 +2419,24 @@ function computePhilhealthContribution(salaryValue) {
   return Number((premiumBasis * 0.05).toFixed(2));
 }
 
-function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, pagibigValue = 0, nonTaxableValue = 0) {
+function computeWithholdingTax(salaryValue, sssValue = 0, philhealthValue = 0, pagibigValue = 0, nonTaxableValue = 0, taxableAdditionalValue = 0) {
   const salary = Number(String(salaryValue ?? '').replace(/,/g, ''));
   const sss = Number(sssValue) || 0;
   const philhealth = Number(philhealthValue) || 0;
   const pagibig = Number(pagibigValue) || 0;
   const nonTaxable = Number(nonTaxableValue) || 0;
+  const taxableAdditional = Number(taxableAdditionalValue) || 0;
 
   if (!Number.isFinite(salary) || salary < 0) {
     return null;
   }
 
-  // Return 0 for zero salary (cutoff with 0 hours worked)
-  if (salary === 0) {
+  // Taxable Income = Gross + taxable additional income - non-taxable - mandatory contributions.
+  const taxableIncome = Math.max(0, salary + taxableAdditional - nonTaxable - sss - philhealth - pagibig);
+
+  if (taxableIncome <= 0) {
     return 0;
   }
-
-  // Taxable Income = Gross - Non-taxable - Mandatory Contributions.
-  const taxableIncome = Math.max(0, salary - nonTaxable - sss - philhealth - pagibig);
 
   // Monthly BIR TRAIN tax table equivalent.
   if (taxableIncome <= 20833) return 0;
@@ -2571,7 +2576,7 @@ function buildTotalIncomeMap(assignedIncomeData = []) {
   return totalIncomeByEmployee;
 }
 
-function computePremiumDeductions(salaryValue, hoursWorkedInCutoff = null, nonTaxableIncome = 0) {
+function computePremiumDeductions(salaryValue, hoursWorkedInCutoff = null, nonTaxableIncome = 0, taxableAdditionalIncome = 0) {
   // If hoursWorkedInCutoff is provided, compute cutoffSalary from monthly salary -> daily -> hourly
   // and use cutoffSalary as the input basis for the premium calculations. If hoursWorkedInCutoff
   // is null or not a finite number, fall back to the existing monthly-salary behaviour.
@@ -2583,8 +2588,8 @@ function computePremiumDeductions(salaryValue, hoursWorkedInCutoff = null, nonTa
     basisSalary = cutoffSalary;
   }
 
-  // If cutoff salary is 0 (no hours worked in this cutoff), all deductions are 0
-  if (basisSalary <= 0) {
+  // If there is neither cutoff salary nor taxable additional income, all deductions are 0.
+  if (basisSalary <= 0 && taxableAdditionalIncome <= 0) {
     return {
       sssContribution: 0,
       pagibigContribution: 0,
@@ -2594,15 +2599,16 @@ function computePremiumDeductions(salaryValue, hoursWorkedInCutoff = null, nonTa
     };
   }
 
-  const sssContribution = computeSssContribution(basisSalary);
-  const pagibigContribution = computePagibigContribution(basisSalary);
-  const philhealthContribution = computePhilhealthContribution(basisSalary);
+  const sssContribution = basisSalary > 0 ? computeSssContribution(basisSalary) : 0;
+  const pagibigContribution = basisSalary > 0 ? computePagibigContribution(basisSalary) : 0;
+  const philhealthContribution = basisSalary > 0 ? computePhilhealthContribution(basisSalary) : 0;
   const withholdingTax = computeWithholdingTax(
     basisSalary,
     sssContribution,
     philhealthContribution,
     pagibigContribution,
-    nonTaxableIncome
+    nonTaxableIncome,
+    taxableAdditionalIncome
   );
   const totalDeductions =
     (Number(sssContribution) || 0) +
@@ -4653,14 +4659,7 @@ async function buildCutoffPayrollRows(dateFrom = null, dateTo = null, fromRaw = 
     const nonTaxableIncome = (nonTaxableIncomeByEmployee[employeeNameKey] || 0) + nonTaxableAdditionalIncome;
 
     const hasWorkedHours = hoursWorked > 0;
-    const premium = hasWorkedHours
-      ? computePremiumDeductions(monthlySalary, hoursWorked, nonTaxableIncome)
-      : {
-          sssContribution: 0,
-          philhealthContribution: 0,
-          pagibigContribution: 0,
-          withholdingTax: 0
-        };
+    const premium = computePremiumDeductions(monthlySalary, hoursWorked, nonTaxableIncome, taxableAdditionalIncome);
 
     const sss = Number(premium.sssContribution) || 0;
     const phlth = Number(premium.philhealthContribution) || 0;
@@ -5447,9 +5446,21 @@ function recalculateEmployeeSalaryEditPreview() {
   const sss = readEmployeeSalaryEditNumber('employeeSalaryEditSss');
   const phlth = readEmployeeSalaryEditNumber('employeeSalaryEditPhlth');
   const pagibig = readEmployeeSalaryEditNumber('employeeSalaryEditPagibig');
-  const tax = readEmployeeSalaryEditNumber('employeeSalaryEditTax');
   const additionalDeductions = readEmployeeSalaryEditNumber('employeeSalaryEditAdditionalDeductions');
   const carryIn = readEmployeeSalaryEditNumber('employeeSalaryEditCarryIn');
+
+  const taxableBase = Math.max(0, cutoffSalary + taxableAdditionalIncome - nonTaxableAdditionalIncome - sss - phlth - pagibig);
+  let tax = 0;
+  if (taxableBase > 20833 && taxableBase <= 33333) tax = (taxableBase - 20833) * 0.15;
+  else if (taxableBase > 33333 && taxableBase <= 66667) tax = 1875 + (taxableBase - 33333) * 0.20;
+  else if (taxableBase > 66667 && taxableBase <= 166667) tax = 8541.8 + (taxableBase - 66667) * 0.25;
+  else if (taxableBase > 166667 && taxableBase <= 666667) tax = 33541.8 + (taxableBase - 166667) * 0.30;
+  else if (taxableBase > 666667) tax = 183541.8 + (taxableBase - 666667) * 0.35;
+
+  tax = Number(tax.toFixed(2));
+
+  const taxField = document.getElementById('employeeSalaryEditTax');
+  if (taxField) taxField.value = formatCurrency(tax);
 
   const totalDeduction = sss + phlth + pagibig + tax + additionalDeductions;
   const grossNet = cutoffSalary + totalOtPay + legalHoliday + specialHoliday + taxableAdditionalIncome + nonTaxableAdditionalIncome - totalDeduction;
@@ -5492,9 +5503,20 @@ async function saveEmployeeSalaryEditRow() {
     sss: readEmployeeSalaryEditNumber('employeeSalaryEditSss'),
     phlth: readEmployeeSalaryEditNumber('employeeSalaryEditPhlth'),
     pagibig: readEmployeeSalaryEditNumber('employeeSalaryEditPagibig'),
-    tax: readEmployeeSalaryEditNumber('employeeSalaryEditTax'),
     additionalDeductions: readEmployeeSalaryEditNumber('employeeSalaryEditAdditionalDeductions')
   };
+
+  const taxableBase = Math.max(0, updatedRow.cutoffSalary + updatedRow.taxableAdditionalIncome - updatedRow.nonTaxableAdditionalIncome - updatedRow.sss - updatedRow.phlth - updatedRow.pagibig);
+  let tax = 0;
+  if (taxableBase > 20833 && taxableBase <= 33333) tax = (taxableBase - 20833) * 0.15;
+  else if (taxableBase > 33333 && taxableBase <= 66667) tax = 1875 + (taxableBase - 33333) * 0.20;
+  else if (taxableBase > 66667 && taxableBase <= 166667) tax = 8541.8 + (taxableBase - 66667) * 0.25;
+  else if (taxableBase > 166667 && taxableBase <= 666667) tax = 33541.8 + (taxableBase - 166667) * 0.30;
+  else if (taxableBase > 666667) tax = 183541.8 + (taxableBase - 666667) * 0.35;
+  tax = Number(tax.toFixed(2));
+  updatedRow.tax = tax;
+  const taxField = document.getElementById('employeeSalaryEditTax');
+  if (taxField) taxField.value = formatCurrency(tax);
 
   const totalDeduction = updatedRow.sss + updatedRow.phlth + updatedRow.pagibig + updatedRow.tax + updatedRow.additionalDeductions;
   const grossNet = updatedRow.cutoffSalary + updatedRow.totalOtPay + updatedRow.legalHoliday + updatedRow.specialHoliday + updatedRow.taxableAdditionalIncome + updatedRow.nonTaxableAdditionalIncome - totalDeduction;
