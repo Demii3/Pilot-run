@@ -1,6 +1,8 @@
 
 const proceedButton = document.getElementById('proceedToAttendance');
+const homeBtn = document.getElementById('homeBtn');
 const attendanceBtn = document.getElementById('attendanceBtn');
+const historyBtn = document.getElementById('historyBtn');
 const logoutButton = document.getElementById('logout');
 const empLocationLat = document.getElementById('empLocationLat');
 const empLocationLng = document.getElementById('empLocationLng');
@@ -88,6 +90,85 @@ function loadEmpInfoContent() {
     });
 }
 
+function loadEmpHistoryContent() {
+    const content = document.getElementById('content-area');
+    const payload = { TEST: 'This is a string', USER_ID: document.getElementById('userId').value };
+
+    fetch('./Modules/test3.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to load content');
+        if (response.error) throw new Error(response.error); // Handle no content response
+        return response.json();
+    })
+    .then(data => { 
+        content.innerHTML = data.datafile || '';
+
+        // Prepare a container for the history table
+        let tableContainer = document.getElementById('historyTableContainer');
+        if (!tableContainer) {
+            tableContainer = document.createElement('div');
+            tableContainer.id = 'historyTableContainer';
+            // Try to insert after the map container if present
+            content.appendChild(tableContainer);
+        }
+
+        // Build table markup
+        tableContainer.innerHTML = `\n            <div class="table-responsive">\n                <table id="historyTable" class="display" style="width:100%"></table>\n            </div>\n        `;
+
+        // Initialize DataTable if data exists
+        const rows = Array.isArray(data.querydata) ? data.querydata : [];
+
+        if (window.jQuery && $.fn.dataTable) {
+            // Destroy existing instance if present
+            if ($.fn.dataTable.isDataTable('#historyTable')) {
+                $('#historyTable').DataTable().clear().destroy();
+            }
+
+            $('#historyTable').DataTable({
+                data: rows,
+                destroy: true,
+                columns: [
+                    { title: 'Date', data: 'Date' },
+                    { title: 'Location', data: 'Location' },
+                    { title: 'Clock In', data: 'Clock_in' },
+                    { title: 'Clock Out', data: 'Clock_out' },
+                    {
+                        title: 'Work Classification',
+                        data: 'Work_Classification',
+                        render: function(data, type, row) {
+                            const map = {
+                                'R': 'Regular',
+                                'SH': 'Special Holiday',
+                                'LH': 'Legal Holiday',
+                                'C': 'Custom'
+                            };
+                            return map[data] || data || '';
+                        }
+                    }
+                ],
+                order: [[0, 'desc']],
+                pageLength: 10
+            });
+        } else {
+            console.warn('DataTables JS not available; rendering raw list.');
+            // Fallback: render simple list
+            const fallback = document.createElement('pre');
+            fallback.textContent = JSON.stringify(rows, null, 2);
+            tableContainer.appendChild(fallback);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        content.innerHTML = '<p style="color: red;">Failed to load content. Please try again later.</p>';
+    });
+}
+
 function populateEmpInfo(querydata) {
     const name = document.getElementById('name');
     const department = document.getElementById('department');
@@ -102,8 +183,18 @@ function populateEmpInfo(querydata) {
     if (Username) Username.textContent = querydata.name || 'User';
 }
 
+if (homeBtn) {
+    homeBtn.addEventListener('click', () => {
+        window.location = './';
+    });
+}
+
 if (attendanceBtn) {
     attendanceBtn.addEventListener('click', loadAttendanceContent);
+};
+
+if (historyBtn) {
+    historyBtn.addEventListener('click', loadEmpHistoryContent);
 };
 
 if (proceedButton) {
@@ -307,21 +398,38 @@ function setAttendanceModuleProperties(querydata) {
                     locationSelect.appendChild(placeholderOption);
                 }
 
-                data.querydata.forEach(location => {
-                    const option = document.createElement('option');
-                    option.value = location.name;
-                    option.textContent = location.name;
-                    option.setAttribute('data-id', location.id);
-                    option.setAttribute('data-coordinates', location.coordinates);
-                    locationSelect.appendChild(option);
-                });
-            }
-        });
+                        data.querydata.forEach(location => {
+                            const option = document.createElement('option');
+                            option.value = location.name;
+                            option.textContent = location.name;
+                            option.setAttribute('data-id', location.id);
+                            option.setAttribute('data-coordinates', location.coordinates);
+                            locationSelect.appendChild(option);
+                        });
 
-        if (querydata.Work_Status == 'Tapped-in') {
-            locationSelect.value = querydata.Location; // Set to the first location if already tapped in
-            locationSelect.disabled = true;
-        }
+                        // If the user is tapped in, try to select the matching option
+                        if (querydata && querydata.Work_Status == 'Tapped-in') {
+                            const target = querydata.Location || '';
+                            if (target) {
+                                // Try to find by option value first (name), then by data-id
+                                const opts = Array.from(locationSelect.options);
+                                let match = opts.find(o => o.value === target);
+                                if (!match) {
+                                    match = opts.find(o => o.getAttribute('data-id') === target);
+                                }
+
+                                if (match) {
+                                    match.selected = true;
+                                    locationSelect.disabled = true;
+                                    console.log('Location select set and disabled, set to:', target);
+                                } else {
+                                    // No exact match; log for debugging
+                                    console.log('Location to select not found among options:', target);
+                                }
+                            }
+                        }
+                    }
+                });
     }
 
     if (locationSelect) {
