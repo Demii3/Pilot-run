@@ -6,6 +6,8 @@ $(document).ready(function() {
             data: {purpose: 'get_settings'},
             dataType: 'json'
         }).then(function(response) {
+            document.getElementById('setTimeIn').value = response.settings.Clock_in;
+            document.getElementById('setTimeOut').value = response.settings.Clock_out;
             let count = 0;
             const columns = [];
             document.getElementById('displayColumns').value = response.settings.Hidden_columns;
@@ -20,7 +22,6 @@ $(document).ready(function() {
             if (overideAll) {
                 columns.push(-1);
             };
-            console.log('Columns to hide:', columns);
             return columns;
         }, function(error) {
             console.error('Failed to fetch settings:', error);
@@ -179,14 +180,14 @@ $(document).ready(function() {
         else if (convert12HourTimetoMin(clockInTime) > convert12HourTimetoMin('8:00 AM')) {
             $('#modalClockInStatus').val('Late');
         }
-        $('#modalDuration').val(excludeLunchBreak($('#modalClockIn').val(), $('#modalClockOut').val()));
+        $('#modalDuration').val(durationCalculation($('#modalClockIn').val(), $('#modalClockOut').val()));
     });
 
     $('#modalClockOut').on('change', function() {
         if ($('#Manual-modify').is(':checked')) {
             return;
         };
-        $('#modalDuration').val(excludeLunchBreak($('#modalClockIn').val(), $('#modalClockOut').val()));
+        $('#modalDuration').val(durationCalculation($('#modalClockIn').val(), $('#modalClockOut').val()));
 
         const clockOutTime = $(this).val();
         if (convert12HourTimetoMin(clockOutTime) < convert12HourTimetoMin('5:00 PM')) {
@@ -198,7 +199,7 @@ $(document).ready(function() {
             $('#modalClockOutStatus').val('Present');
 
         }
-        $('#modalDuration').val(excludeLunchBreak($('#modalClockIn').val(), $('#modalClockOut').val()));
+        $('#modalDuration').val(durationCalculation($('#modalClockIn').val(), $('#modalClockOut').val()));
     });
 
     $('#modalClockInStatus').on('change', function() {

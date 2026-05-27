@@ -12,7 +12,7 @@
     $userId = $data['USER_ID'] ?? 0;
     $querydata = [];
 
-    $sql = mysqli_prepare($dbc, "SELECT `Date`, `Location`, Clock_in, Clock_out, Work_Classification FROM employee_attendance
+    $sql = mysqli_prepare($dbc, "SELECT `Attendance_id`, `Date`, `Location`, Clock_in, Clock_out, Work_Classification FROM employee_attendance
             WHERE Emp_id = ?");
 
     mysqli_stmt_bind_param($sql, "i", $userId);

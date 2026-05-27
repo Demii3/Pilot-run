@@ -134,7 +134,7 @@ function configAttendance(attendance_id, searchTerm, table, action) {
                 data.clockInStatus = document.getElementById('modalClockInStatus').value;
                 data.clockOut = convert24HourTo12Hour(document.getElementById('modalClockOut').value);
                 data.clockOutStatus = document.getElementById('modalClockOutStatus').value;
-                data.duration = excludeLunchBreak(document.getElementById('modalClockIn').value, document.getElementById('modalClockOut').value);
+                data.duration = durationCalculation(document.getElementById('modalClockIn').value, document.getElementById('modalClockOut').value);
                 data.allowOvertime = document.getElementById('allowOvertime').checked ? 1 : 0;
                 data.workClassification = document.getElementById('modalWorkClassification').value;
                 break;
@@ -249,13 +249,17 @@ function saveOptions() {
         data: {
                 purpose: 'save_settings',
                 override: $('#overideAll').is(':checked') ? 1 : 0,
-                hiddenColumns: document.getElementById('displayColumns').value
+                hiddenColumns: document.getElementById('displayColumns').value,
+                TimeIn: document.getElementById('setTimeIn').value,
+                TimeOut: document.getElementById('setTimeOut').value
               },        
         dataType: 'json',
         success: function(response) {
             const message = response && response.msg ? response.msg : 'Options saved successfully.';
-            alert(message);
             window.location.reload();
+        }, 
+        error: function() {
+            console.error('Failed to save options');
         }});
 };
 

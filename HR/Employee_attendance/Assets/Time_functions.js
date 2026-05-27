@@ -64,11 +64,69 @@ function durationCalculation(startTime, endTime) {
         return '--:--';
     }
 
-    const startMin = convert24HourTimetoMin(startTime);
-    const endMin = convert24HourTimetoMin(endTime);
-    const durationMin = endMin - startMin;
+    const defaultShiftStart = 8 * 60;  // 8:00 AM
+    const defaultShiftEnd = 17 * 60;   // 5:00 PM
+
+    const manualModeToggle = document.getElementById('Manual-modify');
+    const allowOvertimeToggle = document.getElementById('allowOvertime') || document.getElementById('newAllowOvertime');
+    const includeLunchBreakToggle = document.getElementById('Include-lunchbreak');
+    const shiftStartInput = document.getElementById('setTimeIn');
+    const shiftEndInput = document.getElementById('setTimeOut');
+
+    const isManualMode = !!(manualModeToggle && manualModeToggle.checked);
+    const allowOvertime = !!(allowOvertimeToggle && allowOvertimeToggle.checked);
+    const includeLunchBreak = !!(includeLunchBreakToggle && includeLunchBreakToggle.checked);
+
+    const shiftStartMin = (shiftStartInput && shiftStartInput.value)
+        ? convert24HourTimetoMin(shiftStartInput.value)
+        : defaultShiftStart;
+    const shiftEndMin = (shiftEndInput && shiftEndInput.value)
+        ? convert24HourTimetoMin(shiftEndInput.value)
+        : defaultShiftEnd;
+    const isNightShift = shiftEndMin <= shiftStartMin;
+
+    let startMin = convert24HourTimetoMin(startTime);
+    let endMin = convert24HourTimetoMin(endTime);
+
+    function normalizeToShiftTimeline(minuteValue) {
+        if (isNightShift && minuteValue < shiftStartMin) {
+            return minuteValue + 24 * 60;
+        }
+        return minuteValue;
+    }
+
+    let startNorm = normalizeToShiftTimeline(startMin);
+    let endNorm = normalizeToShiftTimeline(endMin);
+    const shiftStartNorm = shiftStartMin;
+    const shiftEndNorm = isNightShift ? shiftEndMin + 24 * 60 : shiftEndMin;
+
+    if (endNorm < startNorm) {
+        endNorm += 24 * 60;
+    }
+
+    // Enforce regular shift start unless manual mode is enabled.
+    if (!isManualMode && startNorm < shiftStartNorm) {
+        startNorm = shiftStartNorm;
+    }
+
+    // Cap to regular shift end unless overtime is explicitly allowed.
+    if (!allowOvertime && endNorm > shiftEndNorm) {
+        endNorm = shiftEndNorm;
+    }
+
+    let durationMin = endNorm - startNorm;
 
     if (durationMin < 0) {
         durationMin += 24 * 60; // Adjust for overnight shifts
     }
+
+    const NOON_MIN = 12 * 60;
+    const ONE_PM_MIN = 13 * 60;
+    const spansLunchWindow = startMin < NOON_MIN && endMin > ONE_PM_MIN;
+
+    if (!includeLunchBreak && spansLunchWindow && durationMin > 0) {
+        durationMin -= 60;
+    }
+
+    return durationMin;
 }

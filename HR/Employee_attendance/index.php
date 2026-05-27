@@ -463,7 +463,7 @@
             <span><h5>Display</h5></span>
           </div>
 
-          <div class="col-md-6">
+          <div class="col-md-6 d-none">
             <label class="form-label">displayColumns</label>
             <input id="displayColumns" type="text" class="form-control" readonly>
           </div>
@@ -490,6 +490,23 @@
               <label for="hideDuration" class="toggle-label"></label>
             </div>
             <label class="form-check-label" for="hideDuration">Duration</label>
+          </div>
+
+          <div class="col-md-12">
+            <span><hr></span>
+            <span><h5>Clock In and Clock Out Times</h5></span>
+          </div>
+
+          <div class="col-md-6 gap-3 mt-3">
+              <input type="time" id="setTimeIn" class="form-control">
+              <label for="setTimeIn"></label>
+            <label class="form-check-label" for="setTimeIn">Clock In Time</label>
+          </div>
+
+          <div class="col-md-6 gap-3 mt-3">
+              <input type="time" id="setTimeOut" class="form-control">
+              <label for="setTimeOut"></label>
+            <label class="form-check-label" for="setTimeOut">Clock Out Time</label>
           </div>
 
         </div>

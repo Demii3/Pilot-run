@@ -134,6 +134,7 @@ function loadEmpHistoryContent() {
                 data: rows,
                 destroy: true,
                 columns: [
+                    { title: 'Attendance ID', data: 'Attendance_id' },
                     { title: 'Date', data: 'Date' },
                     { title: 'Location', data: 'Location' },
                     { title: 'Clock In', data: 'Clock_in' },
@@ -151,6 +152,9 @@ function loadEmpHistoryContent() {
                             return map[data] || data || '';
                         }
                     }
+                ],
+                columnDefs: [
+                    { targets: [0], visible: false } // Hide Attendance_id column
                 ],
                 order: [[0, 'desc']],
                 pageLength: 10
@@ -243,14 +247,35 @@ function applymap(querydata) {
     const MapContainer = document.getElementById('Map-container');
     if (!MapContainer || typeof L === 'undefined') return;
 
-    if (map) {
-        // Map already exists, just update its view and marker
-        map.setView([parseFloat(empLocationLat.value), parseFloat(empLocationLng.value)], 18);
-        L.marker([parseFloat(empLocationLat.value), parseFloat(empLocationLng.value)]).addTo(markers);
+    const userLat = parseFloat(empLocationLat.value);
+    const userLng = parseFloat(empLocationLng.value);
+
+    if (Number.isNaN(userLat) || Number.isNaN(userLng)) {
         return;
     }
 
-    map = L.map(MapContainer).setView([parseFloat(empLocationLat.value), parseFloat(empLocationLng.value)], 13);
+    const currentMapContainer = map && typeof map.getContainer === 'function' ? map.getContainer() : null;
+    const mapContainerWasReplaced = map && (!currentMapContainer || !document.contains(currentMapContainer) || currentMapContainer !== MapContainer);
+
+    if (mapContainerWasReplaced) {
+        map.remove();
+        map = null;
+        markers = null;
+        geofenceLayer = null;
+    }
+
+    if (map) {
+        // Map already exists, just update its view and marker
+        map.setView([userLat, userLng], 18);
+        if (markers) {
+            markers.clearLayers();
+            L.marker([userLat, userLng]).addTo(markers);
+        }
+        map.invalidateSize();
+        return;
+    }
+
+    map = L.map(MapContainer).setView([userLat, userLng], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -259,7 +284,8 @@ function applymap(querydata) {
 
     markers = L.layerGroup().addTo(map);
 
-    L.marker([parseFloat(empLocationLat.value), parseFloat(empLocationLng.value)]).addTo(markers);
+    L.marker([userLat, userLng]).addTo(markers);
+    map.invalidateSize();
 };
 
 function drawGeofence(coords) {
