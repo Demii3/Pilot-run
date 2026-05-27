@@ -290,7 +290,8 @@ async function editEmployee(id) {
   document.getElementById('name').value = employee.name;
   document.getElementById('email').value = employee.email;
   document.getElementById('username').value = employee.username || '';
-  document.getElementById('password').value = employee.password || '';
+  document.getElementById('password').value = '';
+  document.getElementById('password').placeholder = 'Leave blank to keep current password';
   document.getElementById('type').value = employee.type || 'Emp';
   document.getElementById('position').value = employee.position;
   document.getElementById('department').value = employee.department;

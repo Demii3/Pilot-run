@@ -15,16 +15,31 @@
     $testingvar2 = true;
 
     if ($purpose === 'updateInfoAndPassword') {
-        $sql1 = mysqli_prepare($dbc, "SELECT DISTINCT employees.password
-                FROM employees
-                WHERE id = ?");
+        $sql1 = mysqli_prepare($dbc, "SELECT `Password`
+                FROM `users`
+                WHERE `User_id` = ?");
         mysqli_stmt_bind_param($sql1, 'i', $userId);
         mysqli_stmt_execute($sql1);
         $result = mysqli_stmt_get_result($sql1);
 
         if (mysqli_num_rows($result) > 0) {
             $querydata = mysqli_fetch_assoc($result);
-            $proceed = password_verify($oldPassword, $querydata['password']);
+            $storedPassword = $querydata['Password'];
+            if (password_get_info($storedPassword)['algo'] === null) {
+                $proceed = hash_equals((string)$storedPassword, (string)$oldPassword);
+                if ($proceed) {
+                    $upgradedPassword = password_hash($storedPassword, PASSWORD_DEFAULT);
+                    $upgradeStmt = mysqli_prepare($dbc, "UPDATE users SET Password = ? WHERE User_id = ?");
+                    if ($upgradeStmt) {
+                        mysqli_stmt_bind_param($upgradeStmt, 'si', $upgradedPassword, $userId);
+                        mysqli_stmt_execute($upgradeStmt);
+                        mysqli_stmt_close($upgradeStmt);
+                    }
+                    $querydata['Password'] = $upgradedPassword;
+                }
+            } else {
+                $proceed = password_verify($oldPassword, $storedPassword);
+            }
             $testingvar2 = $proceed ? true : false;
         } else {
             $error = mysqli_error($dbc);
@@ -34,6 +49,12 @@
         };
 
         if ($proceed) {
+            if ($newPassword === '') {
+                $testingvar = 'New password cannot be empty';
+                echo json_encode(['error' => $error, 'testingvar' => $testingvar]);
+                exit();
+            }
+
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $sql2 = mysqli_prepare($dbc, "UPDATE employees SET password = ? WHERE id = ?");
             mysqli_stmt_bind_param($sql2, 'si', $hashedPassword, $userId);
@@ -69,6 +90,14 @@
             WHERE id = ?");
     mysqli_stmt_bind_param($sql, 'ssi', $data['email'], $data['username'], $userId);
     mysqli_stmt_execute($sql);
+
+    $sqlUsers = mysqli_prepare($dbc, "UPDATE users SET `Username` = ? WHERE `User_id` = ?");
+    if ($sqlUsers) {
+        mysqli_stmt_bind_param($sqlUsers, 'si', $data['username'], $userId);
+        mysqli_stmt_execute($sqlUsers);
+        mysqli_stmt_close($sqlUsers);
+    }
+
     if (mysqli_stmt_affected_rows($sql) > 0) {
         $testingvar = $proceed ? 'Employee information and password updated successfully' : 'Employee information updated successfully';
     } else {

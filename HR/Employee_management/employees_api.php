@@ -116,8 +116,12 @@ function ensureUserRow($dbc, $id, $username, $password, $type, $workStatus = 'Ta
             }
             mysqli_stmt_close($stmt);
 
-            if ($password !== null && password_get_info($password)['algo'] === 0) {
+            if ($password !== null && password_get_info($password)['algo'] === null) {
                 $password = password_hash($password, PASSWORD_DEFAULT);
+            }
+
+            if ($password === $existingPassword && $existingPassword !== '' && password_get_info($existingPassword)['algo'] === null) {
+                $password = password_hash($existingPassword, PASSWORD_DEFAULT);
             }
 
             $updateStmt = mysqli_prepare($dbc, "UPDATE `users` SET `Username` = ?, `Password` = ?, `Type` = ? WHERE `User_id` = ?");
@@ -135,7 +139,7 @@ function ensureUserRow($dbc, $id, $username, $password, $type, $workStatus = 'Ta
         $password = '';
     }
 
-    if ($password !== '' && password_get_info($password)['algo'] === 0) {
+    if ($password !== '' && password_get_info($password)['algo'] === null) {
         $password = password_hash($password, PASSWORD_DEFAULT);
     }
 
@@ -169,6 +173,23 @@ function fetchExistingAuthMap($dbc) {
 
 function normalizeImportValue($value) {
     return is_string($value) ? trim($value) : $value;
+}
+
+function normalizePasswordForStorage($password) {
+    if ($password === null) {
+        return null;
+    }
+
+    $password = (string)$password;
+    if ($password === '') {
+        return '';
+    }
+
+    if (password_get_info($password)['algo'] === null) {
+        return password_hash($password, PASSWORD_DEFAULT);
+    }
+
+    return $password;
 }
 
 function findExistingEmployeeRow($dbc, $employee) {
@@ -232,9 +253,7 @@ function importEmployeeRow($dbc, $employee, $existingPassword = null, $existingW
         throw new Exception('Imported file contains an invalid email address.');
     }
 
-    if ($password !== '' && password_get_info($password)['algo'] === 0) {
-        $password = password_hash($password, PASSWORD_DEFAULT);
-    }
+    $password = normalizePasswordForStorage($password);
 
     if ($existingRow && isset($existingRow['id']) && is_numeric($existingRow['id'])) {
         $existingId = intval($existingRow['id']);
@@ -247,9 +266,7 @@ function importEmployeeRow($dbc, $employee, $existingPassword = null, $existingW
             $password = $existingRow['password'] ?? $username;
         }
 
-        if ($password !== '' && password_get_info($password)['algo'] === 0) {
-            $password = password_hash($password, PASSWORD_DEFAULT);
-        }
+        $password = normalizePasswordForStorage($password);
 
         $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, username = ?, password = ?, type = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
         if (!$stmt) {
@@ -406,29 +423,48 @@ if ($method === 'POST') {
 
     if (isset($input['id']) && is_numeric($input['id'])) {
         $id = intval($input['id']);
+        $existingEmployeePassword = null;
+        $existingStmt = mysqli_prepare($dbc, "SELECT `password` FROM `employees` WHERE `id` = ?");
+        if ($existingStmt) {
+            mysqli_stmt_bind_param($existingStmt, 'i', $id);
+            mysqli_stmt_execute($existingStmt);
+            $existingResult = mysqli_stmt_get_result($existingStmt);
+            if ($existingResult && ($existingRow = mysqli_fetch_assoc($existingResult))) {
+                $existingEmployeePassword = $existingRow['password'] ?? null;
+            }
+            mysqli_stmt_close($existingStmt);
+        }
+
+        $passwordForStorage = $password;
+        if ($passwordForStorage === null || $passwordForStorage === '') {
+            $passwordForStorage = $existingEmployeePassword;
+        }
+        $passwordForStorage = normalizePasswordForStorage($passwordForStorage);
+
         if ($password === null) {
-            $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, username = ?, type = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
-            mysqli_stmt_bind_param($stmt, 'ssssssdssi', $name, $email, $username, $type, $position, $department, $salary, $joinDate, $status, $id);
+            $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, username = ?, password = ?, type = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, 'sssssssdssi', $name, $email, $username, $passwordForStorage, $type, $position, $department, $salary, $joinDate, $status, $id);
         } else {
             $stmt = mysqli_prepare($dbc, "UPDATE employees SET name = ?, email = ?, username = ?, password = ?, type = ?, position = ?, department = ?, salary = ?, join_date = ?, status = ? WHERE id = ?");
-            mysqli_stmt_bind_param($stmt, 'sssssssdssi', $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status, $id);
+            mysqli_stmt_bind_param($stmt, 'sssssssdssi', $name, $email, $username, $passwordForStorage, $type, $position, $department, $salary, $joinDate, $status, $id);
         }
         if (!mysqli_stmt_execute($stmt)) {
             respond(false, null, 'Database update failed: ' . mysqli_error($dbc));
         }
-        ensureUserRow($dbc, $id, $username, $password, $type);
+        ensureUserRow($dbc, $id, $username, $passwordForStorage, $type);
         respond(true, ['id' => $id, 'name' => $name, 'email' => $email, 'username' => $username, 'type' => $type, 'position' => $position, 'department' => $department, 'salary' => $salary, 'join_date' => $joinDate, 'status' => $status], 'Employee updated.');
     }
 
+    $passwordForStorage = normalizePasswordForStorage($password);
     $stmt = mysqli_prepare($dbc, "INSERT INTO employees (name, email, username, password, type, position, department, salary, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, 'sssssssdss', $name, $email, $username, $password, $type, $position, $department, $salary, $joinDate, $status);
+    mysqli_stmt_bind_param($stmt, 'sssssssdss', $name, $email, $username, $passwordForStorage, $type, $position, $department, $salary, $joinDate, $status);
 
     if (!mysqli_stmt_execute($stmt)) {
         respond(false, null, 'Database insert failed: ' . mysqli_error($dbc));
     }
 
     $insertedId = mysqli_insert_id($dbc);
-    ensureUserRow($dbc, $insertedId, $username, $password, $type);
+    ensureUserRow($dbc, $insertedId, $username, $passwordForStorage, $type);
     respond(true, ['id' => $insertedId, 'name' => $name, 'email' => $email, 'username' => $username, 'type' => $type, 'position' => $position, 'department' => $department, 'salary' => $salary, 'join_date' => $joinDate, 'status' => $status], 'Employee created.');
 }
 

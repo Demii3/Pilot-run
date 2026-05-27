@@ -38,8 +38,18 @@
         }
 
         $("#loginBtn").click(function(){
-            $.post("Modules/login_process.php",$("form#formlogin").serialize(),function(d){
-                if(d=='success'){
+            $.post("Modules/login_process.php", $("form#formlogin").serialize(), function(d){
+                let response = d;
+
+                if (typeof response === 'string') {
+                    try {
+                        response = JSON.parse(response);
+                    } catch (error) {
+                        response = { success: response === 'success', message: response };
+                    }
+                }
+
+                if (response && response.success) {
                     if($('input[name="remember"]').is(':checked')){
                         localStorage.setItem('remember','true');
                         localStorage.setItem('remember_username',$('#username').val());
@@ -50,10 +60,10 @@
                         localStorage.removeItem('remember_password');
                     }
                     document.location = "./";
-                } else if(d=='Inactive'){
+                } else if (response && response.message === 'Inactive') {
                     alert('Your account is inactive. Please contact the administrator.');
                 } else {
-                    alert(d);
+                    alert((response && response.message) ? response.message : 'Login failed.');
                 }
             });
         });
