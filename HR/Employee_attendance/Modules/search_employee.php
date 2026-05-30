@@ -4,14 +4,21 @@
     include 'dbcon.php';
     /** @var mysqli $dbc */
 
-    $searchTerm = isset($_POST['search']) ? mysqli_real_escape_string($dbc, $_POST['search']) : '';
+    $rawInput = file_get_contents('php://input');
+    $jsonInput = json_decode($rawInput, true);
+
+    if (is_array($jsonInput) && array_key_exists('searchTerm', $jsonInput)) {
+        $searchTerm = mysqli_real_escape_string($dbc, $jsonInput['searchTerm']);
+    } else {
+        $searchTerm = isset($_POST['searchTerm']) ? mysqli_real_escape_string($dbc, $_POST['searchTerm']) : '';
+    }
+
     $sql = '';
 
     if (strlen($searchTerm) == 0) {
         $sql = "SELECT id, `name`, department, `status` 
             FROM employees
-            WHERE `name` LIKE '%$searchTerm%'
-            LIMIT 15";
+            LIMIT 30";
     } else {
         $sql = "SELECT id, `name`, department, `status` 
                 FROM employees
@@ -26,4 +33,4 @@
     }
 
     echo json_encode($employees);
-?>
+    ?>

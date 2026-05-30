@@ -4,8 +4,19 @@
     include 'dbcon.php';
     /** @var mysqli $dbc */
 
-    $searchTerm = isset($_POST['search']) ? mysqli_real_escape_string($dbc, $_POST['search']) : '';
-    $id = isset($_POST['id']) ? mysqli_real_escape_string($dbc, $_POST['id']) : '';
+    $rawInput = file_get_contents('php://input');
+    $jsonInput = json_decode($rawInput, true);
+
+    $searchTerm = '';
+    $id = '';
+
+    if (is_array($jsonInput) && array_key_exists('searchTerm', $jsonInput)) {
+        $searchTerm = mysqli_real_escape_string($dbc, $jsonInput['searchTerm']);
+        $id = isset($jsonInput['id']) ? mysqli_real_escape_string($dbc, $jsonInput['id']) : '';
+    } else {
+        $searchTerm = isset($_POST['searchTerm']) ? mysqli_real_escape_string($dbc, $_POST['searchTerm']) : '';
+        $id = isset($_POST['id']) ? mysqli_real_escape_string($dbc, $_POST['id']) : '';
+    }
 
     $sql = "SELECT `name`, `coordinates` 
             FROM geofences

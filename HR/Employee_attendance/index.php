@@ -43,11 +43,11 @@
 	<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <link href="./Assets/Demetri.css" rel="stylesheet">
-  <script src="./Assets/Demetri.js"></script>
-  <script src="./Assets/Time_functions.js"></script>
-  <script src="./Assets/Database_communication.js"></script>
+  <script src="./Assets/OnStart_functions.js"></script>
+  <script src="./Assets/Database_functions.js"></script>
+  <script src="./Assets/Table_functions.js" defer></script>
+  <script src="./Assets/Create_attendance.js" defer></script>
   <script src="./Assets/Onclick_functions.js"></script>
-  <script src="../../Modules/universal_logout_handler.js"></script>
 </head>
 
 <body>
@@ -139,29 +139,7 @@
 
       <div class="table-responsive">
         <table id="attendanceTable" class="table table-hover">
-          <thead class="table-dark">
-              <tr>
-                  <th>Attendance ID</th>
-                  <th>Employee ID</th>
-                  <th>Name</th>
-                  <th>Department</th>
-                  <th>Date</th>
-                  <th>Location</th>
-                  <th>Clock In</th>
-                  <th>CI Status</th>
-                  <th>Clock Out</th>
-                  <th>CO Status</th>
-                  <th>Duration</th>
-                  <th>AO</th>
-                  <th>Work Day</th>
-                  <th>User Location</th>
-                  <th>In Geofence</th>
-                  <th>Coordinates</th>
-              </tr>
-          </thead>
-          <tbody>
-              <!-- DATA FROM DATABASE IS DISPLAYED HERE -->
-          </tbody>
+          <!-- Data goes here -->
         </table>
       </div>
     </div>
