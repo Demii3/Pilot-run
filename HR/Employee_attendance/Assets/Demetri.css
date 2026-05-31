@@ -569,7 +569,7 @@ h2 {
   overflow-y: auto;
 }
 
-.employee-suggestion-item, .employeeLocation-suggestion-item {
+.employee-suggestion-item, .location-suggestion-item {
   width: 100%;
   padding: 10px 14px;
   border: 0;
@@ -581,8 +581,8 @@ h2 {
 
 .employee-suggestion-item:hover,
 .employee-suggestion-item:focus,
-.employeeLocation-suggestion-item:hover,
-.employeeLocation-suggestion-item:focus {
+.location-suggestion-item:hover,
+.location-suggestion-item:focus {
   background: #e9f2ff;
   outline: none;
 }

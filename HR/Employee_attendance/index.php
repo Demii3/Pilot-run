@@ -314,7 +314,7 @@
 
           <div class="col-md-6 d-none">
             <label class="form-label">Id</label>
-            <input id="newModalId" type="text" class="form-control">
+            <input id="newModalId" type="text" class="form-control" readonly>
           </div>
 
           <div class="col-md-6">
@@ -340,11 +340,6 @@
               <!-- Container of employees location from database (overlay, doesn't affect layout) -->
               <div id="locationSuggestionDropdown" class="employee-suggestion-dropdown d-none" role="listbox" aria-label="Location suggestions">#</div>
             </div>
-          </div>
-
-          <div class="col-md-6 d-none">
-            <label class="form-label">Location Coordinates</label>
-            <input id="newModalLocationCoordinates" type="text" class="form-control">
           </div>
 
           <div class="col-md-6">
@@ -376,10 +371,6 @@
               <option value="On-leave">On-leave</option>
               <option value="Absent">Absent</option>
             </select>
-            <div class="form-check mt-2" id="newAllowOvertimeContainer">
-              <input class="form-check-input" type="checkbox" id="newAllowOvertime">
-              <label class="form-check-label" for="newAllowOvertime">Allow Over-time</label>
-            </div>
           </div>
           
           <div class="col-md-6">
@@ -390,6 +381,31 @@
                 <option value="LH">Legal Holiday</option>
                 <option value="Custom">Custom</option>
               </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Duration</label>
+            <input id="newModalDuration" type="text" class="form-control">
+          </div>
+
+          <div class="row g-3 mt-2">
+            <div class="col-md-6 d-flex align-items-center gap-2">
+              <div class="toggle-switch">
+                <input type="checkbox" id="Include-lunchbreak-create" class="toggle-input">
+                <label for="Include-lunchbreak-create" class="toggle-label"></label>
+              </div>
+              <label class="form-check-label mb-0" for="Include-lunchbreak-create">Include Lunch Break</label>
+              <span class="help-badge" tabindex="0" aria-label="Help about Include Lunch Break">
+                ?
+                <span class="help-badge-tooltip" style="text-align: center;">
+                  This is will include the lunch break duration in the total duration calculation.
+                </span>
+              </span>
+            </div>
+            <div class="col-md-6 d-flex justify-content-end gap-2" id="newModalStatusButtons">
+              <button id="NewModalAbsentButton" class="btn btn-danger">Absent</button>
+              <button id="NewModalOnLeaveButton" class="btn btn-info">On Leave</button>
+            </div>
           </div>
 
           <div class="modal-footer col-md-12 row g-3 justify-content-between">
@@ -526,6 +542,23 @@
             </div>
             <div id="notificationModalBody" class="modal-body">
               <span class="d-none" style="font-weight: bold;">This attendance has no location data available</span>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="createAttendanceNotifModal" class="modal fade" tabindex="-1" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div id="createAttendanceNotifModalBody" class="modal-body">
+              <span id="createAttendanceNotifModalBodySpan" class="d-none" style="font-weight: bold;">This attendance has no location data available</span>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

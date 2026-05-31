@@ -18,85 +18,21 @@
 		return is_array($_POST) ? $_POST : [];
 	}
 
-	function timeToMinutes(string $time): ?int {
-		$time = trim($time);
-
-		if ($time === '' || $time === '--:--' || $time === '--:-- --') {
-			return null;
-		}
-
-		if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)$/i', $time, $matches)) {
-			$hours = (int) $matches[1];
-			$minutes = (int) $matches[2];
-			$modifier = strtoupper($matches[3]);
-
-			if ($modifier === 'PM' && $hours !== 12) {
-				$hours += 12;
-			} elseif ($modifier === 'AM' && $hours === 12) {
-				$hours = 0;
-			}
-
-			return ($hours * 60) + $minutes;
-		}
-
-		if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $time, $matches)) {
-			$hours = (int) $matches[1];
-			$minutes = (int) $matches[2];
-
-			return ($hours * 60) + $minutes;
-		}
-
-		return null;
-	}
-
-	function calculateAttendanceDuration(string $clockIn, string $clockOut, int $allowOvertime): float {
-		$clockInMinutes = timeToMinutes($clockIn);
-		$clockOutMinutes = timeToMinutes($clockOut);
-
-		if ($clockInMinutes === null || $clockOutMinutes === null) {
-			return 0;
-		}
-
-		if (!$allowOvertime) {
-			$clockOutMinutes = min($clockOutMinutes, 17 * 60);
-		}
-
-		if ($clockOutMinutes === null || $clockInMinutes === null) {
-			return 0;
-		}
-
-		if ($clockInMinutes >= 720 && $clockInMinutes <= 780) {
-			$clockInMinutes = 0;
-		}
-
-		if ($clockOutMinutes >= 720 && $clockOutMinutes <= 780) {
-			$clockOutMinutes = 0;
-		}
-
-		$duration = $clockOutMinutes - $clockInMinutes - 60;
-
-		if ($duration < 0) {
-			$duration += 24 * 60;
-		}
-
-		return (float) $duration;
-	}
-
 	$items = readAttendancePayload();
 
 	$employeeId = trim((string) ($items['employeeId'] ?? ''));
 	$date = trim((string) ($items['date'] ?? ''));
 	$location = trim((string) ($items['location'] ?? ''));
-	$locationCoordinates = trim((string) ($items['locationCoordinates'] ?? ''));
 	$clockIn = trim((string) ($items['clockIn'] ?? ''));
 	$clockInStatus = trim((string) ($items['clockInStatus'] ?? ''));
 	$clockOut = trim((string) ($items['clockOut'] ?? ''));
 	$clockOutStatus = trim((string) ($items['clockOutStatus'] ?? ''));
 	$allowOvertime = isset($items['allowOvertime']) ? (int) $items['allowOvertime'] : 0;
 	$workClassification = trim((string) ($items['workClassification'] ?? 'R'));
+	$duration = isset($items['duration']) ? (float) $items['duration'] : 0;
 
-	if ($employeeId === '' || $date === '' || $location === '' || $locationCoordinates === '' || $clockIn === '' || $clockInStatus === '' || $clockOut === '' || $clockOutStatus === '') {
-		echo json_encode(['success' => false, 'message' => 'Please fill in all required attendance fields before saving.', 'msg' => 'Please fill in all required attendance fields before saving.']);
+	if ($employeeId === '' || $date === '' || $location === '' || $clockIn === '' || $clockInStatus === '' || $clockOut === '' || $clockOutStatus === '') {
+		echo json_encode(['success' => false, 'message' => [$employeeId, $date, $location, $clockIn, $clockInStatus, $clockOut, $clockOutStatus], 'msg' => 'Please fill in all required attendance fields before saving.']);
 		exit;
 	}
 
@@ -105,9 +41,8 @@
 		exit;
 	}
 
-	$duration = calculateAttendanceDuration($clockIn, $clockOut, $allowOvertime);
 
-	$sql = 'INSERT INTO employee_attendance (Emp_id, Date, Location, Coordinates, Clock_in, Clock_out, Clockin_status, Clockout_status, Duration, AO, Work_Classification) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+	$sql = 'INSERT INTO employee_attendance (Emp_id, `Date`, `Location`, Clock_in, Clock_out, Clockin_status, Clockout_status, Duration, AO, Work_Classification) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 	$stmt = mysqli_prepare($dbc, $sql);
 
 	if (!$stmt) {
@@ -116,11 +51,10 @@
 	}
 	mysqli_stmt_bind_param(
 		$stmt,
-		'isssssssdis',
+		'issssssdis',
 		$employeeId,
 		$date,
 		$location,
-		$locationCoordinates,
 		$clockIn,
 		$clockOut,
 		$clockInStatus,

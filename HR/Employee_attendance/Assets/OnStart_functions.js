@@ -12,8 +12,8 @@ $(document).ready(function() {
             { title: 'Department' },
             { title: 'Location' },
             { title: 'Clock In' },
-            { title: 'Clock Out' },
             { title: 'Clock In Status' },
+            { title: 'Clock Out' },
             { title: 'Clock Out Status' },
             { title: 'Duration' },
             { title: 'AO' },
@@ -24,7 +24,8 @@ $(document).ready(function() {
                 targets: [0, 4, 10],
                 visible: false
             }
-        ]
+        ],
+        order: [[0, 'desc']]
     });
     searchAttendance('', ''); // Load initial data with empty search
 
